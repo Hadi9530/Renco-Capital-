@@ -1,0 +1,16 @@
+{
+  "name": "renco-capital",
+  "version": "1.0.0",
+  "description": "Koperasi Keluarga RENCO",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p www && cp KOPERASI_RENCO.html www/index.html"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
