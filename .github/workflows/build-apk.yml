@@ -1,25 +1,42 @@
 name: Build APK
 on: push
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
+
       - uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: '17' }
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - uses: android-actions/setup-android@v3
-      - run: |
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Clone pwa2apk
+        run: |
           git clone https://github.com/Tonihj77-T/pwa2apk.git
           cd pwa2apk && npm install
-      - run: |
+
+      - name: Build APK
+        run: |
           node pwa2apk/bin/pwa2apk.js \
             --url https://username.github.io/Renco-Capital \
             --name "Renco Capital" \
             --package com.renco.capital \
             --output ./dist
+
       - uses: actions/upload-artifact@v4
         with:
-          name: Koperasi Renco 
+          name: apk
           path: ./dist/*.apk
