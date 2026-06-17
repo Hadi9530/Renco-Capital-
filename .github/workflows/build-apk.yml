@@ -10,11 +10,16 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: 'temurin', java-version: '17' }
       - uses: android-actions/setup-android@v3
-      - run: npm install -g @bubblewrap/cli
       - run: |
-          bubblewrap init --manifest=https://hadi9530.github.io/Renco-Capital-/ --alphaPackageName=com.renco.app
-          bubblewrap build
+          git clone https://github.com/Tonihj77-T/pwa2apk.git
+          cd pwa2apk && npm install
+      - run: |
+          node pwa2apk/bin/pwa2apk.js \
+            --url https://username.github.io/Renco-Capital \
+            --name "Renco Capital" \
+            --package com.renco.capital \
+            --output ./dist
       - uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: ./android/*.apk
+          name: Koperasi Renco 
+          path: ./dist/*.apk
