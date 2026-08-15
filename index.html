@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
           var _origInstSave = instance.save;
           if (typeof _origInstSave === 'function') {
             instance.save = function() {
-              _rcGambarStempel(instance);
+              if (!instance._rcSkipStempel) { _rcGambarStempel(instance); }
               return _origInstSave.apply(instance, arguments);
             };
           }
@@ -7058,10 +7058,22 @@ function renderUserProfile() {
       '<button id="nasabahLoadSnapBtn" onclick="nasabahLoadAdminSnapshot()" style="width:100%;padding:13px;border-radius:13px;background:rgba(45,106,79,0.08);color:#2d6a4f;border:1.5px solid rgba(45,106,79,0.22);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:6px">&#x2601;&#xFE0F; Muat Data Terbaru dari Admin</button>' +
       '<div style="font-size:10.5px;color:#9ca3af;text-align:center;margin-bottom:14px;line-height:1.4">Gunakan jika data di perangkat ini tidak sesuai dengan data admin. Data lokal akan digantikan dengan snapshot terbaru dari server.</div>'
     : '') +
-    (adm ? '<button onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalUserMgmt' + q + ')},200)" style="width:100%;padding:13px;border-radius:13px;background:linear-gradient(135deg,#1a472a,#2d6a4f);color:white;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">&#x1F465; Kelola User Nasabah</button>' : '') +
-    (adm ? '<button onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalPengurusMgmt' + q + ')},200)" style="width:100%;padding:13px;border-radius:13px;background:rgba(45,106,79,0.08);color:#2d6a4f;border:1.5px solid rgba(45,106,79,0.22);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">&#x1F4CB; Kelola Struktur Pengurus</button>' : '') +
     (adm ?
-      '<button onclick="showAdminChangePassword()" style="width:100%;padding:13px;border-radius:13px;background:rgba(67,97,238,0.08);color:#4361ee;border:1.5px solid rgba(67,97,238,0.22);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">&#x1F510; Ganti Password Admin</button>' +
+      ('<div class="adminp-grid">' +
+        '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalUserMgmt' + q + ')},200)" style="--apc:#2d6a4f;--apc-bg:rgba(45,106,79,0.14)"><div class="adminp-icon">&#x1F465;</div><span class="adminp-label">Kelola User Nasabah</span></button>' +
+        '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalPengurusMgmt' + q + ')},200)" style="--apc:#2d6a4f;--apc-bg:rgba(45,106,79,0.14)"><div class="adminp-icon">&#x1F4CB;</div><span class="adminp-label">Struktur Pengurus</span></button>' +
+        '<button class="adminp-card" onclick="showAdminChangePassword()" style="--apc:#4361ee;--apc-bg:rgba(67,97,238,0.14)"><div class="adminp-icon">&#x1F510;</div><span class="adminp-label">Ganti Password</span></button>' +
+        '<button class="adminp-card" onclick="authLogout()" style="--apc:#dc2626;--apc-bg:rgba(220,38,38,0.12)"><div class="adminp-icon">&#x1F6AA;</div><span class="adminp-label">Keluar / Logout</span></button>' +
+      '</div>' +
+      '<style>' +
+        '.adminp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}' +
+        '.adminp-card{display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.6);border-radius:14px;padding:11px 4px 9px;cursor:pointer;font-family:inherit;transition:all 0.18s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 10px rgba(0,0,0,0.05);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);-webkit-tap-highlight-color:transparent;text-align:center}' +
+        '.adminp-card:active{transform:scale(0.95);background:rgba(255,255,255,0.55)}' +
+        '.adminp-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;background:var(--apc-bg);border:1px solid rgba(255,255,255,0.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}' +
+        '.adminp-label{font-size:9.5px;font-weight:700;color:var(--apc);letter-spacing:0.1px;line-height:1.25}' +
+      '</style>')
+    : '') +
+    (adm ?
       '<div id="adminChangePwPanel" style="display:none;background:#f8faf9;border-radius:14px;padding:16px;margin-bottom:10px;border:1.5px solid rgba(67,97,238,0.15)">' +
         '<div style="font-size:11px;font-weight:800;color:#4361ee;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px">&#x1F510; Ubah Password Admin</div>' +
         '<div id="adminPwError" style="display:none;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:10px"></div>' +
@@ -7071,7 +7083,7 @@ function renderUserProfile() {
         '<div style="display:flex;gap:8px"><button onclick="showAdminChangePassword()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Batal</button><button onclick="submitAdminChangePassword()" style="flex:2;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#4361ee,#3a0ca3);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#x2705; Simpan Password</button></div>' +
       '</div>'
     : '') +
-    '<button onclick="authLogout()" style="width:100%;padding:13px;border-radius:13px;background:rgba(220,38,38,0.07);color:#dc2626;border:1.5px solid rgba(220,38,38,0.18);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">&#x1F6AA; Keluar / Logout</button>';
+    (!adm ? '<button onclick="authLogout()" style="width:100%;padding:13px;border-radius:13px;background:rgba(220,38,38,0.07);color:#dc2626;border:1.5px solid rgba(220,38,38,0.18);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">&#x1F6AA; Keluar / Logout</button>' : '');
 }
 
 // ── Nasabah: muat ulang data dari snapshot admin terbaru (backup/restore) ──
@@ -8886,7 +8898,7 @@ window.deletePengurus = function(id) {
                alt="Setiap tabungan adalah harapan"
                style="width:100%;height:auto;border-radius:16px;display:block;box-shadow:0 4px 18px rgba(0,0,0,0.14);object-fit:cover" />
         </div>
-        <div id="keuanganGridInner" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 14px">
+        <div id="keuanganGridInner" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px">
           <!-- diisi oleh renderKeuanganGrid() -->
         </div>
       </div>
@@ -8997,118 +9009,44 @@ window.deletePengurus = function(id) {
       </div>
 
       <style>
-      /* ══ Keyframes animasi grid keuangan ══ */
-      @keyframes keu-card-in {
-        0%   { opacity:0; transform:translateY(22px) scale(0.93); }
-        60%  { opacity:1; transform:translateY(-4px) scale(1.01); }
-        100% { opacity:1; transform:translateY(0) scale(1); }
-      }
-      @keyframes keu-shimmer {
-        0%   { transform:translateX(-130%) skewX(-18deg); }
-        100% { transform:translateX(250%) skewX(-18deg); }
-      }
-      @keyframes keu-pulse-border {
-        0%,100% { opacity:0.3; }
-        50%      { opacity:1; }
-      }
-      @keyframes keu-icon-float {
-        0%,100% { transform:translateY(0); }
-        50%      { transform:translateY(-3px); }
-      }
-
-      /* ── Card grid — kaca transparan (glassmorphism) ── */
+      /* ── Card grid keuangan — model sama persis dgn grid hiburan (forum-grid-btn) ── */
       .keu-grid-card {
-        display:flex;flex-direction:column;align-items:flex-start;gap:0;
-        border-radius:20px;
-        padding:10px 10px 8px;cursor:pointer;font-family:inherit;
-        transition:transform 0.2s cubic-bezier(.4,0,.2,1),
-                   box-shadow 0.2s,
-                   border-color 0.2s,
-                   background 0.2s;
+        display:flex; flex-direction:column; align-items:center; gap:6px;
+        background:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.6); border-radius:14px;
+        padding:11px 6px 9px; cursor:pointer; font-family:inherit;
+        transition:all 0.18s cubic-bezier(.4,0,.2,1);
+        box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
         -webkit-tap-highlight-color:transparent;
-        position:relative;overflow:hidden;
-        height:90px;
-        min-height:unset;
-        text-align:left;
-        /* Efek kaca transparan / frosted glass */
-        background:linear-gradient(160deg,rgba(255,255,255,0.38),rgba(255,255,255,0.12));
-        backdrop-filter:blur(16px) saturate(180%);
-        -webkit-backdrop-filter:blur(16px) saturate(180%);
-        border:1.5px solid rgba(255,255,255,0.5);
-        box-shadow:0 8px 24px rgba(26,71,42,0.10),
-                   inset 0 1px 0 rgba(255,255,255,0.55),
-                   inset 0 -1px 0 rgba(255,255,255,0.15);
-        /* Animasi entrance stagger via nth-child */
-        opacity:0;
-        animation:keu-card-in 0.42s cubic-bezier(.4,0,.2,1) forwards;
+        position:relative;
+        height:auto; min-height:unset;
+        text-align:center;
       }
-      /* Stagger delay tiap card */
-      .keu-grid-card:nth-child(1) { animation-delay:0.04s; }
-      .keu-grid-card:nth-child(2) { animation-delay:0.10s; }
-      .keu-grid-card:nth-child(3) { animation-delay:0.16s; }
-      .keu-grid-card:nth-child(4) { animation-delay:0.22s; }
-      .keu-grid-card:nth-child(5) { animation-delay:0.28s; }
-      .keu-grid-card:nth-child(6) { animation-delay:0.34s; }
-      .keu-grid-card:nth-child(7) { animation-delay:0.40s; }
-
-      /* Shimmer pseudo-element */
-      .keu-grid-card::before {
-        content:'';
-        position:absolute;inset:0;
-        background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.35) 50%,transparent 65%);
-        transform:translateX(-130%) skewX(-18deg);
-        pointer-events:none;
-        border-radius:inherit;
+      .keu-grid-card:active { transform:scale(0.95); }
+      .keu-grid-card.active {
+        border-color:rgba(255,255,255,0.85);
+        box-shadow:0 4px 16px rgba(0,0,0,0.1);
+        background:rgba(255,255,255,0.55);
       }
-      /* Glow border top */
-      .keu-grid-card::after {
-        content:'';
-        position:absolute;left:0;top:12%;bottom:12%;
-        width:4px;
-        background:linear-gradient(180deg,transparent,rgba(255,255,255,0.9) 40%,rgba(255,255,255,1) 60%,transparent);
-        border-radius:0 99px 99px 0;
-        box-shadow:0 0 10px 2px rgba(255,255,255,0.5),0 0 20px 4px rgba(255,255,255,0.25);
-        animation:keu-pulse-border 2.8s ease-in-out infinite;
-      }
-
-      /* Hover: shimmer + lift */
-      .keu-grid-card:hover::before {
-        animation:keu-shimmer 0.55s ease forwards;
-      }
-      .keu-grid-card:hover {
-        transform:translateY(-3px) scale(1.02);
-        background:linear-gradient(160deg,rgba(255,255,255,0.5),rgba(255,255,255,0.18));
-        box-shadow:0 12px 30px rgba(26,71,42,0.16),
-                   inset 0 1px 0 rgba(255,255,255,0.65);
-        border-color:rgba(255,255,255,0.75);
-      }
-      .keu-grid-card:hover .kgb-icon {
-        animation:keu-icon-float 1.2s ease-in-out infinite;
-      }
-
-      .keu-grid-card:active {
-        transform:scale(0.93);
-        background:linear-gradient(160deg,rgba(255,255,255,0.3),rgba(255,255,255,0.08));
-        box-shadow:0 2px 8px rgba(26,71,42,0.10);
-        border-color:rgba(255,255,255,0.4);
-      }
+      .keu-grid-card.active .kgb-label { font-weight:800; color:#1c3025; }
 
       .kgb-icon {
-        width:36px;height:36px;border-radius:10px;
-        display:flex;align-items:center;justify-content:center;
-        flex-shrink:0;margin-bottom:6px;
-        border:1px solid rgba(255,255,255,0.4);
-        box-shadow:0 2px 10px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.3);
-        transition:transform 0.18s cubic-bezier(.4,0,.2,1);
+        width:44px; height:44px; border-radius:13px;
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0; margin-bottom:0;
+        background:rgba(255,255,255,0.55);
+        border:1px solid rgba(255,255,255,0.8);
+        -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
+        transition:transform 0.18s;
       }
       .kgb-icon svg { display:block; }
+      .keu-grid-card.active .kgb-icon { transform:scale(1.08); }
       .kgb-label {
-        font-size:12px;font-weight:800;
-        color:var(--text,#1a2e22);
-        letter-spacing:0.1px;
+        font-size:10.5px; font-weight:600; color:#6b7280;
+        letter-spacing:0.1px; white-space:nowrap;
         line-height:1.2;
-        margin-bottom:0;
-        text-shadow:0 1px 2px rgba(255,255,255,0.4);
+        transition:color 0.18s;
       }
       .kgb-desc {
         display:none;
@@ -9142,75 +9080,75 @@ window.deletePengurus = function(id) {
     <!-- FORUM PAGE -->
     <div class="page" id="page-forum">
       <!-- Sub Menu Grid 3x2 -->
-      <div style="background:#f8f9fb;padding:14px 14px 10px;border-bottom:1.5px solid #eef0f3">
+      <div style="background:transparent;padding:14px 14px 10px;border-bottom:1.5px solid #eef0f3">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
 
           <button id="forumTabDiskusi" onclick="forumTab('diskusi')" class="forum-grid-btn active">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#1a472a,#2d6a4f)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 10h8M8 14h5" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 10h8M8 14h5" stroke="#2d6a4f" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </div>
             <span class="fgb-label">Diskusi</span>
           </button>
 
           <button id="forumTabPolling" onclick="forumTab('polling')" class="forum-grid-btn">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#1a3a5c,#2563eb)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="14" width="4" height="7" rx="1" fill="white" opacity="0.6"/>
-                <rect x="10" y="9" width="4" height="12" rx="1" fill="white" opacity="0.8"/>
-                <rect x="17" y="4" width="4" height="17" rx="1" fill="white"/>
-                <circle cx="5" cy="11" r="2" fill="white" opacity="0.5"/>
-                <circle cx="12" cy="6" r="2" fill="white" opacity="0.7"/>
-                <circle cx="19" cy="1.5" r="2" fill="white" opacity="0.9"/>
+                <rect x="3" y="14" width="4" height="7" rx="1" fill="#2563eb" opacity="0.6"/>
+                <rect x="10" y="9" width="4" height="12" rx="1" fill="#2563eb" opacity="0.8"/>
+                <rect x="17" y="4" width="4" height="17" rx="1" fill="#2563eb"/>
+                <circle cx="5" cy="11" r="2" fill="#2563eb" opacity="0.5"/>
+                <circle cx="12" cy="6" r="2" fill="#2563eb" opacity="0.7"/>
+                <circle cx="19" cy="1.5" r="2" fill="#2563eb" opacity="0.9"/>
               </svg>
             </div>
             <span class="fgb-label">Polling</span>
           </button>
 
           <button id="forumTabGames" onclick="forumTab('games')" class="forum-grid-btn">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#6b21a8,#9333ea)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="6" width="20" height="13" rx="4" stroke="white" stroke-width="1.7"/>
-                <path d="M8 9v6M5 12h6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-                <circle cx="16" cy="10.5" r="1.2" fill="white"/>
-                <circle cx="19" cy="13" r="1.2" fill="white"/>
+                <rect x="2" y="6" width="20" height="13" rx="4" stroke="#9333ea" stroke-width="1.7"/>
+                <path d="M8 9v6M5 12h6" stroke="#9333ea" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="16" cy="10.5" r="1.2" fill="#9333ea"/>
+                <circle cx="19" cy="13" r="1.2" fill="#9333ea"/>
               </svg>
             </div>
             <span class="fgb-label">Games</span>
           </button>
 
           <button id="forumTabArisan" onclick="forumTab('arisan')" class="forum-grid-btn" style="position:relative">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#b45309,#d97706)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M20 11a8 8 0 10-2.34 5.66" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M20 5v6h-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="12" r="2.6" fill="white" opacity="0.9"/>
+                <path d="M20 11a8 8 0 10-2.34 5.66" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20 5v6h-6" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="2.6" fill="#d97706" opacity="0.9"/>
               </svg>
             </div>
             <span class="fgb-label">Arisan</span>
           </button>
 
           <button id="forumTabBerita" onclick="forumTab('berita')" class="forum-grid-btn">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#0e7490,#0891b2)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.7"/>
-                <path d="M7 8h10M7 12h10M7 16h6" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
-                <rect x="14" y="12" width="4" height="4" rx="1" fill="white" opacity="0.7"/>
+                <rect x="3" y="3" width="18" height="18" rx="3" stroke="#0891b2" stroke-width="1.7"/>
+                <path d="M7 8h10M7 12h10M7 16h6" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round"/>
+                <rect x="14" y="12" width="4" height="4" rx="1" fill="#0891b2" opacity="0.7"/>
               </svg>
             </div>
             <span class="fgb-label">Berita</span>
           </button>
 
           <button id="forumTabKalender" onclick="forumTab('kalender')" class="forum-grid-btn">
-            <div class="fgb-icon" style="background:linear-gradient(135deg,#be185d,#ec4899)">
+            <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="3" stroke="white" stroke-width="1.7"/>
-                <path d="M16 2v4M8 2v4M3 10h18" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
-                <circle cx="8" cy="15" r="1.3" fill="white" opacity="0.8"/>
-                <circle cx="12" cy="15" r="1.3" fill="white"/>
-                <circle cx="16" cy="15" r="1.3" fill="white" opacity="0.6"/>
+                <rect x="3" y="4" width="18" height="18" rx="3" stroke="#ec4899" stroke-width="1.7"/>
+                <path d="M16 2v4M8 2v4M3 10h18" stroke="#ec4899" stroke-width="1.7" stroke-linecap="round"/>
+                <circle cx="8" cy="15" r="1.3" fill="#ec4899" opacity="0.8"/>
+                <circle cx="12" cy="15" r="1.3" fill="#ec4899"/>
+                <circle cx="16" cy="15" r="1.3" fill="#ec4899" opacity="0.6"/>
               </svg>
             </div>
             <span class="fgb-label">Kalender</span>
@@ -9222,23 +9160,27 @@ window.deletePengurus = function(id) {
       <style>
       .forum-grid-btn {
         display:flex; flex-direction:column; align-items:center; gap:6px;
-        background:white; border:1.5px solid #e8eaed; border-radius:14px;
+        background:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.6); border-radius:14px;
         padding:11px 6px 9px; cursor:pointer; font-family:inherit;
         transition:all 0.18s cubic-bezier(.4,0,.2,1);
-        box-shadow:0 1px 3px rgba(0,0,0,0.05);
+        box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
       }
       .forum-grid-btn:active { transform:scale(0.95); }
       .forum-grid-btn.active {
-        border-color:transparent;
-        box-shadow:0 3px 12px rgba(0,0,0,0.13);
-        background:white;
+        border-color:rgba(255,255,255,0.85);
+        box-shadow:0 4px 16px rgba(0,0,0,0.1);
+        background:rgba(255,255,255,0.55);
       }
       .forum-grid-btn.active .fgb-label { font-weight:800; color:#1c3025; }
       .fgb-icon {
         width:44px; height:44px; border-radius:13px;
         display:flex; align-items:center; justify-content:center;
         flex-shrink:0;
-        box-shadow:0 2px 8px rgba(0,0,0,0.15);
+        background:rgba(255,255,255,0.55);
+        border:1px solid rgba(255,255,255,0.8);
+        -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
         transition:transform 0.18s;
       }
       .forum-grid-btn.active .fgb-icon { transform:scale(1.08); }
@@ -11826,6 +11768,8 @@ function _dbMigrate() {
   // RencoPay
   if (!DB.rencoPay || typeof DB.rencoPay !== 'object') DB.rencoPay = {};
   if (!DB.rencoPay.settings || typeof DB.rencoPay.settings !== 'object') DB.rencoPay.settings = {};
+  if (!DB.rencoPay.settings.namaKoperasi) DB.rencoPay.settings.namaKoperasi = 'Koperasi Keluarga RENCO';
+  if (!DB.rencoPay.settings.noQRIS) DB.rencoPay.settings.noQRIS = '';
   if (!DB.rencoPay.dompet   || !Array.isArray(DB.rencoPay.dompet))   DB.rencoPay.dompet   = [];
   if (!DB.rencoPay.tagihan  || !Array.isArray(DB.rencoPay.tagihan))  DB.rencoPay.tagihan  = [];
   if (!DB.rencoPay.settings.transferBanks || !DB.rencoPay.settings.transferBanks.length) {
@@ -13712,88 +13656,39 @@ window.triggerPhotoUpload = function(memberId) {
   if (typeof _origTriggerPhotoUpload === 'function') _origTriggerPhotoUpload(memberId);
 };
 
-/* ── Helper: konversi src gambar (file lokal/relatif) menjadi data URI agar canvas tidak "tainted" ── */
-function _kaImgToDataURL(src) {
+/* ── Gambar kartu anggota (nasabah) ke Canvas 2D secara manual ──
+   Catatan: sebelumnya fitur ini memakai html2canvas untuk "memfoto" elemen
+   DOM kartu, tapi library tsb sering gagal dgn error:
+   "Failed to execute 'createPattern' ... canvas element that has not fully
+   loaded" saat elemen sumber memakai banyak lapisan linear-gradient +
+   animasi. Solusinya: gambar kartu langsung ke canvas secara manual
+   (sama seperti pendekatan yang sudah stabil dipakai di fitur cetak kartu
+   admin / drawKartuCanvas), sehingga tidak bergantung pada html2canvas
+   sama sekali. */
+function _kaLoadPhotoImg(memberId) {
   return new Promise(function(resolve) {
-    if (!src || src.indexOf('data:') === 0) { resolve(src); return; }
-    fetch(src, { mode: 'cors' })
-      .then(function(res){ if (!res.ok) throw new Error('fetch gagal'); return res.blob(); })
-      .then(function(blob){
-        var reader = new FileReader();
-        reader.onload = function(){ resolve(reader.result); };
-        reader.onerror = function(){ resolve(null); };
-        reader.readAsDataURL(blob);
-      })
-      .catch(function(){ resolve(null); }); // gagal fetch → null, elemen gambar akan disembunyikan
-  });
-}
-
-/* ── Helper: render kartu ke canvas (off-screen clone dengan ukuran tetap) ── */
-function _kaRenderCanvas(memberId, callback) {
-  var el = document.getElementById('kaCardEl_' + memberId);
-  if (!el) { callback(null, 'Elemen kartu tidak ditemukan'); return; }
-  if (typeof html2canvas === 'undefined') { callback(null, 'Library html2canvas belum siap'); return; }
-
-  // Buat wrapper off-screen dengan ukuran fix kartu kredit standar
-  var W = 856, H = 540; // 85.6mm x 54mm
-  var wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:'+W+'px;height:'+H+'px;overflow:hidden;pointer-events:none;z-index:-1';
-  var clone = el.cloneNode(true);
-  clone.style.cssText = 'width:'+W+'px;height:'+H+'px;border-radius:18px;overflow:hidden;';
-  // Salin semua computed style animasi ke clone agar tidak bergerak
-  clone.style.animation = 'none';
-  clone.querySelectorAll('*').forEach(function(n){ n.style.animation='none'; n.style.transition='none'; });
-  wrap.appendChild(clone);
-  document.body.appendChild(wrap);
-
-  // ── Ubah semua <img> (mis. logo assets/icon-renco.png) menjadi data URI dulu ──
-  // supaya html2canvas tidak menghasilkan canvas yang "tainted" saat di-export.
-  var imgs = Array.prototype.slice.call(clone.querySelectorAll('img'));
-  var conversions = imgs.map(function(img){
-    return _kaImgToDataURL(img.getAttribute('src')).then(function(dataUrl){
-      if (dataUrl) { img.setAttribute('crossorigin', 'anonymous'); img.src = dataUrl; }
-      else { img.style.display = 'none'; } // gambar gagal dimuat → sembunyikan drpd gagalkan seluruh export
-    });
-  });
-
-  Promise.all(conversions).then(function() {
-    return html2canvas(clone, {
-      scale: 2,
-      width: W,
-      height: H,
-      backgroundColor: '#0a1a0f',
-      useCORS: true,
-      allowTaint: false,
-      logging: false,
-      imageTimeout: 0,
-      removeContainer: true
-    });
-  }).then(function(canvas) {
-    document.body.removeChild(wrap);
-    callback(canvas, null);
-  }).catch(function(e) {
-    try { document.body.removeChild(wrap); } catch(_) {}
-    console.error('[KartuDL]', e);
-    callback(null, e.message || 'html2canvas error');
+    var src = typeof getMemberPhoto === 'function' ? getMemberPhoto(memberId) : null;
+    if (!src) { resolve(null); return; }
+    var img = new Image();
+    img.onload = function() { resolve(img); };
+    img.onerror = function() { resolve(null); };
+    img.src = src;
   });
 }
 
 /* ── Download Gambar ── */
 function _kaDownloadImg(memberId) {
-  // Temukan tombol dari data-id di ka-dl-row
+  var a = typeof getNasabah === 'function' ? getNasabah(memberId) : null;
+  if (!a) { if (typeof showToast === 'function') showToast('⚠️ Data anggota tidak ditemukan'); return; }
   var btns = document.querySelectorAll('.ka-dl-btn.img');
   var btn = null;
   btns.forEach(function(b){ if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+memberId+"'") > -1) btn = b; });
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Memproses...'; }
   if (typeof showToast === 'function') showToast('⏳ Menyiapkan gambar...');
 
-  _kaRenderCanvas(memberId, function(canvas, err) {
-    if (err) {
-      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + err);
-      if (btn) { btn.disabled = false; btn.innerHTML = '🖼️ Simpan Gambar'; }
-      return;
-    }
+  _kaLoadPhotoImg(memberId).then(function(img) {
     try {
+      var canvas = drawKartuCanvas(a, 3, img);
       var dataUrl = canvas.toDataURL('image/png');
       var link = document.createElement('a');
       link.download = 'kartu-anggota-' + memberId + '.png';
@@ -13804,8 +13699,7 @@ function _kaDownloadImg(memberId) {
       if (typeof showToast === 'function') showToast('✅ Gambar berhasil diunduh!');
     } catch(e) {
       console.error(e);
-      var pesanImg = /tainted/i.test(e.message||'') ? 'Gambar logo/foto gagal dimuat lintas-sumber' : (e.message||'Gagal menyimpan gambar');
-      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + pesanImg);
+      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + (e.message || 'Gagal menyimpan gambar'));
     }
     if (btn) { btn.disabled = false; btn.innerHTML = '🖼️ Simpan Gambar'; }
   });
@@ -13813,34 +13707,32 @@ function _kaDownloadImg(memberId) {
 
 /* ── Download PDF ── */
 function _kaDownloadPDF(memberId) {
-  // Cek jsPDF — handle UMD global window.jspdf.jsPDF atau window.jsPDF
   var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF || null;
   if (!jsPDFCls) {
     if (typeof showToast === 'function') showToast('⏳ Library PDF belum siap, tunggu sebentar lalu coba lagi');
     return;
   }
+  var a = typeof getNasabah === 'function' ? getNasabah(memberId) : null;
+  if (!a) { if (typeof showToast === 'function') showToast('⚠️ Data anggota tidak ditemukan'); return; }
   var btns = document.querySelectorAll('.ka-dl-btn.pdf');
   var btn = null;
   btns.forEach(function(b){ if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+memberId+"'") > -1) btn = b; });
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Memproses...'; }
   if (typeof showToast === 'function') showToast('⏳ Menyiapkan PDF...');
 
-  _kaRenderCanvas(memberId, function(canvas, err) {
-    if (err) {
-      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + err);
-      if (btn) { btn.disabled = false; btn.innerHTML = '📑 Simpan PDF'; }
-      return;
-    }
+  _kaLoadPhotoImg(memberId).then(function(img) {
     try {
+      var canvas = drawKartuCanvas(a, 4, img);
       var imgData = canvas.toDataURL('image/png');
-      var pdf = new jsPDFCls({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+      var jsPDFCls2 = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      var pdf = new jsPDFCls2({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+      pdf._rcSkipStempel = true;
       pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
       pdf.save('kartu-anggota-' + memberId + '.pdf');
       if (typeof showToast === 'function') showToast('✅ PDF berhasil diunduh!');
     } catch(e) {
       console.error(e);
-      var pesanPdf = /tainted/i.test(e.message||'') ? 'Gambar logo/foto gagal dimuat lintas-sumber' : (e.message||'Gagal menyimpan PDF');
-      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + pesanPdf);
+      if (typeof showToast === 'function') showToast('⚠️ Gagal: ' + (e.message || 'Gagal menyimpan PDF'));
     }
     if (btn) { btn.disabled = false; btn.innerHTML = '📑 Simpan PDF'; }
   });
@@ -18431,25 +18323,54 @@ function _rpRwRenderList(semua, filter) {
     }).join('') + `</div>`;
 }
 
+/* ─── Accordion helper: generic collapse/expand for Setting cards ─── */
+function rpAccToggle(key) {
+  var wrap = document.getElementById('rpAcc_wrap_' + key);
+  var chev = document.getElementById('rpAcc_chev_' + key);
+  if (!wrap) return;
+  var open = wrap.getAttribute('data-open') === '1';
+  if (open) {
+    wrap.style.gridTemplateRows = '0fr';
+    wrap.style.opacity = '0';
+    wrap.setAttribute('data-open', '0');
+    if (chev) chev.style.transform = 'rotate(-90deg)';
+  } else {
+    wrap.style.gridTemplateRows = '1fr';
+    wrap.style.opacity = '1';
+    wrap.setAttribute('data-open', '1');
+    if (chev) chev.style.transform = 'rotate(0deg)';
+  }
+}
+function _rpAccChevronHTML(key) {
+  return '<div id="rpAcc_chev_' + key + '" style="width:22px;height:22px;border-radius:6px;background:rgba(45,106,79,0.04);display:flex;align-items:center;justify-content:center;transition:transform 0.35s cubic-bezier(.4,0,.2,1),background 0.2s;transform:rotate(-90deg);flex-shrink:0">' +
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#2d6a4f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+  '</div>';
+}
+
 /* ─── Pengaturan Tab ─── */
 function rpPengaturanHTML() {
   const rp = getRPDB();
   const s = rp.settings;
   return `
-    <!-- QRIS Settings -->
-    <div class="rp-card">
-      <div class="rp-card-header">
+    <!-- QRIS Settings (accordion, default tertutup) -->
+    <div class="rp-card" style="overflow:hidden">
+      <div class="rp-card-header" onclick="rpAccToggle('qris-set')" style="cursor:pointer;user-select:none;-webkit-user-select:none;transition:background 0.2s" ontouchstart="this.style.background='rgba(45,106,79,0.06)'" ontouchend="this.style.background=''">
         <div class="rp-card-title">◈ Pengaturan QRIS</div>
-        <button onclick="rpSaveQRIS()" style="padding:6px 14px;border-radius:8px;background:var(--forest-mid);color:white;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Simpan</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="event.stopPropagation();rpSaveQRIS()" style="padding:6px 14px;border-radius:8px;background:var(--forest-mid);color:white;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Simpan</button>
+          ${_rpAccChevronHTML('qris-set')}
+        </div>
       </div>
+      <div id="rpAcc_wrap_qris-set" data-open="0" style="display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.38s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;opacity:0">
+      <div style="overflow:hidden">
       <div class="rp-card-body">
         <div class="field">
           <label>Nama Koperasi (tampil di QRIS)</label>
-          <input type="text" id="rpNamaKop" value="${s.namaKoperasi}" placeholder="Nama koperasi">
+          <input type="text" id="rpNamaKop" value="${s.namaKoperasi || ''}" placeholder="Nama koperasi">
         </div>
         <div class="field">
           <label>Nomor QRIS / Merchant ID</label>
-          <input type="text" id="rpNoQRIS" value="${s.noQRIS}" placeholder="ID001234567890">
+          <input type="text" id="rpNoQRIS" value="${s.noQRIS || ''}" placeholder="ID001234567890">
         </div>
         <div class="field">
           <label>📱 No. WhatsApp Admin <span style="font-size:10px;color:#9ca3af;font-weight:400">(untuk tombol Bagikan)</span></label>
@@ -18457,15 +18378,20 @@ function rpPengaturanHTML() {
           <div style="font-size:10px;color:#9ca3af;margin-top:3px">Format internasional tanpa +. Misal: 628xxx</div>
         </div>
       </div>
+      </div>
+      </div>
     </div>
 
     ${typeof rpNotifSettingHTML === 'function' ? rpNotifSettingHTML() : ''}
 
-    <!-- ═══ DB MANAGEMENT PANEL ═══ -->
-    <div class="rp-card" style="margin-bottom:20px;border:1.5px solid rgba(230,57,70,0.15)">
-      <div class="rp-card-header" style="background:rgba(230,57,70,0.04)">
+    <!-- ═══ DB MANAGEMENT PANEL (accordion, default tertutup) ═══ -->
+    <div class="rp-card" style="margin-bottom:20px;border:1.5px solid rgba(230,57,70,0.15);overflow:hidden">
+      <div class="rp-card-header" onclick="rpAccToggle('dbmgmt')" style="background:rgba(230,57,70,0.04);cursor:pointer;user-select:none;-webkit-user-select:none" ontouchstart="this.style.background='rgba(230,57,70,0.08)'" ontouchend="this.style.background='rgba(230,57,70,0.04)'">
         <div class="rp-card-title" style="color:#c0392b">🗄️ Manajemen Database</div>
+        ${_rpAccChevronHTML('dbmgmt')}
       </div>
+      <div id="rpAcc_wrap_dbmgmt" data-open="0" style="display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.38s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;opacity:0">
+      <div style="overflow:hidden">
       <div class="rp-card-body">
         <!-- Health Check -->
         <div style="margin-bottom:12px">
@@ -18529,6 +18455,8 @@ function rpPengaturanHTML() {
             <div id="_cloudResetStatus" style="margin-top:7px;font-size:10px;text-align:center;color:#9ca3af;min-height:14px"></div>
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   `;
@@ -22940,36 +22868,36 @@ let _syariahActiveAkad = 'murabahah';
 // Definisi grid item keuangan — admin & nasabah
 var _keuanganGridItems = {
   admin: [
-    { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="white" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="white"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>' },
-    { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>' },
-    { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)', color:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="#2d6a4f" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="#2d6a4f"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+    { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)', color:'#1a472a',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#1a472a" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="#1a472a" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+    { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)', color:'#1a472a',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1a472a" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="#1a472a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
       directNav: 'pembiayaan' },
-    { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="white" stroke-width="1.8"/><path d="M2 10h20" stroke="white" stroke-width="1.8"/><path d="M6 15h4" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="white" opacity="0.9"/></svg>' },
-    { tab:'phu',                 label:'Hasil Usaha', desc:'Pantau pendapatan hasil usaha koperasi',     grad:'linear-gradient(135deg,#2d6a4f,#40916c)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M3 18h18M6 18V9M10 18V9M14 18V9M18 18V9M2 9l10-6 10 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
-    { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="white" stroke-width="1.7" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/></svg>' },
-    { tab:'aset',                label:'Aset',        desc:'Kelola aset milik koperasi',                grad:'linear-gradient(135deg,#0d2016,#2d6a4f)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+    { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)', color:'#b07a00',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="#b07a00" stroke-width="1.8"/><path d="M2 10h20" stroke="#b07a00" stroke-width="1.8"/><path d="M6 15h4" stroke="#b07a00" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="#b07a00" opacity="0.9"/></svg>' },
+    { tab:'phu',                 label:'Hasil Usaha', desc:'Pantau pendapatan hasil usaha koperasi',     grad:'linear-gradient(135deg,#2d6a4f,#40916c)', color:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M3 18h18M6 18V9M10 18V9M14 18V9M18 18V9M2 9l10-6 10 6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+    { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)', color:'#92400e',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#92400e" stroke-width="1.7" stroke-linejoin="round" fill="rgba(146,64,14,0.12)"/></svg>' },
+    { tab:'aset',                label:'Aset',        desc:'Kelola aset milik koperasi',                grad:'linear-gradient(135deg,#0d2016,#2d6a4f)', color:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
   ],
   nasabah: [
-    { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="white" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="white"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>' },
-    { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>' },
-    { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)', color:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="#2d6a4f" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="#2d6a4f"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+    { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)', color:'#1a472a',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#1a472a" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="#1a472a" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+    { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)', color:'#1a472a',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1a472a" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="#1a472a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
       directNav: 'pembiayaan' },
-    { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="white" stroke-width="1.8"/><path d="M2 10h20" stroke="white" stroke-width="1.8"/><path d="M6 15h4" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="white" opacity="0.9"/></svg>' },
-    { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="white" stroke-width="1.7" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/></svg>' },
-    { tab:'aset',                label:'Aset',        desc:'Kelola aset milik Anda',                    grad:'linear-gradient(135deg,#0d2016,#2d6a4f)',
-      svg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+    { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)', color:'#b07a00',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="#b07a00" stroke-width="1.8"/><path d="M2 10h20" stroke="#b07a00" stroke-width="1.8"/><path d="M6 15h4" stroke="#b07a00" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="#b07a00" opacity="0.9"/></svg>' },
+    { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)', color:'#92400e',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#92400e" stroke-width="1.7" stroke-linejoin="round" fill="rgba(146,64,14,0.12)"/></svg>' },
+    { tab:'aset',                label:'Aset',        desc:'Kelola aset milik Anda',                    grad:'linear-gradient(135deg,#0d2016,#2d6a4f)', color:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
   ]
 };
 
@@ -22986,7 +22914,7 @@ function renderKeuanganGrid(activeTab) {
       : 'keuPanelOpen(\''+item.tab+'\',this)';
     return '<button class="keu-grid-card keu-glass" id="keu-card-'+item.tab+'"'
       +' onclick="'+clickFn+'">'
-      +'<div class="kgb-icon" style="background:'+item.grad+'">'+item.svg+'</div>'
+      +'<div class="kgb-icon">'+item.svg+'</div>'
       +'<span class="kgb-label">'+item.label+'</span>'
       +'<span class="kgb-desc">'+item.desc+'</span>'
       +'<div class="kgb-arrow">'+arrowSvg+'</div>'
@@ -33800,7 +33728,7 @@ async function downloadKartuImg() {
   if (!a) { showToast('⚠️ Pilih nasabah dulu'); return; }
   showToast('📷 Membuat gambar...');
   try {
-    const photoSrc = localStorage.getItem('renco_photo_'+a.id);
+    const photoSrc = typeof getMemberPhoto === 'function' ? getMemberPhoto(a.id) : localStorage.getItem('renco_photo_'+a.id);
     if (photoSrc) {
       const img = new Image();
       img.onload = () => {
@@ -33809,6 +33737,13 @@ async function downloadKartuImg() {
         link.download = 'kartu-nasabah-'+(a.nama||'renco').replace(/\s+/g,'-').toLowerCase()+'.png';
         link.href = canvas.toDataURL('image/png'); link.click();
         showToast('✅ Kartu berhasil diunduh!');
+      };
+      img.onerror = () => {
+        const canvas = drawKartuCanvas(a, 3, null);
+        const link = document.createElement('a');
+        link.download = 'kartu-nasabah-'+(a.nama||'renco').replace(/\s+/g,'-').toLowerCase()+'.png';
+        link.href = canvas.toDataURL('image/png'); link.click();
+        showToast('✅ Kartu berhasil diunduh! (foto gagal dimuat)');
       };
       img.src = photoSrc;
     } else {
@@ -33824,19 +33759,25 @@ async function downloadKartuImg() {
 async function downloadKartuPDF() {
   const a = getCardMemberData();
   if (!a) { showToast('⚠️ Pilih nasabah dulu'); return; }
+  const jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF || null;
+  if (!jsPDFCls) { showToast('⏳ Library PDF belum siap, tunggu sebentar lalu coba lagi'); return; }
   showToast('📄 Membuat PDF...');
   try {
-    const photoSrc = localStorage.getItem('renco_photo_'+a.id);
+    const photoSrc = typeof getMemberPhoto === 'function' ? getMemberPhoto(a.id) : localStorage.getItem('renco_photo_'+a.id);
     const doExport = (img) => {
       const canvas = drawKartuCanvas(a, 4, img||null);
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('l','mm',[85.6,54]);
+      const jsPDFCls2 = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const pdf = new jsPDFCls2('l','mm',[85.6,54]);
+      pdf._rcSkipStempel = true;
       pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,85.6,54);
       pdf.save('kartu-nasabah-'+(a.nama||'renco').replace(/\s+/g,'-').toLowerCase()+'.pdf');
       showToast('✅ PDF berhasil diunduh!');
     };
     if (photoSrc) {
-      const img = new Image(); img.onload=()=>doExport(img); img.src=photoSrc;
+      const img = new Image();
+      img.onload=()=>doExport(img);
+      img.onerror=()=>doExport(null);
+      img.src=photoSrc;
     } else { doExport(null); }
   } catch(e) { showToast('❌ Gagal: '+e.message); }
 }
@@ -46071,21 +46012,28 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       '</div>';
     }).join('');
 
-    return '<div class="rp-card" style="margin-bottom:20px">' +
-      '<div class="rp-card-header">' +
+    return '<div class="rp-card" style="margin-bottom:20px;overflow:hidden">' +
+      '<div class="rp-card-header" onclick="rpAccToggle(\'notif-set\')" style="cursor:pointer;user-select:none;-webkit-user-select:none;transition:background 0.2s" ontouchstart="this.style.background=\'rgba(45,106,79,0.06)\'" ontouchend="this.style.background=\'\'">' +
         '<div class="rp-card-title" style="display:flex;align-items:center;gap:7px">' +
-          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-          '&#9203; Notifikasi Otomatis' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+          'Notifikasi Otomatis' +
         '</div>' +
-        '<button onclick="rpNotifRunNow()" style="padding:6px 12px;border-radius:8px;background:rgba(45,106,79,0.1);color:#2d6a4f;border:1.5px solid rgba(45,106,79,0.2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">' +
-          '&#9654; Cek Sekarang' +
-        '</button>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<button onclick="event.stopPropagation();rpNotifRunNow()" style="padding:6px 12px;border-radius:8px;background:rgba(45,106,79,0.1);color:#2d6a4f;border:1.5px solid rgba(45,106,79,0.2);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">' +
+            '&#9654; Cek Sekarang' +
+          '</button>' +
+          (typeof _rpAccChevronHTML === 'function' ? _rpAccChevronHTML('notif-set') : '') +
+        '</div>' +
       '</div>' +
+      '<div id="rpAcc_wrap_notif-set" data-open="0" style="display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.38s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;opacity:0">' +
+      '<div style="overflow:hidden">' +
       '<div class="rp-card-body" style="padding-top:4px">' +
         rows +
         '<div style="margin-top:10px;padding:10px 12px;background:rgba(45,106,79,0.05);border-radius:10px;font-size:10.5px;color:var(--text-soft);line-height:1.6">' +
           '&#128276; Notifikasi muncul di panel kanan atas. Pengecekan otomatis setiap 5 menit &amp; saat data berubah.' +
         '</div>' +
+      '</div>' +
+      '</div>' +
       '</div>' +
     '</div>';
   };
@@ -52039,13 +51987,13 @@ function _pdfGenTransparansiDana(jsPDFCls) {
 if (window._keuanganGridItems) {
   var tbGridItem = {
     tab: 'tabungan-berjangka', label: 'Berjangka Syariah', desc: 'Simpanan sukarela berjangka dengan bagi hasil',
-    grad: 'linear-gradient(135deg,#3d2b00,#b07a00)',
-    svg: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="10" width="18" height="11" rx="2" stroke="white" stroke-width="1.8"/><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="white" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="white"/></svg>'
+    grad: 'linear-gradient(135deg,#3d2b00,#b07a00)', color: '#b07a00',
+    svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="10" width="18" height="11" rx="2" stroke="#b07a00" stroke-width="1.8"/><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="#b07a00" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="#b07a00"/></svg>'
   };
   var transparansiGridItem = {
     tab: 'transparansi-dana', label: 'Transparansi Dana', desc: 'Rincian pengelolaan dana koperasi',
-    grad: 'linear-gradient(135deg,#0d2016,#2d6a4f)',
-    svg: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    grad: 'linear-gradient(135deg,#0d2016,#2d6a4f)', color: '#2d6a4f',
+    svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
   ['admin','nasabah'].forEach(function(role){
     var arr = window._keuanganGridItems[role];
