@@ -13,7 +13,19 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="https://cwtoqrxakgaawqgyxhjz.supabase.co">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Font Google dimuat SECARA NON-BLOCKING (trik media="print" lalu di-swap
+     ke "all" setelah selesai). PENTING: kalau memakai link stylesheet
+     biasa, browser akan menahan (block) eksekusi SEMUA tag script lain di
+     bawahnya — termasuk yang defer — sampai font ini selesai dimuat. Di
+     jaringan yang memblokir/tidak bisa menjangkau fonts.googleapis.com
+     (banyak jaringan kantor/instansi/negara tertentu), request ini bisa
+     menggantung lama, membuat SELURUH aplikasi terlihat "loading terus"
+     meski app-nya sendiri tidak bermasalah. Dengan trik ini, font dimuat di
+     latar belakang tanpa menahan apa pun; kalau gagal, app tetap jalan
+     normal dan cuma pakai font cadangan (fallback) yang sudah ditentukan di
+     CSS. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap"></noscript>
 <link rel="manifest" href="manifest.json">
 <script>
 if ('serviceWorker' in navigator) {
