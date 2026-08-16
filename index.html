@@ -5635,7 +5635,7 @@ function renderPengingatIuranHTML() {
   };
 
   var html = '<div style="padding:14px 16px 80px">';
-  html += '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">📅 Pengingat Iuran Wajib</div>' +
+  html += '<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Pengingat Iuran Wajib</div>' +
     '<div style="font-size:11px;color:var(--text-soft);margin-bottom:14px">Nasabah yang belum bayar iuran bulan ' +
     now.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) + '</div>';
 
@@ -6504,7 +6504,7 @@ function _renderTagihanJatuhTempo(kkId) {
     if (diff===0) return '\ud83d\udd34 Hari ini!';
     if (diff<=3)  return '\ud83d\udfe1 '+diff+' hari lagi';
     if (diff<=7)  return '\ud83d\udfe0 '+diff+' hari lagi';
-    return '\ud83d\udcc5 '+(new Date(new Date().getTime()+(diff*86400000))).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> '+(new Date(new Date().getTime()+(diff*86400000))).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
   }
   function _dotColor(diff, overdue) { return (overdue||diff<0)?'#e63946':diff<=7?'#e65c00':'#2d6a4f'; }
 
@@ -6513,7 +6513,7 @@ function _renderTagihanJatuhTempo(kkId) {
     var ov=s.isOverdue, nr=!ov&&s.diffDays<=7;
     var dc=ov?'#e63946':nr?'#e65c00':'#2d6a4f';
     var bg=ov?'rgba(230,57,70,0.04)':nr?'rgba(230,92,0,0.03)':'transparent';
-    var ic=s.isPaid?'\u2705':ov?'\u23f0':'\ud83d\udcc5';
+    var ic=s.isPaid?'\u2705':ov?'\u23f0':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
     var st=s.isPaid?'Terbayar':_jatuhStr(s.diffDays,ov);
     var btnBayarOnclick = "event.stopPropagation();openCicilan&&openCicilan();setTimeout(function(){var sel=document.getElementById('cicilanPinjaman');if(sel){sel.value='"+pinId+"';if(typeof onCicilanPinjamanChange==='function')onCicilanPinjamanChange();}},120)";
     var btnPerpOnclick  = "event.stopPropagation();(function(){var eid='_kp_perp_"+pinId+"_"+s.no+"';var el=document.getElementById(eid);var h=!el||el.style.display==='none';document.querySelectorAll('.kp-perp-panel').forEach(function(x){x.style.display='none';});if(el&&h)el.style.display='block';})()";
@@ -6562,7 +6562,7 @@ function _renderTagihanJatuhTempo(kkId) {
     var ov=s.isOverdue, nr=!ov&&s.diffDays<=7;
     var dc=ov?'#e63946':nr?'#e65c00':'#7b2d8b';
     var bg=ov?'rgba(230,57,70,0.04)':nr?'rgba(230,92,0,0.03)':'transparent';
-    var ic=s.isPaid?'\u2705':s.isParsial?'\u23f3':ov?'\u23f0':'\ud83d\udcc5';
+    var ic=s.isPaid?'\u2705':s.isParsial?'\u23f3':ov?'\u23f0':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
     var st=s.isPaid?'Terbayar':s.isParsial?('sisa dari '+fmtFn(s.cicilan)):_jatuhStr(s.diffDays,ov);
     var dc2=s.isParsial?'#b07a00':dc;
     var btnBayarOnclick, btnPerpOnclick;
@@ -6642,7 +6642,7 @@ function _renderTagihanJatuhTempo(kkId) {
       +(nextItem
         ? '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid rgba(0,0,0,0.05)">'
             +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">\ud83d\udcb3 Cicilan</div><div style="font-size:11px;font-weight:800;color:'+barColor+'">'+fmtFn(nextItem.sisaTagihan!==undefined?nextItem.sisaTagihan:nextItem.cicilan)+'</div></div>'
-            +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">\ud83d\udcc5 Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jColor+'">'+jStr+'</div></div>'
+            +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jColor+'">'+jStr+'</div></div>'
             +'<div style="padding:8px 10px;text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">\ud83d\udcca Progress</div><div style="font-size:11px;font-weight:800;color:'+barColor+'">'+pct+'%</div><div style="background:#eee;border-radius:99px;height:3px;margin-top:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;border-radius:99px;background:'+barColor+'"></div></div></div>'
           +'</div>'
         : '')
@@ -8168,7 +8168,7 @@ window.deletePengurus = function(id) {
       <button class="rn-gtab" data-group="angsuran" onclick="rnFilterGroup('angsuran',this)">🏦 Angsuran</button>
       <button class="rn-gtab" data-group="lainnya" onclick="rnFilterGroup('lainnya',this)">📌 Lainnya</button>
       <!-- Tab Pengingat Iuran — hanya admin -->
-      <button class="rn-gtab" data-group="iuran" onclick="rnFilterGroup('iuran',this)" id="rnTabIuran" style="display:none">📅 Iuran</button>
+      <button class="rn-gtab" data-group="iuran" onclick="rnFilterGroup('iuran',this)" id="rnTabIuran" style="display:none"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Iuran</button>
     </div>
     <div id="rnPendingBanner" class="rn-pending-banner" style="display:none">
       <div class="rn-pending-icon">⏳</div>
@@ -8206,7 +8206,7 @@ window.deletePengurus = function(id) {
       <div class="hero-banner">
         <h3>TOTAL ASET KOPERASI</h3>
         <div class="amount" id="heroTotal">Rp 0</div>
-        <div class="sub">📅 <span id="heroDate"></span></div>
+        <div class="sub"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> <span id="heroDate"></span></div>
       </div>
       <div class="stats-row">
         <div class="stat-card">
@@ -8445,7 +8445,7 @@ window.deletePengurus = function(id) {
         <div class="home-tagihan-tabs" id="htTabs">
           <button class="ht-tab aktif" onclick="htSwitchTab('semua',this)">Semua<span class="ht-tab-badge" id="htBadgeSemua">0</span></button>
           <button class="ht-tab" onclick="htSwitchTab('overdue',this)">⚠️ Menunggak<span class="ht-tab-badge" id="htBadgeOverdue">0</span></button>
-          <button class="ht-tab" onclick="htSwitchTab('upcoming',this)">📅 Mendatang<span class="ht-tab-badge" id="htBadgeUpcoming">0</span></button>
+          <button class="ht-tab" onclick="htSwitchTab('upcoming',this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Mendatang<span class="ht-tab-badge" id="htBadgeUpcoming">0</span></button>
           <button class="ht-tab" onclick="htSwitchTab('pinjaman',this)">💳 Pinjaman<span class="ht-tab-badge" id="htBadgePinjaman">0</span></button>
           <button class="ht-tab" onclick="htSwitchTab('cicilan',this)">🏦 Angsuran<span class="ht-tab-badge" id="htBadgeCicilan">0</span></button>
         </div>
@@ -8524,7 +8524,7 @@ window.deletePengurus = function(id) {
         </div>
         <div class="htf-wrap" id="homeTxnDateWrap">
           <button type="button" class="htf-trigger" id="htfDateTrigger" onclick="window._htfDateToggle(event)">
-            <span class="htf-trigger-label" id="htfDateTriggerLabel">📅 Semua Tanggal</span>
+            <span class="htf-trigger-label" id="htfDateTriggerLabel"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Semua Tanggal</span>
             <span class="htf-trigger-arrow">▾</span>
           </button>
           <div class="htf-date-panel" id="htfDatePanel" onclick="event.stopPropagation()">
@@ -8563,11 +8563,11 @@ window.deletePengurus = function(id) {
           'angsuran-rc':'💳 Angsuran RC'
         };
         var HTF_DATE_LABELS = {
-          'all':'📅 Semua Tanggal',
-          'today':'📅 Hari Ini',
-          '7d':'📅 7 Hari Terakhir',
-          'month':'📅 Bulan Ini',
-          'lastmonth':'📅 Bulan Lalu'
+          'all':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Semua Tanggal',
+          'today':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Hari Ini',
+          '7d':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> 7 Hari Terakhir',
+          'month':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Bulan Ini',
+          'lastmonth':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Bulan Lalu'
         };
         window._htfToggle = function(e){
           if (e) e.stopPropagation();
@@ -8662,7 +8662,7 @@ window.deletePengurus = function(id) {
           if (startInput) startInput.value = range.start || '';
           if (endInput) endInput.value = range.end || '';
           var label = document.getElementById('htfDateTriggerLabel');
-          if (label) label.textContent = HTF_DATE_LABELS[mode] || '📅 Semua Tanggal';
+          if (label) label.innerHTML = HTF_DATE_LABELS[mode] || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Semua Tanggal';
           window._htfDateClose();
           if (typeof window._homeTxnFilterChange === 'function') window._homeTxnFilterChange(window._homeTxnFilterVal || 'all');
         };
@@ -8679,7 +8679,7 @@ window.deletePengurus = function(id) {
           var label = document.getElementById('htfDateTriggerLabel');
           if (label) {
             var fmtShort = function(s){ if (!s) return ''; var p = s.split('-'); return p[2]+'/'+p[1]; };
-            label.textContent = start && end ? ('📅 ' + fmtShort(start) + ' – ' + fmtShort(end)) : start ? ('📅 Sejak ' + fmtShort(start)) : ('📅 s/d ' + fmtShort(end));
+            label.innerHTML = start && end ? ('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ' + fmtShort(start) + ' – ' + fmtShort(end)) : start ? ('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Sejak ' + fmtShort(start)) : ('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> s/d ' + fmtShort(end));
           }
           window._htfDateClose();
           if (typeof window._homeTxnFilterChange === 'function') window._homeTxnFilterChange(window._homeTxnFilterVal || 'all');
@@ -8710,7 +8710,7 @@ window.deletePengurus = function(id) {
         
         <!-- Tab Pembiayaan dihapus dari menu nasabah -->
         <button id="nstab_reward" class="nasabah-tab-btn" onclick="nasabahSubTab('reward',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>Kategori</button>
-        <button id="nstab_admin_iuran" class="nasabah-tab-btn" id="tabAdminIuran" onclick="nasabahSubTab('admin-iuran',this)" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 15h10M7 18h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Rekap Iuran</button>
+        <button id="nstab_admin_iuran" class="nasabah-tab-btn" id="tabAdminIuran" onclick="nasabahSubTab('admin-iuran',this)" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>Rekap Iuran</button>
         <button id="nstab_kartu" class="nasabah-tab-btn" onclick="nasabahSubTab('kartu',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M13 10h5M13 14h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Kartu</button>
         <button id="nstab_download" class="nasabah-tab-btn" onclick="nasabahSubTab('download',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 3v13M7 11l5 5 5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 19h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Unduh</button>
         <script>
@@ -8998,7 +8998,7 @@ window.deletePengurus = function(id) {
             padding:14px 16px 12px;flex-shrink:0;
           ">
             <div style="display:flex;align-items:center;gap:10px">
-              <div id="keuPanelIconWrap" style="width:34px;height:34px;border-radius:10px;background:rgba(244,169,34,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
+              <div id="keuPanelIconWrap" style="width:34px;height:34px;border-radius:10px;background:rgba(244,169,34,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;line-height:1"></div>
               <span id="keuPanelTitle" style="font-size:15px;font-weight:800;color:white;letter-spacing:0.2px"></span>
             </div>
             <button onclick="keuPanelClose()" style="
@@ -9051,6 +9051,7 @@ window.deletePengurus = function(id) {
         -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
         box-shadow:0 2px 8px rgba(0,0,0,0.08);
         transition:transform 0.18s;
+        font-size:20px; line-height:1;
       }
       .kgb-icon svg { display:block; }
       .keu-grid-card.active .kgb-icon { transform:scale(1.08); }
@@ -12352,7 +12353,7 @@ function _renderTagihanNasabah() {
     if(diff===0)return '🔴 Hari ini!';
     if(diff<=3)return '🟡 '+diff+' hari lagi';
     if(diff<=7)return '🟠 '+diff+' hari lagi';
-    var d=new Date(today.getTime()+diff*86400000); return '📅 '+d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    var d=new Date(today.getTime()+diff*86400000); return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> '+d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
   }
   function dotClr(diff,ov){return (ov||diff<0)?'#e63946':diff<=7?'#e65c00':'#2d6a4f';}
 
@@ -12361,7 +12362,7 @@ function _renderTagihanNasabah() {
     var ov=s.isOverdue,nr=!ov&&s.diffDays<=7;
     var dc=ov?'#e63946':nr?'#e65c00':'#2d6a4f';
     var bg=ov?'rgba(230,57,70,0.04)':nr?'rgba(230,92,0,0.03)':'transparent';
-    var ic=s.isPaid?'✅':ov?'⏰':'📅';
+    var ic=s.isPaid?'✅':ov?'⏰':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
     var st=s.isPaid?'Terbayar':jStr(s.diffDays,ov);
     var bayarOc="event.stopPropagation();openCicilan&&openCicilan();setTimeout(function(){var sel=document.getElementById('cicilanPinjaman');if(sel){sel.value='"+pinId+"';if(typeof onCicilanPinjamanChange==='function')onCicilanPinjamanChange();}},120)";
     var perpOc="event.stopPropagation();(function(){var eid='_ns_kp_'+'"+pinId+"'+'_'+s.no;var el=document.getElementById(eid);var h=!el||el.style.display==='none';document.querySelectorAll('.ns-kp-panel').forEach(function(x){x.style.display='none';});if(el&&h)el.style.display='block';})()";
@@ -12410,7 +12411,7 @@ function _renderTagihanNasabah() {
     var dc=ov?'#e63946':nr?'#e65c00':'#7b2d8b';
     var dc2=s.isParsial?'#b07a00':dc;
     var bg=ov?'rgba(230,57,70,0.04)':nr?'rgba(230,92,0,0.03)':'transparent';
-    var ic=s.isPaid?'✅':s.isParsial?'⏳':ov?'⏰':'📅';
+    var ic=s.isPaid?'✅':s.isParsial?'⏳':ov?'⏰':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
     var st=s.isPaid?'Terbayar':s.isParsial?('sisa dari '+fmtFn(s.cicilan)):jStr(s.diffDays,ov);
     var bayarOc=pmb._isSyariah
       ?"event.stopPropagation();if(typeof bayarAngsuranPembSy==='function')bayarAngsuranPembSy('"+pmb._syariahId+"')"
@@ -12479,7 +12480,7 @@ function _renderTagihanNasabah() {
       +(nextItem
         ?'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid rgba(0,0,0,0.05)">'
           +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:2px">💳 Cicilan</div><div style="font-size:11px;font-weight:800;color:'+barC+'">'+fmtFn(nextItem.sisaTagihan!==undefined?nextItem.sisaTagihan:nextItem.cicilan)+'</div></div>'
-          +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:2px">📅 Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jc+'">'+js+'</div></div>'
+          +'<div style="padding:8px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:2px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jc+'">'+js+'</div></div>'
           +'<div style="padding:8px 10px;text-align:center"><div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:2px">📊 Progress</div><div style="font-size:11px;font-weight:800;color:'+barC+'">'+pct+'%</div><div style="background:#eee;border-radius:99px;height:3px;margin-top:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;border-radius:99px;background:'+barC+'"></div></div></div>'
         +'</div>'
         :'')
@@ -15948,8 +15949,14 @@ function _ensureAnggotaCSS() {
 
 /* ─── Helper: ambil foto anggota ─── */
 function _rpGetPhoto(kkId) {
+  // Sumber utama: field foto di record nasabah (DB.nasabah[].foto) — tersimpan
+  // di database & tersinkron ke Supabase, sama seperti yang dipakai tab Nasabah.
   try {
-    // Key foto yang dipakai sistem: renco_photo_<id>
+    var n = (window.DB && Array.isArray(DB.nasabah)) ? DB.nasabah.find(function(x){ return x.id === kkId; }) : null;
+    if (n && n.foto) return n.foto;
+  } catch(e) {}
+  // Fallback: key localStorage lama (data yang belum sempat termigrasi)
+  try {
     return localStorage.getItem('renco_photo_' + kkId) || null;
   } catch(e) { return null; }
 }
@@ -16155,8 +16162,8 @@ function _rewardCalcMember(kkId) {
   // Achievements
   const achievements = [];
   if (lunasCount >= 1)  achievements.push({ key:'first_pay', icon:'🎯', label:'Bayar Pertama', earned:true });
-  if (lunasCount >= 6)  achievements.push({ key:'half_year', icon:'📅', label:'6 Bulan', earned:true });
-  else                   achievements.push({ key:'half_year', icon:'📅', label:'6 Bulan', earned:false });
+  if (lunasCount >= 6)  achievements.push({ key:'half_year', icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>', label:'6 Bulan', earned:true });
+  else                   achievements.push({ key:'half_year', icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>', label:'6 Bulan', earned:false });
   if (tepatCount >= 3)  achievements.push({ key:'on_time',   icon:'⚡', label:'Tepat Waktu', earned:true });
   else                   achievements.push({ key:'on_time',   icon:'⚡', label:'Tepat Waktu', earned:false });
   if (currentStreak>=3) achievements.push({ key:'streak3',   icon:'🔥', label:'Streak 3 Bln', earned:true });
@@ -17635,7 +17642,7 @@ function rpTagihanHTML() {
       <div class="tmb-toolbar">
         <div class="tmb-toolbar-left">
           <button class="tmb-btn tmb-btn-gen" id="btn-generate-tagihan">🔄 Generate</button>
-          <button class="tmb-btn tmb-btn-multi" onclick="TagihanApp.openGenMulti()">📅 Multi Bulan</button>
+          <button class="tmb-btn tmb-btn-multi" onclick="TagihanApp.openGenMulti()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Multi Bulan</button>
           <button class="tmb-btn tmb-btn-bayar-semua" id="btn-bayar-selected" onclick="TagihanApp.bayarSelected()" style="display:none">💳 Bayar Terpilih (<span id="sel-count">0</span>)</button>
           <button class="tmb-btn" onclick="rpHapusSemuaTagihan()" style="background:rgba(230,57,70,0.12);border:1.5px solid rgba(230,57,70,0.3);color:#e63946;font-weight:700;">🗑 Hapus Semua</button>
         </div>
@@ -17761,7 +17768,7 @@ function _ensureTagihanModals() {
     <!-- Modal Generate Multi Bulan -->
     <div class="modal-gen-multi" id="modal-gen-multi">
       <div class="modal-gen-box">
-        <div class="mgm-title">📅 Generate Tagihan Multi Bulan</div>
+        <div class="mgm-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Generate Tagihan Multi Bulan</div>
         <div class="mgm-field">
           <label>Pilih Bulan (bisa lebih dari 1)</label>
           <div class="mgm-month-grid" id="mgm-month-grid"></div>
@@ -18359,13 +18366,70 @@ function _rpAccChevronHTML(key) {
   '</div>';
 }
 
+/* ── Grid 3x navigasi cepat di atas tab Setting RencoPay ──
+   Default: hanya grid yang tampil, 3 panel (qris-set, notif-set, dbmgmt)
+   disembunyikan total. Tap salah satu kartu → panel itu "membesar" jadi
+   konten (expand/accordion) di tempat, kartu lain otomatis tertutup. ── */
+var _rpSetActiveKey = null;
+var _rpSetKeys = ['qris-set', 'notif-set', 'dbmgmt'];
+function rpSetJumpTo(key) {
+  var closing = (_rpSetActiveKey === key);
+  _rpSetKeys.forEach(function(k) {
+    var card = document.getElementById('rpSetCard_' + k);
+    var wrap = document.getElementById('rpAcc_wrap_' + k);
+    var btn  = document.getElementById('rpSetGridBtn_' + k);
+    if (!card) return;
+    if (k === key && !closing) {
+      // Tampilkan card, lalu buka accordion-nya (animasi expand)
+      card.style.display = '';
+      if (wrap && wrap.getAttribute('data-open') !== '1') {
+        requestAnimationFrame(function() { rpAccToggle(k); });
+      }
+      if (btn) btn.classList.add('active');
+    } else {
+      // Tutup accordion dulu (animasi collapse), baru sembunyikan card
+      if (wrap && wrap.getAttribute('data-open') === '1') rpAccToggle(k);
+      if (btn) btn.classList.remove('active');
+      setTimeout(function() { if (_rpSetActiveKey !== k) card.style.display = 'none'; }, 400);
+    }
+  });
+  _rpSetActiveKey = closing ? null : key;
+  if (!closing) {
+    setTimeout(function() {
+      var card = document.getElementById('rpSetCard_' + key);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+}
+function _rpSetGridHTML() {
+  var items = [
+    { key:'qris-set', label:'QRIS', c:'#2d6a4f',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="#2d6a4f" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="#2d6a4f" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="#2d6a4f" stroke-width="1.7"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2h-2z" stroke="#2d6a4f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+    { key:'notif-set', label:'Notifikasi', c:'#b07a00',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#b07a00" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#b07a00" stroke-width="1.7" stroke-linecap="round"/></svg>' },
+    { key:'dbmgmt', label:'Database', c:'#c0392b',
+      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="5" rx="8" ry="3" stroke="#c0392b" stroke-width="1.7"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" stroke="#c0392b" stroke-width="1.7" stroke-linecap="round"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="#c0392b" stroke-width="1.7" stroke-linecap="round"/></svg>' }
+  ];
+  // Reset state grid setiap render ulang tab Setting (default: semua tertutup)
+  _rpSetActiveKey = null;
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
+    items.map(function(it){
+      return '<button class="keu-grid-card" id="rpSetGridBtn_'+it.key+'" onclick="rpSetJumpTo(\''+it.key+'\')">' +
+        '<div class="kgb-icon">'+it.svg+'</div>' +
+        '<span class="kgb-label">'+it.label+'</span>' +
+      '</button>';
+    }).join('') +
+  '</div>';
+}
+
 /* ─── Pengaturan Tab ─── */
 function rpPengaturanHTML() {
   const rp = getRPDB();
   const s = rp.settings;
   return `
-    <!-- QRIS Settings (accordion, default tertutup) -->
-    <div class="rp-card" style="overflow:hidden">
+    ${_rpSetGridHTML()}
+    <!-- QRIS Settings (accordion, default tersembunyi — muncul saat kartu grid ditap) -->
+    <div class="rp-card" id="rpSetCard_qris-set" style="display:none;overflow:hidden">
       <div class="rp-card-header" onclick="rpAccToggle('qris-set')" style="cursor:pointer;user-select:none;-webkit-user-select:none;transition:background 0.2s" ontouchstart="this.style.background='rgba(45,106,79,0.06)'" ontouchend="this.style.background=''">
         <div class="rp-card-title">◈ Pengaturan QRIS</div>
         <div style="display:flex;align-items:center;gap:6px">
@@ -18394,10 +18458,12 @@ function rpPengaturanHTML() {
       </div>
     </div>
 
-    ${typeof rpNotifSettingHTML === 'function' ? rpNotifSettingHTML() : ''}
+    <div id="rpSetCard_notif-set" style="display:none">
+      ${typeof rpNotifSettingHTML === 'function' ? rpNotifSettingHTML() : ''}
+    </div>
 
-    <!-- ═══ DB MANAGEMENT PANEL (accordion, default tertutup) ═══ -->
-    <div class="rp-card" style="margin-bottom:20px;border:1.5px solid rgba(230,57,70,0.15);overflow:hidden">
+    <!-- ═══ DB MANAGEMENT PANEL (accordion, default tersembunyi — muncul saat kartu grid ditap) ═══ -->
+    <div class="rp-card" id="rpSetCard_dbmgmt" style="display:none;margin-bottom:20px;border:1.5px solid rgba(230,57,70,0.15);overflow:hidden">
       <div class="rp-card-header" onclick="rpAccToggle('dbmgmt')" style="background:rgba(230,57,70,0.04);cursor:pointer;user-select:none;-webkit-user-select:none" ontouchstart="this.style.background='rgba(230,57,70,0.08)'" ontouchend="this.style.background='rgba(230,57,70,0.04)'">
         <div class="rp-card-title" style="color:#c0392b">🗄️ Manajemen Database</div>
         ${_rpAccChevronHTML('dbmgmt')}
@@ -19216,7 +19282,7 @@ function rpDetailTagihan(id) {
                             </div>
                             <div class="tmb-card-info" style="flex:1">
                               <div class="tmb-card-name" style="font-size:11.5px">
-                                📅 ${fmtMonth(b.month)}
+                                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${fmtMonth(b.month)}
                                 ${subType ? `<span style="font-size:9px;background:rgba(107,33,168,0.1);color:#6b21a8;padding:1px 5px;border-radius:99px;margin-left:4px;font-weight:700">${subType}</span>` : ''}
                               </div>
                               <div class="tmb-card-sub">Jatuh Tempo: ${b.dueDate}${b.sisaTenor < 999 ? ' • Sisa '+b.sisaTenor+' bln' : ''}</div>
@@ -20694,24 +20760,37 @@ function rpPengingatHTML() {
 
       html += '<div style="background:white;border-radius:16px;margin:0 16px 12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;border:1.5px solid '+borderColor+'">';
 
-      /* Card Header */
-      html += '<div style="background:'+headerBg+';padding:13px 15px 10px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(0,0,0,0.05)">'
-        +'<div style="width:44px;height:44px;border-radius:13px;flex-shrink:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white">'+((a.nama||'?')[0].toUpperCase())+'</div>'
+      /* Card Header — tap untuk buka/tutup rincian tagihan & cicilan */
+      var photo = (typeof _rpGetPhoto==='function') ? _rpGetPhoto(a.id) : (typeof getMemberPhoto==='function' ? getMemberPhoto(a.id) : null);
+      var avatarInner = photo
+        ? '<img src="'+photo+'" alt="'+a.nama+'" style="width:100%;height:100%;object-fit:cover;border-radius:13px">'
+        : ((a.nama||'?')[0].toUpperCase());
+      html += '<div onclick="rpTogglePengingatCard('+idx+')" style="cursor:pointer;user-select:none;-webkit-user-select:none;background:'+headerBg+';padding:13px 15px 10px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(0,0,0,0.05)">'
+        +'<div style="width:44px;height:44px;border-radius:13px;flex-shrink:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;overflow:hidden">'+avatarInner+'</div>'
         +'<div style="flex:1;min-width:0">'
           +'<div style="font-size:14px;font-weight:700;color:#1c3025;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.nama+'</div>'
-          +'<div style="display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap">'
-            +(hasWA
-              ?'<span style="font-size:9.5px;font-weight:700;color:#15803d;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.25);border-radius:99px;padding:1px 7px">📱 '+a.hp+'</span>'
-              :'<span style="font-size:9.5px;font-weight:700;color:#dc2626;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:99px;padding:1px 7px">📵 HP kosong</span>')
-            +(hasEmail
-              ?'<span style="font-size:9.5px;font-weight:700;color:#1d4ed8;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:99px;padding:1px 7px">✉️ '+email+'</span>'
-              :'<span style="font-size:9.5px;font-weight:700;color:#dc2626;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:99px;padding:1px 7px">✉️ Email kosong</span>')
-          +'</div>'
-          +(!hasWA || !hasEmail
-            ?'<button onclick="rpLengkapiKontak(\''+a.id+'\')" style="margin-top:5px;font-size:9px;font-weight:700;color:#d97706;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:99px;padding:2px 8px;cursor:pointer;font-family:inherit">⚠️ Lengkapi kontak →</button>'
-            :'')
+          +'<div style="font-size:10px;color:#6b7280;margin-top:2px">'+tagihan.length+' tagihan · Tap untuk lihat rincian</div>'
         +'</div>'
         +'<div style="width:10px;height:10px;border-radius:50%;background:'+statusDot+';flex-shrink:0;box-shadow:0 0 0 3px '+statusDot+'33"></div>'
+        +'<div id="rpPingChev_'+idx+'" style="width:20px;height:20px;border-radius:6px;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;transition:transform 0.35s cubic-bezier(.4,0,.2,1);transform:rotate(-90deg);flex-shrink:0">'
+          +'<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#6b7280" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        +'</div>'
+      +'</div>';
+
+      /* Wrapper rincian (default tertutup) — tagihan/cicilan + tombol kirim */
+      html += '<div id="rpPingWrap_'+idx+'" data-open="0" style="display:grid;grid-template-rows:0fr;transition:grid-template-rows 0.38s cubic-bezier(.4,0,.2,1),opacity 0.3s ease;opacity:0"><div style="overflow:hidden">';
+
+      /* Kontak pill (dipindah ke dalam rincian) */
+      html += '<div style="padding:10px 15px 0;display:flex;align-items:center;gap:5px;flex-wrap:wrap">'
+        +(hasWA
+          ?'<span style="font-size:9.5px;font-weight:700;color:#15803d;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.25);border-radius:99px;padding:1px 7px">📱 '+a.hp+'</span>'
+          :'<span style="font-size:9.5px;font-weight:700;color:#dc2626;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:99px;padding:1px 7px">📵 HP kosong</span>')
+        +(hasEmail
+          ?'<span style="font-size:9.5px;font-weight:700;color:#1d4ed8;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:99px;padding:1px 7px">✉️ '+email+'</span>'
+          :'<span style="font-size:9.5px;font-weight:700;color:#dc2626;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:99px;padding:1px 7px">✉️ Email kosong</span>')
+        +(!hasWA || !hasEmail
+          ?'<button onclick="rpLengkapiKontak(\''+a.id+'\')" style="font-size:9px;font-weight:700;color:#d97706;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:99px;padding:2px 8px;cursor:pointer;font-family:inherit">⚠️ Lengkapi kontak →</button>'
+          :'')
       +'</div>';
 
       /* Tagihan list */
@@ -20719,7 +20798,7 @@ function rpPengingatHTML() {
         var tColor = t.status==='terlambat'?'#dc2626':(t.status==='segera'?'#d97706':'#2563eb');
         var tBg    = t.status==='terlambat'?'rgba(239,68,68,0.06)':(t.status==='segera'?'rgba(245,158,11,0.06)':'rgba(37,99,235,0.04)');
         var tLabel = t.status==='terlambat'?('🔴 Terlambat '+Math.abs(t.selisihHari)+' hari'):(t.status==='segera'?('🟡 '+t.selisihHari+' hari lagi'):(t.selisihHari===0?'🔴 Hari ini':'🔵 '+t.selisihHari+' hari lagi'));
-        html += '<div style="background:'+tBg+';padding:9px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.04)">'
+        html += '<div style="background:'+tBg+';margin-top:8px;padding:9px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.04)">'
           +'<div>'
             +'<div style="font-size:12px;font-weight:700;color:#1c3025">'+t.jenis+'</div>'
             +'<div style="font-size:10px;color:#6b7280;margin-top:1px">Jatuh: '+_fmtD(t.jatuhTempo)+' · '+tLabel+'</div>'
@@ -20775,6 +20854,7 @@ function rpPengingatHTML() {
         +'</div>':'')
       +'</div>';
 
+      html += '</div></div>'; /* /rincian wrapper (rpPingWrap) */
       html += '</div>'; /* /card */
     });
 
@@ -20799,6 +20879,25 @@ window.rpPreviewPesan = function(idx) {
   var el = document.getElementById('rpPrev_'+idx);
   if (!el) return;
   el.style.display = el.style.display==='none' ? '' : 'none';
+};
+
+/* ── Helper: buka/tutup rincian tagihan & cicilan per nasabah (accordion) ── */
+window.rpTogglePengingatCard = function(idx) {
+  var wrap = document.getElementById('rpPingWrap_'+idx);
+  var chev = document.getElementById('rpPingChev_'+idx);
+  if (!wrap) return;
+  var open = wrap.getAttribute('data-open') === '1';
+  if (open) {
+    wrap.style.gridTemplateRows = '0fr';
+    wrap.style.opacity = '0';
+    wrap.setAttribute('data-open', '0');
+    if (chev) chev.style.transform = 'rotate(-90deg)';
+  } else {
+    wrap.style.gridTemplateRows = '1fr';
+    wrap.style.opacity = '1';
+    wrap.setAttribute('data-open', '1');
+    if (chev) chev.style.transform = 'rotate(0deg)';
+  }
 };
 
 /* ── Helper: lengkapi kontak nasabah — buka detail langsung ke mode edit ── */
@@ -21383,7 +21482,7 @@ function renderHomeTagihan() {
       var urgentCount = overdueCnt + upcomingCnt;
       summaryEl.innerHTML =
         '<div class="ht-summary-bar">' +
-          '<div class="ht-summary-icon">' + (overdueCnt > 0 ? '⚠️' : upcomingCnt > 0 ? '📅' : '✅') + '</div>' +
+          '<div class="ht-summary-icon">' + (overdueCnt > 0 ? '⚠️' : upcomingCnt > 0 ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>' : '✅') + '</div>' +
           '<div class="ht-summary-info">' +
             '<div class="ht-summary-title">' + (overdueCnt > 0 ? overdueCnt + ' Tagihan Menunggak' : upcomingCnt > 0 ? upcomingCnt + ' Jatuh Tempo Segera' : 'Tagihan Bulan Ini') + '</div>' +
             '<div class="ht-summary-sub">' + items.length + ' tagihan aktif bulan ini' + (urgentCount > 0 ? ' · ' + urgentCount + ' perlu perhatian' : ' · Semua terjadwal') + '</div>' +
@@ -21472,7 +21571,7 @@ function renderHomeTagihanList() {
           '</div>' +
           '<div class="ht-amount">' +
             '<div class="' + amtClass + '">' + fmt(item.amount) + '</div>' +
-            '<div class="ht-amount-progress">' + (item.isOverdue ? '⚠ Menunggak' : item.isSoon ? '📅 Segera' : '🗓 Terjadwal') + '</div>' +
+            '<div class="ht-amount-progress">' + (item.isOverdue ? '⚠ Menunggak' : item.isSoon ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Segera' : '🗓 Terjadwal') + '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -21854,7 +21953,7 @@ function renderNasabah(filter='') {
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="badge ${statusAktif?'':'danger'}" style="font-size:10px">${statusAktif?'✅ Aktif':'⛔ Tidak Aktif'}</span>
-          ${(a.iuranMenunggak && statusAktif) ? `<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(180,83,9,0.13);color:#b45309">📅 ${a.iuranJumlahTunggak} bln tunggak</span>` : ''}
+          ${(a.iuranMenunggak && statusAktif) ? `<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(180,83,9,0.13);color:#b45309"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${a.iuranJumlahTunggak} bln tunggak</span>` : ''}
           <span id="nasabahChevron_${a.id}" style="font-size:14px;color:var(--text-soft);transition:transform 0.28s ease;display:inline-block;transform:${isOpen?'rotate(180deg)':'rotate(0deg)'}">▾</span>
         </div>
       </div>
@@ -22878,38 +22977,51 @@ function hapusBankInfo(kkId, idx) {
 let _syariahActiveAkad = 'murabahah';
 
 // Definisi grid item keuangan — admin & nasabah
+/* ── SVG line-icon 20x20, gaya sama dgn grid Hiburan (stroke-based, warna per kategori) ── */
+function _kgIcon(name, c) {
+  var icons = {
+    simpanan: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="'+c+'" stroke-width="1.7"/><path d="M5 6v5c0 1.66 3.13 3 7 3s7-1.34 7-3V6" stroke="'+c+'" stroke-width="1.7" stroke-linecap="round"/><path d="M5 11v5c0 1.66 3.13 3 7 3s7-1.34 7-3v-5" stroke="'+c+'" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    pinjaman: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="m11 17 2 2a1 1 0 1 0 3-3" stroke="'+c+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4 2 14l6.5 6.5a1 1 0 1 0 3-3" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4h8" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    pembiayaan: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" stroke="'+c+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="'+c+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    pembayaran: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2.5" stroke="'+c+'" stroke-width="1.7"/><path d="M2 10h20" stroke="'+c+'" stroke-width="1.7"/><rect x="5" y="14" width="5" height="2.4" rx="0.6" fill="'+c+'" opacity="0.75"/></svg>',
+    phu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l5-5 4 4 8-8" stroke="'+c+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 8h6v6" stroke="'+c+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    shu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.9 6.4.6-4.8 4.3 1.4 6.2L12 16.9 6.4 20l1.4-6.2L3 9.5l6.4-.6z" stroke="'+c+'" stroke-width="1.5" stroke-linejoin="round" fill="'+c+'" fill-opacity="0.15"/></svg>',
+    aset: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="10" height="18" rx="1" stroke="'+c+'" stroke-width="1.7"/><rect x="14" y="9" width="6" height="12" rx="1" stroke="'+c+'" stroke-width="1.7"/><path d="M7 7h1M11 7h1M7 11h1M11 11h1M7 15h1M11 15h1" stroke="'+c+'" stroke-width="1.4" stroke-linecap="round"/></svg>'
+  };
+  return icons[name] || '';
+}
 var _keuanganGridItems = {
   admin: [
     { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)', color:'#2d6a4f',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="#2d6a4f" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="#2d6a4f"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+      emoji:_kgIcon('simpanan','#2d6a4f') },
     { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)', color:'#1a472a',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#1a472a" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="#1a472a" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+      emoji:_kgIcon('pinjaman','#1a472a') },
     { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)', color:'#1a472a',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1a472a" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="#1a472a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      emoji:_kgIcon('pembiayaan','#7c3aed'),
       directNav: 'pembiayaan' },
     { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)', color:'#b07a00',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="#b07a00" stroke-width="1.8"/><path d="M2 10h20" stroke="#b07a00" stroke-width="1.8"/><path d="M6 15h4" stroke="#b07a00" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="#b07a00" opacity="0.9"/></svg>' },
+      emoji:_kgIcon('pembayaran','#b07a00') },
     { tab:'phu',                 label:'Hasil Usaha', desc:'Pantau pendapatan hasil usaha koperasi',     grad:'linear-gradient(135deg,#2d6a4f,#40916c)', color:'#2d6a4f',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M3 18h18M6 18V9M10 18V9M14 18V9M18 18V9M2 9l10-6 10 6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+      emoji:_kgIcon('phu','#0891b2') },
     { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)', color:'#92400e',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#92400e" stroke-width="1.7" stroke-linejoin="round" fill="rgba(146,64,14,0.12)"/></svg>' },
+      emoji:_kgIcon('shu','#d97706') },
     { tab:'aset',                label:'Aset',        desc:'Kelola aset milik koperasi',                grad:'linear-gradient(135deg,#0d2016,#2d6a4f)', color:'#2d6a4f',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+      emoji:_kgIcon('aset','#57534e') },
   ],
   nasabah: [
     { tab:'simpanan',            label:'Simpanan',    desc:'Kelola tabungan dan simpanan Anda',          grad:'linear-gradient(135deg,#1a472a,#2d6a4f)', color:'#2d6a4f',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" stroke="#2d6a4f" stroke-width="1.8"/><path d="M16 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" fill="#2d6a4f"/><path d="M6 7V5a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+      emoji:_kgIcon('simpanan','#2d6a4f') },
     { tab:'pinjaman',            label:'Koperasi Renco', desc:'Ajukan pinjaman dengan mudah',               grad:'linear-gradient(135deg,#1a472a,#40916c)', color:'#1a472a',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="3" stroke="#1a472a" stroke-width="1.8"/><path d="M8 7h8M8 11h8M8 15h5" stroke="#1a472a" stroke-width="1.8" stroke-linecap="round"/></svg>' },
+      emoji:_kgIcon('pinjaman','#1a472a') },
     { tab:'pembiayaan', label:'Renco Capital',  desc:'Pembiayaan Renco Capital — produk syariah & konvensional', grad:'linear-gradient(135deg,#0d2016,#1a472a)', color:'#1a472a',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1a472a" stroke-width="1.8"/><path d="M8 12l2.5 2.5L16 9" stroke="#1a472a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      emoji:_kgIcon('pembiayaan','#7c3aed'),
       directNav: 'pembiayaan' },
     { tab:'pembayaran',          label:'Pembayaran',  desc:'Bayar tagihan & transaksi cepat',            grad:'linear-gradient(135deg,#b07a00,#f4a922)', color:'#b07a00',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="#b07a00" stroke-width="1.8"/><path d="M2 10h20" stroke="#b07a00" stroke-width="1.8"/><path d="M6 15h4" stroke="#b07a00" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="15" r="2" fill="#b07a00" opacity="0.9"/></svg>' },
+      emoji:_kgIcon('pembayaran','#b07a00') },
     { tab:'shu',                 label:'SHU',         desc:'Lihat pembagian SHU Anda',                  grad:'linear-gradient(135deg,#92400e,#d97706)', color:'#92400e',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#92400e" stroke-width="1.7" stroke-linejoin="round" fill="rgba(146,64,14,0.12)"/></svg>' },
+      emoji:_kgIcon('shu','#d97706') },
     { tab:'aset',                label:'Aset',        desc:'Kelola aset milik Anda',                    grad:'linear-gradient(135deg,#0d2016,#2d6a4f)', color:'#2d6a4f',
-      svg:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' },
+      emoji:_kgIcon('aset','#57534e') },
   ]
 };
 
@@ -22926,7 +23038,7 @@ function renderKeuanganGrid(activeTab) {
       : 'keuPanelOpen(\''+item.tab+'\',this)';
     return '<button class="keu-grid-card keu-glass" id="keu-card-'+item.tab+'"'
       +' onclick="'+clickFn+'">'
-      +'<div class="kgb-icon">'+item.svg+'</div>'
+      +'<div class="kgb-icon">'+(item.emoji||item.svg||'')+'</div>'
       +'<span class="kgb-label">'+item.label+'</span>'
       +'<span class="kgb-desc">'+item.desc+'</span>'
       +'<div class="kgb-arrow">'+arrowSvg+'</div>'
@@ -22966,7 +23078,7 @@ function keuPanelOpen(tab, cardEl) {
   // Header selalu pakai tema hijau-gold
   header.style.background = 'linear-gradient(135deg,var(--forest),var(--forest-mid))';
   panel.style.background  = 'white';
-  iconWrap.innerHTML = item.svg;
+  iconWrap.innerHTML = item.emoji || item.svg || '';
   titleEl.textContent = item.label;
 
   // Ambil posisi card sumber
@@ -27363,7 +27475,7 @@ function renderSHUHTML() {
   <!-- Tahun Buku Selector -->
   <div class="shu-year-sel">
     <button class="shu-year-btn" onclick="shuChangeTahun(-1)">‹</button>
-    <div class="shu-year-label">📅 Tahun Buku ${tahun}</div>
+    <div class="shu-year-label"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Tahun Buku ${tahun}</div>
     <button class="shu-year-btn" onclick="shuChangeTahun(1)">›</button>
   </div>
 
@@ -27705,7 +27817,7 @@ function renderSHUDanaLembagaTab(tahun, shuCadangan, shuSosial, shuPendidikan, s
       <!-- Detail bawah (hanya jika ada data) -->
       ${(tgl || catatan) ? `
       <div style="border-top:1px dashed #f0f0f0;padding:8px 16px 10px 16px;display:flex;gap:16px;flex-wrap:wrap">
-        ${tgl ? `<div style="font-size:10px;color:var(--text-soft)">📅 <b>${tgl}</b></div>` : ''}
+        ${tgl ? `<div style="font-size:10px;color:var(--text-soft)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> <b>${tgl}</b></div>` : ''}
         ${catatan ? `<div style="font-size:10px;color:var(--text-soft)">📝 ${catatan}</div>` : ''}
       </div>` : ''}
     </div>`;
@@ -27891,7 +28003,7 @@ function renderSHURiwayat() {
         <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.keterangan||label}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:1px">📅 ${fmtDate(r.tanggal)} · SHU ${r.tahun}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:1px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${fmtDate(r.tanggal)} · SHU ${r.tahun}</div>
         </div>
         <div style="font-size:12px;font-weight:800;color:${accentColor};flex-shrink:0">+${fmt(r.jumlah)}</div>
       </div>`).join('');
@@ -31050,7 +31162,7 @@ function renderKalenderKoperasi(tahunParam, bulanParam) {
   var html = '<div style="background:linear-gradient(135deg,#0a1628,#1a3a5c,#2d6a9f);border-radius:18px;padding:18px 16px;margin-bottom:14px;color:white">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
       + '<div>'
-        + '<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">📅 Kalender Operasional</div>'
+        + '<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Kalender Operasional</div>'
         + '<div style="font-size:18px;font-weight:800;color:#ffd166">Koperasi RENCO</div>'
         + '<div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">Kalender Bursa Efek Indonesia</div>'
       + '</div>'
@@ -31159,7 +31271,7 @@ function renderKalenderKoperasi(tahunParam, bulanParam) {
   // Tombol kembali ke bulan ini (jika sedang di bulan lain)
   if (!isThisMonth) {
     html += '<div style="padding:12px 0 4px;text-align:center">'
-      + '<button onclick="renderKalenderKoperasi(' + now.getFullYear() + ',' + now.getMonth() + ')" style="padding:8px 20px;border-radius:99px;border:1.5px solid rgba(26,58,92,0.25);background:white;color:#1a3a5c;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">📅 Kembali ke Bulan Ini</button>'
+      + '<button onclick="renderKalenderKoperasi(' + now.getFullYear() + ',' + now.getMonth() + ')" style="padding:8px 20px;border-radius:99px;border:1.5px solid rgba(26,58,92,0.25);background:white;color:#1a3a5c;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Kembali ke Bulan Ini</button>'
     + '</div>';
   }
 
@@ -31206,7 +31318,7 @@ function openModalEventKoperasi(tgl) {
 
     // Header
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
-      + '<div style="font-size:15px;font-weight:800;color:var(--text)">📅 Kelola Kalender ' + tahunAktif + '</div>'
+      + '<div style="font-size:15px;font-weight:800;color:var(--text)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Kelola Kalender ' + tahunAktif + '</div>'
       + '<button onclick="document.getElementById(\'evKopOverlay\').remove()" style="width:30px;height:30px;border:none;background:#f0f0f0;border-radius:50%;font-size:16px;cursor:pointer;line-height:1">✕</button>'
     + '</div>'
 
@@ -31827,7 +31939,7 @@ function renderPolling() {
         ${poll.deskripsi?`<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;line-height:1.5">${poll.deskripsi}</div>`:''}
         <div class="poll-meta">
           <span>👤 ${poll.pembuatNama}</span>
-          <span>📅 ${fmtDate(poll.tanggal)}</span>
+          <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${fmtDate(poll.tanggal)}</span>
           <span>⏱ ${deadlineStr}</span>
         </div>
       </div>
@@ -36193,7 +36305,7 @@ function renderChallenge() {
         <div style="font-size:9px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px">Misi</div>
       </div>
       <div style="background:white;border-radius:12px;padding:10px 8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-        <div style="font-size:18px">📅</div>
+        <div style="font-size:18px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg></div>
         <div style="font-size:14px;font-weight:800;color:#b07a00">${projBulan ? projBulan+' bln' : '—'}</div>
         <div style="font-size:9px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px">Proyeksi</div>
       </div>
@@ -38055,12 +38167,12 @@ function renderCicilanHTML() {
         ? `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(64,145,108,0.12);color:#2d6a4f">\u2705 Lunas</span>`
         : late.length
         ? `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(230,57,70,0.12);color:#e63946">\u23F0 ${late.length} Telat</span>`
-        : `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(67,97,238,0.10);color:#4361ee">\uD83D\uDCC5 Aktif</span>`;
+        : `<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(67,97,238,0.10);color:#4361ee"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Aktif</span>`;
 
       const detailRows = items.slice().sort((a,b)=>a.dueDate-b.dueDate).map(s => {
         const d   = Math.round((s.dueDate - today)/(1000*60*60*24));
         const sc  = s.isPaid ? '#40916c' : s.isOverdue ? '#e63946' : '#4361ee';
-        const ic  = s.isPaid ? '\u2705' : s.isOverdue ? '\u23F0' : '\uD83D\uDCC5';
+        const ic  = s.isPaid ? '\u2705' : s.isOverdue ? '\u23F0' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
         const dStr = s.isPaid ? 'Terbayar' : s.isOverdue ? `${Math.abs(d)} hari telat` : d===0 ? 'Hari ini' : d<=7 ? `${d} hari lagi` : s.dueDate.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
         return `<div style="display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid rgba(0,0,0,0.04)">
           <div style="font-size:15px;width:22px;text-align:center;flex-shrink:0">${ic}</div>
@@ -38197,7 +38309,7 @@ function renderCicilanHTML() {
         ? `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(64,145,108,0.12);color:#2d6a4f">\u2705 Semua Lunas</span>`
         : late.length
         ? `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(230,57,70,0.12);color:#e63946">\u23F0 ${late.length} Telat</span>`
-        : `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(67,97,238,0.10);color:#4361ee">\uD83D\uDCC5 Aktif</span>`;
+        : `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(67,97,238,0.10);color:#4361ee"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Aktif</span>`;
 
       const pinBadge = pinjamanList.length > 1
         ? `<span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(155,93,229,0.12);color:#9b5de5">${pinjamanList.length} Pinjaman</span>`
@@ -38300,7 +38412,7 @@ function renderCicilanHTML() {
         <div class="cicilan-tile-sub" style="color:var(--forest-mid)">${sudahBayarItems.length} cicilan</div>
       </div>
       <div class="cicilan-summary-tile" style="border-top:3px solid #4361ee">
-        <div class="cicilan-tile-icon">📅</div>
+        <div class="cicilan-tile-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg></div>
         <div class="cicilan-tile-val" style="color:#4361ee">${fmt(totalAkan)}</div>
         <div class="cicilan-tile-lbl">Akan Datang</div>
         <div class="cicilan-tile-sub" style="color:#4361ee">${akanDatangItems.length} cicilan</div>
@@ -38371,7 +38483,7 @@ function renderCicilanHTML() {
   <!-- Filter Bar -->
   <div class="cicilan-filter-bar">
     <button class="cicilan-chip ${_cicilanFilter==='semua'?'active':''}" onclick="_cicilanFilter='semua';rerenderCicilan()">🗂 Semua</button>
-    <button class="cicilan-chip akan ${_cicilanFilter==='akan'?'active akan':''}" onclick="_cicilanFilter='akan';rerenderCicilan()">📅 Bulan Ini</button>
+    <button class="cicilan-chip akan ${_cicilanFilter==='akan'?'active akan':''}" onclick="_cicilanFilter='akan';rerenderCicilan()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Bulan Ini</button>
     <button class="cicilan-chip ${_cicilanFilter==='terlambat'?'active':''}" style="${terlambatItems.length>0&&_cicilanFilter!=='terlambat'?'border-color:var(--danger);color:var(--danger)':''}" onclick="_cicilanFilter='terlambat';rerenderCicilan()">⏰ Terlambat${terlambatItems.length>0?' ('+terlambatItems.length+')':''}</button>
     <button class="cicilan-chip sudah ${_cicilanFilter==='sudah'?'active sudah':''}" onclick="_cicilanFilter='sudah';rerenderCicilan()">✅ Terbayar</button>
   </div>
@@ -38379,7 +38491,7 @@ function renderCicilanHTML() {
 
   <!-- Nasabah List -->
   <div style="padding:4px 0 8px 16px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.4px">
-    ${_cicilanFilter==='akan' ? '📅 Jatuh Tempo ' + today.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) + ' ↓' : 'Tap nama nasabah untuk detail ↓'}
+    ${_cicilanFilter==='akan' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo ' + today.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) + ' ↓' : 'Tap nama nasabah untuk detail ↓'}
   </div>
   <div id="cicilanListWrap">
     ${listHTML}
@@ -38460,7 +38572,7 @@ function buildCicilanPrintHTML(filter, kkIdFilter) {
   const nasabahLabel = kkIdFilter ? (' · ' + (getNasabah(kkIdFilter)||{nama:'?'}).nama) : '';
 
   const rows = filtered.map((item, idx) => {
-    const status   = item.isPaid ? '✅ Terbayar' : item.isOverdue ? '⚠ Terlambat' : '📅 Akan Datang';
+    const status   = item.isPaid ? '✅ Terbayar' : item.isOverdue ? '⚠ Terlambat' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Akan Datang';
     const txtColor = item.isPaid ? '#1a472a' : item.isOverdue ? '#c0392b' : '#b8860b';
     const bgBadge  = item.isPaid ? 'rgba(26,71,42,0.10)' : item.isOverdue ? 'rgba(192,57,43,0.10)' : 'rgba(244,169,34,0.15)';
     const rowBg    = idx % 2 === 0 ? '#ffffff' : '#f0f7f0';
@@ -38510,7 +38622,7 @@ function buildCicilanPrintHTML(filter, kkIdFilter) {
           <div style="font-size:13px;font-weight:800;color:#ffffff">${fmt(totalSudah)}</div>
         </div>
         <div style="background:rgba(244,169,34,0.14);border:1px solid rgba(244,169,34,0.35);border-radius:12px;padding:10px 12px">
-          <div style="font-size:8px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">📅 Akan Datang</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Akan Datang</div>
           <div style="font-size:13px;font-weight:800;color:#ffd166">${fmt(totalAkan)}</div>
         </div>
         <div style="background:rgba(230,57,70,0.13);border:1px solid rgba(230,57,70,0.3);border-radius:12px;padding:10px 12px">
@@ -39152,7 +39264,7 @@ function renderCatatAngsuranHTML() {
       : nextDiff === 0 ? '🔴 Hari ini'
       : nextDiff < 0   ? `🔴 ${Math.abs(nextDiff)} hari telat`
       : nextDiff <= 7  ? `🟡 ${nextDiff} hari lagi`
-      : `📅 ${nextDue.due.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}`;
+      : `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${nextDue.due.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}`;
     const jatuhColor = isLunas ? '#40916c' : nextDiff===null ? '#aaa' : nextDiff<0 ? '#e63946' : nextDiff<=7 ? '#e65c00' : '#4361ee';
 
     const barColor = isLunas ? '#40916c' : late.length ? '#e63946' : upcoming.length ? '#7b2d8b' : '#aaa';
@@ -39161,7 +39273,7 @@ function renderCatatAngsuranHTML() {
       : late.length
       ? `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(230,57,70,0.12);color:#e63946">⏰ ${late.length} Terlambat</span>`
       : upcoming.length
-      ? `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(123,45,139,0.12);color:#7b2d8b">📅 ${upcoming.length} Mendekati</span>`
+      ? `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(123,45,139,0.12);color:#7b2d8b"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${upcoming.length} Mendekati</span>`
       : `<span style="padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(0,0,0,0.07);color:#888">⏳ Berjalan</span>`;
 
     // Rincian angsuran rows
@@ -39170,7 +39282,7 @@ function renderCatatAngsuranHTML() {
     const detailRows = sched.map(s => {
       const sc  = s.isPaid ? '#40916c' : s.isOverdue ? '#e63946' : s.isUpcoming ? '#7b2d8b' : '#bbb';
       const isParsialRow = !s.isPaid && s.no === dibayarAng + 1 && hCA.pembayaranParsial > 0;
-      const ico = s.isPaid ? '✅' : isParsialRow ? '⏳' : s.isOverdue ? '⚠️' : s.isUpcoming ? '📅' : '○';
+      const ico = s.isPaid ? '✅' : isParsialRow ? '⏳' : s.isOverdue ? '⚠️' : s.isUpcoming ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>' : '○';
       const diff= s.isPaid ? '' : s.diffDays < 0 ? `${Math.abs(s.diffDays)}h telat` : s.diffDays===0 ? 'Hari ini' : `${s.diffDays}h lagi`;
       const cicilanTampil = isParsialRow ? hCA.tagihanBulanIni : s.cicilan;
       const nominalStr = s.isPaid ? `✓ ${fmt(s.cicilan)}`
@@ -39218,7 +39330,7 @@ function renderCatatAngsuranHTML() {
               ${hasParsial ? `<div style="font-size:9px;color:#b07a00;font-weight:700;margin-top:3px;background:rgba(244,169,34,0.12);border-radius:6px;padding:1px 5px">⏳ sisa ${fmt(hRC.tagihanBulanIni)}</div>` : ''}
             </div>
             <div style="padding:10px 12px;border-right:1px solid rgba(0,0,0,0.05);text-align:center">
-              <div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px">📅 Jatuh Tempo</div>
+              <div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo</div>
               <div style="font-size:11px;font-weight:700;color:${jatuhColor}">${jatuhStr}</div>
             </div>
             <div style="padding:10px 12px;text-align:center">
@@ -39312,7 +39424,7 @@ function renderCatatAngsuranHTML() {
         <div style="font-size:10px;color:#40916c;font-weight:700;margin-top:4px">${totalLunas} angsuran</div>
       </div>
       <div style="background:white;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);border-top:3px solid #7b2d8b;animation:tilePopIn 0.45s cubic-bezier(.34,1.56,.64,1) 0.06s both">
-        <div style="font-size:26px;margin-bottom:6px">📅</div>
+        <div style="font-size:26px;margin-bottom:6px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg></div>
         <div style="font-size:17px;font-weight:800;color:#7b2d8b">${fmt(totalMendekati)}</div>
         <div style="font-size:10px;color:var(--text-soft);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-top:2px">Mendekati JT</div>
         <div style="font-size:10px;color:#7b2d8b;font-weight:700;margin-top:4px">${jumlahMendekati} angsuran</div>
@@ -39356,7 +39468,7 @@ function renderCatatAngsuranHTML() {
         {key:'semua',      label:'🗂 Semua'},
         {key:'aktif',      label:'🟢 Aktif'},
         {key:'terlambat',  label:'⏰ Terlambat'+(jumlahTerlambat>0?' ('+jumlahTerlambat+')':'')},
-        {key:'mendekati',  label:'📅 Mendekati JT'},
+        {key:'mendekati',  label:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Mendekati JT'},
         {key:'lunas',      label:'✅ Lunas'},
       ].map(f=>`<button onclick="_angsuranFilter='${f.key}';rerenderCatatAngsuran()" style="padding:7px 14px;border-radius:99px;border:1.5px solid ${_angsuranFilter===f.key?'#7b2d8b':'#e0e0e0'};background:${_angsuranFilter===f.key?'#7b2d8b':'white'};color:${_angsuranFilter===f.key?'white':'var(--text-soft)'};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;transition:all 0.2s">${f.label}</button>`).join('')}
     </div>
@@ -39687,7 +39799,7 @@ function _buildRcPrintHTML(kkIdFilter) {
     + '<div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05)"></div>'
     + '<div style="font-size:9px;letter-spacing:1.8px;text-transform:uppercase;opacity:0.55;margin-bottom:4px">KOPERASI KELUARGA RENCO</div>'
     + '<div style="font-family:\'Playfair Display\',serif;font-size:21px;font-weight:800;color:#ffd166;line-height:1.2">Laporan Angsuran Renco Capital' + nasabahHeader + '</div>'
-    + '<div style="font-size:10px;opacity:0.65;margin-top:6px">📅 Dicetak: ' + today.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + '</div>'
+    + '<div style="font-size:10px;opacity:0.65;margin-top:6px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Dicetak: ' + today.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) + '</div>'
   + '</div>';
 
   // Ringkasan 3 kotak
@@ -41418,7 +41530,7 @@ function renderMudharabahKoperasi(){
           <div style="display:flex;gap:8px;margin-top:10px">
             ${item.status!=='lunas'?`<button onclick="tandaiLunasMdh('${item.id}')" style="flex:1;padding:7px;background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.3);border-radius:10px;color:#52b788;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🏁 Lunas</button>`:''}
             <button onclick="hapusMudharabah('${item.id}')" style="flex:1;padding:7px;background:rgba(230,57,70,0.1);border:1px solid rgba(230,57,70,0.25);border-radius:10px;color:#e63946;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🗑 Hapus</button>
-            ${item.tanggal?`<span style="flex:1;padding:7px;text-align:center;font-size:10px;color:rgba(255,255,255,0.3);font-weight:600;display:flex;align-items:center;justify-content:center">📅 ${item.tanggal}</span>`:''}
+            ${item.tanggal?`<span style="flex:1;padding:7px;text-align:center;font-size:10px;color:rgba(255,255,255,0.3);font-weight:600;display:flex;align-items:center;justify-content:center"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${item.tanggal}</span>`:''}
           </div>
         </div>
       </div>`;
@@ -41476,8 +41588,13 @@ function renderModalAwalKoperasi(){
   const bhDiterima = getBhMdh().reduce((s,x)=>s+(x.bagianKoperasi||0),0);
   const grandTotal = totalSimpanan + totalModal + bhDiterima;
 
+  const jenisIcon = {
+    'simpanan-pokok':'💎','simpanan-wajib':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>',
+    'modal-donasi':'🎁','modal-penyertaan':'📋',
+    'dana-cadangan':'🏦','lainnya':'📦'
+  };
   const jenisLabel = {
-    'simpanan-pokok':'💎 Simpanan Pokok','simpanan-wajib':'📅 Simpanan Wajib',
+    'simpanan-pokok':'💎 Simpanan Pokok','simpanan-wajib':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Simpanan Wajib',
     'modal-donasi':'🎁 Donasi / Hibah','modal-penyertaan':'📋 Modal Penyertaan',
     'dana-cadangan':'🏦 Dana Cadangan','lainnya':'📦 Lainnya'
   };
@@ -41601,11 +41718,11 @@ function renderModalAwalKoperasi(){
       html += `
       <div class="mdh-item-card">
         <div class="mdh-item-top">
-          <div class="mdh-item-avatar" style="font-size:22px">${(jenisLabel[x.jenis]||'📦').split(' ')[0]}</div>
+          <div class="mdh-item-avatar" style="font-size:22px">${jenisIcon[x.jenis]||'📦'}</div>
           <div style="flex:1;min-width:0">
             <div class="mdh-item-name">${jenisLabel[x.jenis]||x.jenis}</div>
             <div class="mdh-item-meta">${x.keterangan||'—'}</div>
-            <div class="mdh-item-meta">📅 ${x.tanggal||'—'}</div>
+            <div class="mdh-item-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> ${x.tanggal||'—'}</div>
           </div>
           <div style="text-align:right">
             <div class="mdh-item-amount">${mdhFmt(x.jumlah)}</div>
@@ -42370,7 +42487,7 @@ function renderRencoCapitalHTML() {
         ? '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(64,145,108,0.12);color:#2d6a4f">✅ Lunas</span>'
         : hasLate
         ? '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(230,57,70,0.12);color:#e63946">⏰ Telat</span>'
-        : '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(123,45,139,0.10);color:#7b2d8b">📅 Aktif</span>';
+        : '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(123,45,139,0.10);color:#7b2d8b"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Aktif</span>';
       var pinBadge = '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(0,0,0,0.06);color:var(--text-soft)">' + Object.keys(group.byPmb).length + ' pembiayaan</span>';
 
       /* ── Per-pembiayaan blocks ── */
@@ -42393,7 +42510,7 @@ function renderRencoCapitalHTML() {
 
         var detailRows = items.slice().sort(function(a,b){ return a.due-b.due; }).map(function(s){
           var sc2 = s.isPaid ? '#40916c' : s.isOverdue ? '#e63946' : '#7b2d8b';
-          var ic2 = s.isPaid ? '✅' : s.isParsial ? '⏳' : s.isOverdue ? '⏰' : '📅';
+          var ic2 = s.isPaid ? '✅' : s.isParsial ? '⏳' : s.isOverdue ? '⏰' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
           var d2  = s.diffDays;
           var dStr= s.isPaid ? 'Terbayar' : s.isOverdue ? (Math.abs(d2)+' hari telat') : d2===0 ? 'Hari ini' : d2<=7 ? (d2+' hari lagi') : s.due.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
 
@@ -42458,7 +42575,7 @@ function renderRencoCapitalHTML() {
         var pStatusChip = pAllL
           ? '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(64,145,108,0.12);color:#2d6a4f">✅ Lunas</span>'
           : late.length ? '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(230,57,70,0.12);color:#e63946">⏰ '+late.length+' Telat</span>'
-          : '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(123,45,139,0.10);color:#7b2d8b">📅 Aktif</span>';
+          : '<span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;background:rgba(123,45,139,0.10);color:#7b2d8b"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Aktif</span>';
 
         return '<div style="border-top:1px solid rgba(0,0,0,0.05)">'
           +'<div onclick="_toggleRcRow(\'p_'+pmb.id+'\')" style="display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;background:rgba(123,45,139,0.03)">'
@@ -42490,7 +42607,7 @@ function renderRencoCapitalHTML() {
                 }
                 return '<div style="padding:9px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">💳 Cicilan/Bln</div><div style="font-size:11px;font-weight:800;color:'+cicilanColor+'">'+cicilanLabel+'</div></div>';
               })()
-              +'<div style="padding:9px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">📅 Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jColor+'">'+jStr+'</div></div>'
+              +'<div style="padding:9px 10px;border-right:1px solid rgba(0,0,0,0.05);text-align:center"><div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo</div><div style="font-size:10px;font-weight:700;color:'+jColor+'">'+jStr+'</div></div>'
               +'<div style="padding:9px 10px;text-align:center"><div style="font-size:8px;color:var(--text-soft);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px">📊 Progress</div><div style="font-size:11px;font-weight:800;color:'+accentColor+'">'+pct+'%</div><div style="background:#eee;border-radius:99px;height:3px;margin-top:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;border-radius:99px;background:'+accentColor+'"></div></div></div>'
             +'</div>'
             
@@ -42575,7 +42692,7 @@ function renderRencoCapitalHTML() {
   +'<div id="rcSummaryWrap" style="display:'+(_rcSummaryOpen?'block':'none')+'">'
     +'<div class="cicilan-summary-tiles">'
       +'<div class="cicilan-summary-tile" style="border-top:3px solid var(--forest-mid)"><div class="cicilan-tile-icon">✅</div><div class="cicilan-tile-val">'+fmt(totalSudah)+'</div><div class="cicilan-tile-lbl">Sudah Terbayar</div><div class="cicilan-tile-sub" style="color:var(--forest-mid)">'+sudahItems.length+' angsuran</div></div>'
-      +'<div class="cicilan-summary-tile" style="border-top:3px solid #7b2d8b"><div class="cicilan-tile-icon">📅</div><div class="cicilan-tile-val" style="color:#7b2d8b">'+fmt(totalAkan)+'</div><div class="cicilan-tile-lbl">Bulan Ini</div><div class="cicilan-tile-sub" style="color:#7b2d8b">'+akanItems.length+' angsuran</div></div>'
+      +'<div class="cicilan-summary-tile" style="border-top:3px solid #7b2d8b"><div class="cicilan-tile-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg></div><div class="cicilan-tile-val" style="color:#7b2d8b">'+fmt(totalAkan)+'</div><div class="cicilan-tile-lbl">Bulan Ini</div><div class="cicilan-tile-sub" style="color:#7b2d8b">'+akanItems.length+' angsuran</div></div>'
       +'<div class="cicilan-summary-tile" style="border-top:3px solid var(--danger)"><div class="cicilan-tile-icon">⏰</div><div class="cicilan-tile-val" style="color:var(--danger)">'+fmt(totalTelat)+'</div><div class="cicilan-tile-lbl">Terlambat</div><div class="cicilan-tile-sub" style="color:var(--danger)">'+terlambatItems.length+' angsuran</div></div>'
       +'<div class="cicilan-summary-tile" style="border-top:3px solid var(--gold)"><div class="cicilan-tile-icon">💰</div><div class="cicilan-tile-val" style="color:#b07a00">'+fmt(totalSudah+totalHero)+'</div><div class="cicilan-tile-lbl">Total Seluruh</div><div class="cicilan-tile-sub" style="color:#b07a00">'+allSchedule.length+' angsuran</div></div>'
     +'</div>'
@@ -42621,7 +42738,7 @@ function renderRencoCapitalHTML() {
   /* ── Filter Bar ── */
   +'<div class="cicilan-filter-bar">'
     +'<button class="cicilan-chip '+(_rcFilter==='semua'?'active':'')+'" onclick="_rcFilter=\'semua\';rerenderRencoCapital()">🗂 Semua</button>'
-    +'<button class="cicilan-chip akan '+(_rcFilter==='akan'?'active akan':'')+'" onclick="_rcFilter=\'akan\';rerenderRencoCapital()">📅 Bulan Ini</button>'
+    +'<button class="cicilan-chip akan '+(_rcFilter==='akan'?'active akan':'')+'" onclick="_rcFilter=\'akan\';rerenderRencoCapital()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Bulan Ini</button>'
     +'<button class="cicilan-chip '+(_rcFilter==='terlambat'?'active':'')+'" style="'+(terlambatItems.length>0&&_rcFilter!=='terlambat'?'border-color:var(--danger);color:var(--danger)':'')+'" onclick="_rcFilter=\'terlambat\';rerenderRencoCapital()">⏰ Terlambat'+(terlambatItems.length>0?' ('+terlambatItems.length+')':'')+'</button>'
     +'<button class="cicilan-chip sudah '+(_rcFilter==='sudah'?'active sudah':'')+'" onclick="_rcFilter=\'sudah\';rerenderRencoCapital()">✅ Terbayar</button>'
   +'</div>'
@@ -42631,7 +42748,7 @@ function renderRencoCapitalHTML() {
 
   /* ── List label ── */
   +'<div style="padding:4px 0 8px 16px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.4px">'
-    +(_rcFilter==='akan' ? '📅 Jatuh Tempo '+today.toLocaleDateString('id-ID',{month:'long',year:'numeric'})+' ↓' : 'Tap nama nasabah untuk detail ↓')
+    +(_rcFilter==='akan' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo '+today.toLocaleDateString('id-ID',{month:'long',year:'numeric'})+' ↓' : 'Tap nama nasabah untuk detail ↓')
   +'</div>'
 
   /* ── Cards list ── */
@@ -46465,7 +46582,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           <div style="font-size:17px;font-weight:800;color:${totalNet>=0?'#2d6a4f':'#e63946'}">${_fmt(totalNet)}</div>
           <div style="font-size:10px;color:var(--text-soft);margin-top:3px">${totalNet>=0?'Positif':'Defisit'}</div>
         </div>
-        ${_statCard('Simpanan Bulan Ini',_fmt(masuBulan),months[m]+' '+y,'#f4a922','📅')}
+        ${_statCard('Simpanan Bulan Ini',_fmt(masuBulan),months[m]+' '+y,'#f4a922','<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>')}
       </div>
 
       <!-- Trend Bar Chart 6 Bulan -->
@@ -46538,7 +46655,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
                   <div style="font-size:13px;font-weight:800;color:#6b21a8;margin-top:2px">${x.pem>0?'Ada':'—'}</div>
                 </div>
               </div>
-              ${x.setor>0?`<div style="padding:6px 12px;background:rgba(45,106,79,0.05);border-top:1px solid rgba(45,106,79,0.1);font-size:10px;color:#2d6a4f;font-weight:600">📅 Simpanan bulan ini: ${_fmt(x.setor)}</div>`:''}
+              ${x.setor>0?`<div style="padding:6px 12px;background:rgba(45,106,79,0.05);border-top:1px solid rgba(45,106,79,0.1);font-size:10px;color:#2d6a4f;font-weight:600"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Simpanan bulan ini: ${_fmt(x.setor)}</div>`:''}
             </div>
           </div>`).join('')}
       </div>`;
@@ -46804,7 +46921,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       </div>
 
       <!-- ── AKTIVITAS BULAN INI ── -->
-      ${_sectionHeader('📅 Aktivitas '+monthsFull[m]+' '+y,'#1a472a')}
+      ${_sectionHeader('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Aktivitas '+monthsFull[m]+' '+y,'#1a472a')}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 12px">
         ${_statCard('Simpanan Masuk',_fmt(simBulanIni),'bulan ini','#2d6a4f','💵')}
         ${_statCard('Cicilan Terkumpul',_fmt(cicBulanIni),'bulan ini','#f4a922','💳')}
@@ -47775,7 +47892,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     }).join('');
 
     var filterViewHTML =
-      _pill('📅 Per Bulan', filterView==='bulanan',
+      _pill('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Per Bulan', filterView==='bulanan',
         "window._arsipFilterView='bulanan';document.getElementById('laporanContent').innerHTML=renderLaporanArsipHTML();") +
       (typeof isNasabah === 'function' && isNasabah() ? '' :
         _pill('👤 Per Anggota', filterView==='anggota',
@@ -48487,7 +48604,7 @@ function renderLaporanTunggakanHTML() {
     var isIuran  = jenis==='iuran';
     var aksenClr = isKop ? '#b91c1c' : isRC ? '#7c3aed' : '#b45309';
     var aksenBg  = isKop ? 'rgba(185,28,28,0.07)' : isRC ? 'rgba(124,58,237,0.07)' : 'rgba(180,83,9,0.07)';
-    var icon     = isKop ? '🏛️' : isRC ? '🏦' : '📅';
+    var icon     = isKop ? '🏛️' : isRC ? '🏦' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg>';
     var judulAtas= isKop ? 'Koperasi RENCO — '+(item.tujuan||'Pinjaman') : isRC ? 'Renco Capital — '+(item.akad||'')+(item.tujuan?' / '+item.tujuan:'') : 'Iuran Wajib';
 
     // Baris angsuran telat (untuk pinjaman/RC)
@@ -48618,7 +48735,7 @@ function renderLaporanTunggakanHTML() {
   // ── SEKSI 3: Iuran Wajib ──
   html += '<div style="padding:0 14px 6px;display:flex;align-items:center;gap:8px">'
     + '<div style="width:4px;height:18px;border-radius:99px;background:#b45309"></div>'
-    + '<div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.5px">📅 Iuran Wajib Menunggak</div>'
+    + '<div style="font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.5px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Iuran Wajib Menunggak</div>'
     + '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(180,83,9,0.1);color:#b45309">'+tunggakanIuran.length+' anggota</span>'
   + '</div>';
 
@@ -51746,6 +51863,36 @@ window.renderTabunganBerjangkaHTML = function() {
       var nasabahObj = typeof getNasabah === 'function' ? getNasabah(tb.kkId) : null;
       var estBH = tb.status === 'aktif' ? tbBagiHasil(tb, nowISO()) : (tb.bagiHasilDiterima || 0);
 
+      // ── Kartu minimalis khusus Berjangka yang sedang AKTIF ──
+      if (tb.status === 'aktif') {
+        var sisaHariAktif = tbSisaHari(tb);
+        var siapCair = sisaHariAktif <= 0;
+        var dotClr = siapCair ? '#1a6640' : '#1a472a';
+        var statusTxt = siapCair ? 'Siap dicairkan' : sisaHariAktif + ' hari lagi';
+        return '<div class="card" style="margin:0 0 10px;padding:14px 16px">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
+          + '<div style="min-width:0">'
+          + (myId ? '' : '<div style="font-size:11px;font-weight:700;color:var(--text-soft);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (nasabahObj ? nasabahObj.nama : tb.kkId) + '</div>')
+          + '<div style="font-family:\'Playfair Display\',serif;font-size:19px;font-weight:700;color:var(--forest)">' + fmt(tb.jumlah) + '</div>'
+          + '<div style="font-size:10.5px;color:var(--text-soft);margin-top:2px">Tenor ' + tb.tenorBulan + ' bln · Jatuh tempo ' + fmtDate(tb.tanggalJatuhTempo) + '</div>'
+          + '</div>'
+          + '<div style="text-align:right;flex-shrink:0">'
+          + '<div style="width:7px;height:7px;border-radius:50%;background:' + dotClr + ';margin-left:auto;margin-bottom:4px"></div>'
+          + '<div style="font-size:9.5px;font-weight:700;color:' + dotClr + ';white-space:nowrap">' + statusTxt + '</div>'
+          + '</div>'
+          + '</div>'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.06)">'
+          + '<span style="font-size:10.5px;color:var(--text-soft)">Estimasi Bagi Hasil</span>'
+          + '<span style="font-size:12.5px;font-weight:700;color:#b07a00">' + fmt(estBH) + '</span>'
+          + '</div>'
+          + (tb.keterangan ? '<div style="font-size:10.5px;color:var(--text-soft);margin-top:8px;font-style:italic">"' + tb.keterangan + '"</div>' : '')
+          + '<div style="display:flex;gap:8px;margin-top:10px">'
+          + '<button class="keu-action-btn keu-action-primary" style="flex:1;padding:8px;font-size:11.5px" onclick="bukaCairTB(\'' + tb.id + '\')">Cairkan</button>'
+          + '<button class="keu-action-btn keu-action-secondary" style="flex:1;padding:8px;font-size:11.5px" onclick="unduhAkadTB(\'' + tb.id + '\')">📄 Unduh Dokumen Akad (PDF)</button>'
+          + '</div>'
+          + '</div>';
+      }
+
       var actions = '';
       if (tb.status === 'menunggu' && isAdm) {
         actions = '<div style="display:flex;gap:8px;margin-top:10px">'
@@ -51758,21 +51905,19 @@ window.renderTabunganBerjangkaHTML = function() {
           + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="white" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke="white" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke="white" stroke-width="2"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>'
           + 'Bagikan ke Admin</button>'
           + '</div>';
-      } else if (tb.status === 'aktif') {
-        actions = '<button class="keu-action-btn keu-action-primary" style="width:100%;margin-top:10px;padding:9px;font-size:12px" onclick="bukaCairTB(\'' + tb.id + '\')">💸 Cairkan</button>';
       }
-      if (tb.status === 'aktif' || tb.status === 'cair') {
+      if (tb.status === 'cair') {
         actions += '<button class="keu-action-btn keu-action-secondary" style="width:100%;margin-top:8px;padding:9px;font-size:12px" onclick="unduhAkadTB(\'' + tb.id + '\')">📄 Unduh Dokumen Akad (PDF)</button>';
       }
 
       var histRow = '';
-      if (tb.status === 'aktif' || tb.status === 'cair') {
+      if (tb.status === 'cair') {
         histRow = '<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.08)">'
-          + '<span style="color:var(--text-soft)">' + (tb.status === 'cair' ? 'Mulai → Cair' : 'Mulai → Jatuh Tempo') + '</span>'
-          + '<span style="font-weight:700">' + fmtDate(tb.tanggalMulai) + ' → ' + fmtDate(tb.status === 'cair' ? tb.tanggalCair : tb.tanggalJatuhTempo) + '</span>'
+          + '<span style="color:var(--text-soft)">Mulai → Cair</span>'
+          + '<span style="font-weight:700">' + fmtDate(tb.tanggalMulai) + ' → ' + fmtDate(tb.tanggalCair) + '</span>'
           + '</div>'
           + '<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:5px">'
-          + '<span style="color:var(--text-soft)">' + (tb.status === 'cair' ? 'Bagi Hasil Diterima' : 'Estimasi Bagi Hasil') + '</span>'
+          + '<span style="color:var(--text-soft)">Bagi Hasil Diterima</span>'
           + '<span style="font-weight:700;color:#b07a00">' + fmt(estBH) + '</span>'
           + '</div>';
       }
@@ -53288,7 +53433,7 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
     _bukaKonfirmasiSumberDana({
       kkId: kkId,
       total: jumlah,
-      title: '📅 Konfirmasi Iuran Wajib',
+      title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Konfirmasi Iuran Wajib',
       subtitle: 'Iuran Wajib bulan ' + bulanLabel,
       onConfirm: function(sumberDana) {
         if (!DB.pendingTransaksi) DB.pendingTransaksi = [];
@@ -53328,7 +53473,7 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
     _bukaKonfirmasiSumberDana({
       kkId: kkId,
       total: totalSemua,
-      title: '📅 Konfirmasi Iuran Wajib',
+      title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Konfirmasi Iuran Wajib',
       subtitle: sel.length + ' bulan dipilih',
       onConfirm: function(sumberDana) {
         if (!DB.pendingTransaksi) DB.pendingTransaksi = [];
