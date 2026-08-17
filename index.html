@@ -5389,12 +5389,28 @@ async function _rencoForceUpdateApp() {
     // nyasar (mis. content://downloads/all_downloads → ERR_FILE_NOT_FOUND).
     // Dalam kasus itu, reload biasa saja tanpa mengubah URL.
     var isHttp = location.protocol === 'http:' || location.protocol === 'https:';
-    if (isHttp) {
-      var freshUrl = location.pathname + '?_update=' + Date.now();
-      location.replace(freshUrl);
-    } else {
-      location.reload();
-    }
+    // Reload sesungguhnya ditunda: tampilkan dulu popup "Update Berhasil" di layar
+    // SAAT INI (sebelum reload) — ini lebih andal daripada mengandalkan flag di
+    // sessionStorage yang bisa saja tidak konsisten bertahan lewat reload penuh
+    // di sejumlah browser/WebView. Reload jalan otomatis begitu popup ditutup
+    // (atau otomatis setelah beberapa detik sebagai fallback).
+    window._rencoPendingReload = function() {
+      if (isHttp) {
+        var freshUrl = location.pathname + '?_update=' + Date.now();
+        location.replace(freshUrl);
+      } else {
+        location.reload();
+      }
+    };
+    if (btn) btn.style.opacity = '';
+    if (typeof _showUpdateSuccessPopup === 'function') _showUpdateSuccessPopup();
+    setTimeout(function() {
+      if (typeof window._rencoPendingReload === 'function') {
+        var _fn = window._rencoPendingReload;
+        window._rencoPendingReload = null;
+        _fn();
+      }
+    }, 3500);
   }
 }
 window._rencoForceUpdateApp = _rencoForceUpdateApp;
@@ -54946,6 +54962,74 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
 
   console.log('✅ Fitur: Admin bisa cek & bersihkan data cicilan nyasar dari tab Arsip');
 })();
+</script>
+
+<!-- ═══ Popup "Update Berhasil" — muncul sekali di layar login setelah Update/Restart selesai ═══ -->
+<div id="updateSuccessPopup" class="usp-overlay">
+  <div class="usp-card">
+    <div class="usp-check">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12.5l5 5L20 6" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="usp-title">Aplikasi Berhasil Diupdate!</div>
+    <div class="usp-sub">Nikmati fitur baru Koperasi Renco 🎉</div>
+    <button class="usp-btn" onclick="_confirmUpdateSuccess()">Oke, Siap!</button>
+  </div>
+</div>
+<style>
+.usp-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999999;
+  background: rgba(15,25,20,0.55); align-items: center; justify-content: center;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  opacity: 0; transition: opacity 0.25s ease;
+}
+.usp-overlay.show { display: flex; opacity: 1; }
+.usp-card {
+  width: min(280px, 84vw); background: linear-gradient(180deg, #ffffff, #fbfaf6);
+  border-radius: 20px; padding: 26px 22px 22px; text-align: center;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.28);
+  transform: scale(0.85) translateY(10px); transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+}
+.usp-overlay.show .usp-card { transform: scale(1) translateY(0); }
+.usp-check {
+  width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 14px;
+  background: linear-gradient(135deg, var(--forest, #1a472a), var(--forest-mid, #2d6a4f));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 18px rgba(26,71,42,0.35);
+  animation: uspPop 0.5s cubic-bezier(.34,1.56,.64,1) 0.1s both;
+}
+@keyframes uspPop { 0%{ transform:scale(0); } 70%{ transform:scale(1.12); } 100%{ transform:scale(1); } }
+.usp-title { font-size: 15px; font-weight: 800; color: #1c3025; margin-bottom: 4px; letter-spacing: 0.1px; }
+.usp-sub { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 18px; }
+.usp-btn {
+  width: 100%; border: none; border-radius: 12px; padding: 11px 0;
+  background: linear-gradient(135deg, var(--gold, #f4a922), #b07a00);
+  color: white; font-size: 12.5px; font-weight: 800; font-family: inherit;
+  cursor: pointer; box-shadow: 0 4px 12px rgba(244,169,34,0.35);
+}
+.usp-btn:active { transform: scale(0.97); }
+</style>
+<script>
+function _showUpdateSuccessPopup() {
+  var el = document.getElementById('updateSuccessPopup');
+  if (el) el.classList.add('show');
+}
+function _closeUpdateSuccessPopup() {
+  var el = document.getElementById('updateSuccessPopup');
+  if (el) el.classList.remove('show');
+}
+/* Tombol "Oke, Siap!" pada popup: tutup popup lalu langsung lanjutkan reload
+   yang tadinya ditunda oleh _rencoForceUpdateApp(). Kalau dipanggil di luar
+   alur itu (mis. popup dites manual), cukup menutup popup saja. */
+function _confirmUpdateSuccess() {
+  _closeUpdateSuccessPopup();
+  if (typeof window._rencoPendingReload === 'function') {
+    var _fn = window._rencoPendingReload;
+    window._rencoPendingReload = null;
+    _fn();
+  }
+}
 </script>
 
 </body></html>
