@@ -2058,6 +2058,11 @@ body {
   opacity: 0; transition: var(--transition);
 }
 .nav-item.active .nav-indicator { opacity: 1; }
+/* Keuangan: gold accent + animasi saat dipilih (selaras dengan simbol Rp) */
+.nav-item[data-nav="keuangan"].active .nav-icon { color: var(--gold); }
+.nav-item[data-nav="keuangan"].active .nav-label { color: var(--gold); }
+.nav-item[data-nav="keuangan"].active .nav-indicator { background: var(--gold); }
+.nav-item[data-nav="keuangan"].nav-selected-pulse .nav-icon { animation: qbtnPulseGold 0.5s ease; }
 
 /* ========== PAGE SECTIONS ========== */
 .page { display: none; }
@@ -3235,6 +3240,116 @@ body {
   font-family: inherit; padding: 0;
 }
 
+/* ========== NAV: BADGE "BARU" ========== */
+.nav-badge-new {
+  position: absolute; top: 4px; right: 14%;
+  background: #e63946; color: white; font-size: 8px; font-weight: 800;
+  padding: 1.5px 5px; border-radius: 99px; letter-spacing: 0.3px;
+  line-height: 1.3; box-shadow: 0 1px 4px rgba(230,57,70,0.5);
+}
+.nav-badge-count {
+  position: absolute; top: 2px; left: 20%;
+  min-width: 15px; height: 15px; padding: 0 3.5px;
+  background: #e63946; color: white; font-size: 9px; font-weight: 800;
+  border-radius: 99px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(230,57,70,0.55); border: 1.5px solid white;
+  animation: pendingPulse 2s ease infinite;
+}
+
+/* ========== SEMETON+ (LOKER ANGGOTA) ========== */
+.loker-hero {
+  background: linear-gradient(135deg, var(--forest) 0%, var(--forest-mid) 60%, var(--forest-light) 100%);
+  margin: 12px 16px; border-radius: var(--radius); padding: 18px 20px; color: white; position: relative; overflow: hidden;
+}
+.loker-hero::before { content: '💼'; position: absolute; right: -6px; top: -14px; font-size: 84px; opacity: 0.1; }
+.loker-hero h3 { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+.loker-hero p { font-size: 11.5px; opacity: 0.85; line-height: 1.5; }
+.loker-hero .slogan { margin-top: 8px; font-size: 11px; font-weight: 700; color: var(--gold); font-style: italic; }
+.loker-rules { margin: 0 16px 4px; background: white; border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 4px 0; overflow: hidden; }
+.loker-rules summary { padding: 12px 16px; font-size: 12.5px; font-weight: 700; color: var(--forest-mid); cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+.loker-rules summary::-webkit-details-marker { display: none; }
+.loker-rules-body { padding: 0 16px 14px; font-size: 12px; line-height: 1.7; color: var(--text-soft); }
+.loker-rules-body b { color: var(--text); }
+.loker-cat-tag {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800;
+  padding: 3px 9px; border-radius: 99px; background: rgba(45,106,79,0.1); color: var(--forest-mid);
+}
+.loker-card {
+  background: white; border-radius: 14px; box-shadow: var(--card-shadow);
+  margin: 8px 16px; padding: 11px 14px; position: relative; cursor: pointer;
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.loker-card:active { box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+.loker-card.loker-card-expanded { box-shadow: 0 6px 18px rgba(0,0,0,0.09); }
+.loker-card.loker-card-closed { opacity: 0.6; }
+.loker-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+.loker-card-title { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.35; }
+.loker-card-meta-compact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 10.5px; color: var(--text-soft); margin-top: 4px; }
+.loker-card-meta-compact span { display: flex; align-items: center; gap: 3px; }
+.loker-expand-hint { margin-left: auto; font-weight: 800; color: var(--forest-mid); font-size: 10px; transition: transform 0.2s ease; }
+.loker-card-expanded .loker-expand-hint { transform: rotate(180deg); }
+.loker-card-detail { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.2s ease; }
+.loker-card-detail.open { max-height: 600px; opacity: 1; margin-top: 8px; }
+.loker-card-detail-block { font-size: 12px; color: var(--text); line-height: 1.6; margin-bottom: 6px; }
+.loker-card-detail-block b { color: var(--text); }
+.loker-card-contact {
+  background: var(--cream); border-radius: 10px; padding: 6px 6px 6px 11px; font-size: 12px; font-weight: 700; color: var(--forest-mid);
+  display: flex; align-items: center; gap: 6px; margin-top: 4px;
+}
+.loker-contact-num { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loker-contact-btn {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: transform 0.15s ease;
+}
+.loker-contact-btn:active { transform: scale(0.9); }
+.loker-contact-btn.wa { background: #25D366; color: white; }
+.loker-contact-btn.call { background: var(--forest-mid); color: white; }
+.loker-status-badge { padding: 3px 8px; border-radius: 99px; font-size: 9px; font-weight: 800; letter-spacing: 0.2px; white-space: nowrap; }
+.loker-status-badge.pending { background: rgba(244,169,34,0.15); color: #b07a00; }
+.loker-status-badge.aktif { background: rgba(64,145,108,0.14); color: #2d6a4f; }
+.loker-status-badge.ditolak { background: rgba(230,57,70,0.12); color: #e63946; }
+.loker-tersedia-badge { padding: 3px 8px; border-radius: 99px; font-size: 9px; font-weight: 800; letter-spacing: 0.2px; white-space: nowrap; }
+.loker-tersedia-badge.yes { background: rgba(64,145,108,0.14); color: #2d6a4f; }
+.loker-tersedia-badge.no { background: rgba(107,114,128,0.14); color: #6b7280; }
+.loker-tersedia-badge.clickable { cursor: pointer; }
+.loker-tersedia-badge.clickable:active { transform: scale(0.94); }
+.loker-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.loker-fab {
+  position: fixed; right: 16px; bottom: 88px; z-index: 90;
+  background: linear-gradient(135deg, var(--forest), var(--forest-mid)); color: white;
+  border: none; border-radius: 99px; padding: 13px 18px; font-size: 12.5px; font-weight: 800;
+  box-shadow: 0 6px 20px rgba(26,71,42,0.35); display: none; align-items: center; gap: 6px; cursor: pointer;
+  font-family: inherit;
+}
+.loker-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 12.5px; }
+
+/* Grid tab Semeton+ — tampilan sama seperti grid menu Hiburan, ditambah animasi gradient di pinggir tab aktif */
+.loker-tab-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.loker-grid-btn { position: relative; z-index: 0; }
+.loker-grid-btn.active {
+  animation: lokerTabPop 0.3s ease;
+}
+.loker-grid-btn.active::before {
+  content: '';
+  position: absolute; inset: -2.5px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #f4a922, #2d6a4f, #40916c, #f4a922);
+  background-size: 300% 300%;
+  animation: lokerGradShift 2.6s ease infinite;
+  z-index: -1;
+}
+@keyframes lokerGradShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes lokerTabPop {
+  0%   { transform: scale(0.94); }
+  60%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
 /* ========== ASET & USAHA ========== */
 .asset-card {
   display: flex; align-items: center; gap: 14px;
@@ -3666,8 +3781,14 @@ body {
   box-shadow: var(--card-shadow);
 }
 .quick-btn:active { transform: scale(0.94); }
-.quick-btn .q-icon { font-size: 26px; display: flex; align-items: center; justify-content: center; }
+.quick-btn .q-icon { font-size: 26px; display: flex; align-items: center; justify-content: center; transition: transform 0.25s ease; }
 .quick-btn .q-label { font-size: 9px; font-weight: 700; color: var(--text-soft); text-align: center; }
+.quick-btn.qbtn-selected .q-icon { animation: qbtnPulseGold 0.5s ease; }
+@keyframes qbtnPulseGold {
+  0%   { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(244,169,34,0)); }
+  40%  { transform: scale(1.22); filter: drop-shadow(0 0 9px rgba(244,169,34,0.7)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 0 0 rgba(244,169,34,0)); }
+}
 
 
 /* ========== EMPTY STATE ========== */
@@ -7156,7 +7277,8 @@ var UM_MENUS = [
   { id:'keuangan', label:'&#x1F4B0; Keuangan' },
   { id:'laporan', label:'&#x1F4CA; Laporan' },
   { id:'rencoPay', label:'&#x1F4B3; RencoPay' },
-  { id:'forum', label:'&#x1F3AE; Hiburan' }
+  { id:'forum', label:'&#x1F3AE; Hiburan' },
+  { id:'semetonPlus', label:'&#x1F4BC; Semeton+' }
 ];
 
 function renderUserManagement() {
@@ -7422,7 +7544,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="lsi-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.2 1-1.2 1.9v.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 17v.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
     </div>
     <div class="login-side-item" onclick="_rencoForceUpdateApp()">
-      <span>Update Aplikasi</span>
+      <span>Update/Restart</span>
       <span class="lsi-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-2.6-6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M21 4v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </div>
   </div>
@@ -8383,8 +8505,8 @@ window.deletePengurus = function(id) {
 
       <div class="section-title">Aksi Cepat</div>
       <div class="quick-actions">
-        <button class="quick-btn" onclick="openModal('modalSimpan')">
-          <span class="q-icon"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qa1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#40916c"/><stop offset="1" stop-color="#1a472a"/></linearGradient></defs><circle cx="14" cy="14" r="10" fill="url(#qa1)" opacity="0.15"/><circle cx="14" cy="14" r="10" stroke="url(#qa1)" stroke-width="1.8"/><text x="14" y="19" text-anchor="middle" font-family="serif" font-size="12" font-weight="bold" fill="#40916c">Rp</text><path d="M14 5v2.5M14 20.5v2.5" stroke="#40916c" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg></span><span class="q-label">Simpanan</span>
+        <button class="quick-btn" onclick="quickBtnSelect(this,'modalSimpan')">
+          <span class="q-icon"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qa1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#f4a922"/><stop offset="1" stop-color="#b07a00"/></linearGradient></defs><circle cx="14" cy="14" r="10" fill="url(#qa1)" opacity="0.15"/><circle cx="14" cy="14" r="10" stroke="url(#qa1)" stroke-width="1.8"/><text x="14" y="19" text-anchor="middle" font-family="serif" font-size="12" font-weight="bold" fill="#f4a922">Rp</text><path d="M14 5v2.5M14 20.5v2.5" stroke="url(#qa1)" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg></span><span class="q-label">Simpanan</span>
         </button>
         <button class="quick-btn" onclick="openModal('modalTarikTunai')">
           <span class="q-icon"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qaTarik" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#f4a922"/><stop offset="1" stop-color="#a06800"/></linearGradient></defs><rect x="2" y="7" width="24" height="14" rx="3" fill="url(#qaTarik)" opacity="0.15"/><rect x="2" y="7" width="24" height="14" rx="3" stroke="url(#qaTarik)" stroke-width="1.8"/><path d="M2 11h24" stroke="url(#qaTarik)" stroke-width="1.8"/><rect x="6" y="15" width="5" height="3" rx="1" fill="url(#qaTarik)" opacity="0.8"/><path d="M17 17h5M19 15l3 2-3 2" stroke="url(#qaTarik)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="q-label">Tarik Tunai</span>
@@ -9376,6 +9498,125 @@ window.deletePengurus = function(id) {
 
     </div>
 
+    <!-- SEMETON+ PAGE (LOKER ANGGOTA) -->
+    <div class="page" id="page-semetonPlus">
+      <div class="loker-hero">
+        <h3>💼 LOKER ANGGOTA</h3>
+        <p>Anggota Koperasi Renco yang memiliki informasi atau membuka lowongan kerja dapat membagikannya kepada sesama anggota. Koperasi menjadi penghubung informasi, bukan pihak yang menjamin hubungan kerja.</p>
+        <div class="slogan">"Dari Anggota, Untuk Anggota."<br>Berbagi Informasi. Membuka Peluang. Membangun Kesejahteraan Bersama.</div>
+      </div>
+
+      <details class="loker-rules">
+        <summary>📋 Aturan Sederhana <span style="opacity:0.5">▾</span></summary>
+        <div class="loker-rules-body">
+          <div><b>1. Khusus Anggota</b> — Info loker berasal dari anggota, untuk anggota.</div>
+          <div><b>2. Gratis</b> — Tidak ada biaya untuk membagikan informasi lowongan.</div>
+          <div><b>3. Verifikasi</b> — Setiap lowongan diperiksa admin sebelum dipublikasikan.</div>
+          <div><b>4. Transparan</b> — Cantumkan nama usaha, posisi, lokasi, persyaratan & kontak dengan jelas.</div>
+          <div><b>5. Koperasi Sebagai Penghubung</b> — Koperasi tidak menjadi pihak dalam hubungan kerja antara pemberi kerja & pencari kerja.</div>
+        </div>
+      </details>
+
+      <div style="background:transparent;padding:14px 14px 10px;border-bottom:1.5px solid #eef0f3">
+        <div class="loker-tab-grid" id="lokerTabBar">
+
+          <button class="forum-grid-btn loker-grid-btn active" data-kat="semua" onclick="semetonTab('semua',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Semua</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="cariKerja" onclick="semetonTab('cariKerja',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="10.5" cy="10.5" r="6.5" stroke="#2563eb" stroke-width="1.8"/>
+                <path d="M20 20l-4.8-4.8" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Cari Kerja</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="pasangLowongan" onclick="semetonTab('pasangLowongan',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 11l14-6v14L3 13v-2z" stroke="#d97706" stroke-width="1.7" stroke-linejoin="round"/>
+                <path d="M7 15v3a2 2 0 0 0 2 2h1" stroke="#d97706" stroke-width="1.7" stroke-linecap="round"/>
+                <path d="M19 8.5a4 4 0 0 1 0 7" stroke="#d97706" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Lowongan</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="cariMitra" onclick="semetonTab('cariMitra',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="8" cy="7.5" r="2.6" stroke="#9333ea" stroke-width="1.6"/>
+                <circle cx="16" cy="7.5" r="2.6" stroke="#9333ea" stroke-width="1.6"/>
+                <path d="M2.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#9333ea" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M10.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#9333ea" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M11 10.5l1 1 2-2" stroke="#9333ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Mitra Usaha</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="butuhKaryawan" onclick="semetonTab('butuhKaryawan',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 9.5l1.4-4.2A1.5 1.5 0 0 1 5.8 4.3h12.4a1.5 1.5 0 0 1 1.4 1l1.4 4.2" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 9.5h16v9.2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" stroke="#0891b2" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M9.5 13v2.2a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V13" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Butuh Karyawan</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="tawarkanJasa" onclick="semetonTab('tawarkanJasa',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M14.5 6.5a3.5 3.5 0 0 1-4.6 4.6L4 17v3h3l6-6a3.5 3.5 0 0 1 4.6-4.6l-2.4 2.4-1.7-1.7 2.4-2.4z" stroke="#ec4899" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Jasa/Keahlian</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="punyaSaya" onclick="semetonTab('punyaSaya',this)">
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="3.6" stroke="#6b7280" stroke-width="1.7"/>
+                <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="#6b7280" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Punya Saya</span>
+          </button>
+
+          <button class="forum-grid-btn loker-grid-btn" data-kat="verifikasi" id="lokerTabVerifikasi" style="display:none;position:relative" onclick="semetonTab('verifikasi',this)">
+            <span class="nav-badge-count" id="lokerTabNotif" style="display:none;top:-3px;left:auto;right:6px">0</span>
+            <div class="fgb-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3l7 3v5.5c0 4.6-3 8.3-7 9.5-4-1.2-7-4.9-7-9.5V6l7-3z" stroke="#e63946" stroke-width="1.7" stroke-linejoin="round"/>
+                <path d="M9 12l2 2 4-4.3" stroke="#e63946" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="fgb-label">Verifikasi</span>
+          </button>
+
+        </div>
+      </div>
+
+      <div id="lokerList"></div>
+    </div>
+
+    <button class="loker-fab" id="lokerFab" onclick="openLokerModal()">
+      <span style="font-size:15px">＋</span> Pasang Info
+    </button>
+
 
     <!-- PEMBIAYAAN PAGE -->
     <div class="page" id="page-pembiayaan">
@@ -9551,22 +9792,18 @@ window.deletePengurus = function(id) {
       <span class="nav-label">Nasabah</span>
     </button>
 
-    <!-- Keuangan: wallet dengan koin — representasi keuangan yang jelas -->
+    <!-- Keuangan: dokumen/surat keuangan (nota/laporan) — representasi keuangan yang jelas -->
     <button class="nav-item" onclick="navTo('keuangan')" data-nav="keuangan">
       <div class="nav-indicator"></div>
       <span class="nav-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Badan dompet -->
-          <rect x="2" y="6" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/>
-          <!-- Tutup dompet / flap atas -->
-          <path d="M6 6V5a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Kompartemen koin kanan -->
-          <rect x="14" y="11" width="6" height="5" rx="2" stroke="currentColor" stroke-width="1.3"/>
-          <!-- Titik koin di dalam kompartemen -->
-          <circle cx="17" cy="13.5" r="1" fill="currentColor"/>
-          <!-- Garis kartu kiri -->
-          <line x1="4" y1="11" x2="10" y2="11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.55"/>
-          <line x1="4" y1="14" x2="8" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.35"/>
+          <!-- Badan kertas dengan sudut terlipat -->
+          <path d="M6 2.5h9l4 4V20a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V4A1.5 1.5 0 0 1 6 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M15 2.5V6a1 1 0 0 0 1 1h3.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <!-- Baris teks -->
+          <path d="M7.5 11h9M7.5 14h9M7.5 17h5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.65"/>
+          <!-- Tanda Rp kecil -->
+          <text x="9.4" y="9" text-anchor="middle" font-family="serif" font-size="5.6" font-weight="bold" fill="currentColor">Rp</text>
         </svg>
       </span>
       <span class="nav-label">Keuangan</span>
@@ -9608,6 +9845,23 @@ window.deletePengurus = function(id) {
         </svg>
       </span>
       <span class="nav-label">RencoPay</span>
+    </button>
+
+    <!-- Semeton+: loker / info kerja antar anggota (briefcase+plus = peluang kerja/usaha baru) -->
+    <button class="nav-item" onclick="navTo('semetonPlus')" data-nav="semetonPlus">
+      <div class="nav-indicator"></div>
+      <span class="nav-badge-new">BARU</span>
+      <span class="nav-badge-count" id="lokerNavNotif" style="display:none">0</span>
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2.5" y="8" width="19" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M8.3 8V6.3a2 2 0 0 1 2-2h3.4a2 2 0 0 1 2 2V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2.5 13.2h19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+          <circle cx="17.3" cy="16.6" r="4" fill="var(--cream)" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M17.3 14.9v3.4M15.6 16.6h3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="nav-label">Semeton+</span>
     </button>
 
     <!-- Hiburan: orbit / broadcast signal -->
@@ -10412,6 +10666,37 @@ window.deletePengurus = function(id) {
   </div>
 </div>
 
+<!-- MODAL: Semeton+ Pasang Info Loker -->
+<div class="modal-overlay" id="modalLokerPost">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">💼 Pasang Info Loker</h3>
+      <button class="modal-close" onclick="closeModal('modalLokerPost')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="lokerEditId">
+      <div class="field"><label>Kategori</label>
+        <select id="lokerKategori" onchange="lokerFormAdapt(this.value)">
+          <option value="cariKerja">🔎 Cari Pekerjaan</option>
+          <option value="pasangLowongan">📢 Pasang Lowongan</option>
+          <option value="cariMitra">🤝 Cari Mitra Usaha</option>
+          <option value="butuhKaryawan">🏪 Butuh Karyawan</option>
+          <option value="tawarkanJasa">🛠️ Tawarkan Keahlian/Jasa</option>
+        </select>
+      </div>
+      <div class="field"><label id="lokerLabelJudul">Judul</label><input type="text" id="lokerJudul" placeholder="Contoh: Butuh Kasir Toko Kelontong"></div>
+      <div class="field"><label id="lokerLabelUsaha">Nama Usaha / Posisi</label><input type="text" id="lokerUsaha" placeholder="Contoh: Toko Berkah Jaya / Kasir"></div>
+      <div class="field"><label>Lokasi</label><input type="text" id="lokerLokasi" placeholder="Contoh: Renco, Kelayu Jorong"></div>
+      <div class="field"><label id="lokerLabelDeskripsi">Deskripsi</label><textarea id="lokerDeskripsi" placeholder="Jelaskan detail lowongan/kebutuhan..." style="min-height:90px"></textarea></div>
+      <div class="field"><label id="lokerLabelSyarat">Persyaratan (opsional)</label><textarea id="lokerSyarat" placeholder="Contoh: Jujur, mau belajar, usia max 35 tahun" style="min-height:60px"></textarea></div>
+      <div class="field"><label>Kontak</label><input type="text" id="lokerKontak" placeholder="Nomor WA / Telepon yang bisa dihubungi"></div>
+      <div style="font-size:11px;color:var(--text-soft);background:var(--cream);border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.5">⏳ Info yang Anda kirim akan diperiksa admin terlebih dahulu sebelum tampil untuk anggota lain.</div>
+      <button class="btn btn-primary btn-block" onclick="saveLokerPost()">📤 Kirim untuk Diverifikasi</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Tambah Berita -->
 <div class="modal-overlay" id="modalTambahBerita">
   <div class="modal-sheet">
@@ -10527,6 +10812,7 @@ window.deletePengurus = function(id) {
             <option value="Aset Bergerak">🚗 Aset Bergerak</option>
             <option value="Aset Lancar">💧 Aset Lancar</option>
             <option value="Aset Usaha">🏪 Aset Usaha</option>
+            <option value="Investasi">📈 Investasi</option>
           </select>
         </div>
         <div class="field"><label>Nilai (Rp)</label><input type="number" id="asetNilai" placeholder="0"></div>
@@ -10546,7 +10832,71 @@ window.deletePengurus = function(id) {
           </div>
         </div>
       </div>
+      <!-- Investasi fields -->
+      <div id="asetInvestasiFields" style="display:none">
+        <div style="background:linear-gradient(135deg,rgba(67,97,238,0.08),rgba(67,97,238,0.04));border:1.5px solid rgba(67,97,238,0.25);border-radius:14px;padding:14px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:800;color:#4361ee;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">📈 Detail Investasi</div>
+          <div class="field"><label>Jenis Investasi</label><input type="text" id="asetJenisInvestasi" placeholder="Contoh: Deposito Syariah, Penyertaan Modal, Sukuk"></div>
+          <div class="field"><label>Instansi/Mitra</label><input type="text" id="asetMitraInvestasi" placeholder="Contoh: Bank Syariah XYZ"></div>
+          <div class="field"><label>Imbal Hasil / Bagi Hasil per Bulan (Rp)</label><input type="number" id="asetReturnInvestasi" placeholder="0" oninput="updateAsetInvestasiCalc()"></div>
+          <div class="field"><label>Jangka Waktu (Bulan)</label><input type="number" id="asetJangkaInvestasi" placeholder="0"></div>
+          <div id="asetInvestasiCalcBox" style="background:rgba(67,97,238,0.07);border-radius:10px;padding:10px 14px;margin-top:8px;display:none;font-size:12px;line-height:1.8">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text-soft)">Imbal Hasil Bulanan</span><span id="asetInvestasiROI" style="font-weight:700;color:#4361ee">-</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Arsip Dokumen Asli -->
+      <div class="field">
+        <label>📎 Arsip Dokumen Asli</label>
+        <div style="font-size:11px;color:var(--text-soft);margin-bottom:8px">Unggah scan/foto sertifikat, BPKB, kwitansi, akta, atau dokumen asli lain sebagai bukti kepemilikan.</div>
+        <button type="button" class="btn btn-outline btn-sm btn-block" onclick="document.getElementById('asetDokumenInput').click()">⬆️ Pilih File (gambar/PDF)</button>
+        <input type="file" id="asetDokumenInput" accept="image/*,.pdf" multiple style="display:none" onchange="handleAsetDokumenSelect(this)">
+        <div id="asetDokumenList" style="margin-top:10px"></div>
+      </div>
       <button class="btn btn-primary btn-block" onclick="saveAset()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Lihat Dokumen Aset -->
+<div class="modal-overlay" id="modalAsetDokumenView">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">📎 Arsip Dokumen Asli</h3>
+      <button class="modal-close" onclick="closeModal('modalAsetDokumenView')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="asetDokumenViewList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Tambah Liabilitas -->
+<div class="modal-overlay" id="modalLiabilitas">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalLiabilitasTitle">Tambah Liabilitas</h3>
+      <button class="modal-close" onclick="closeModal('modalLiabilitas')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editLiabilitasId">
+      <div class="field"><label>Nama Kewajiban</label><input type="text" id="liabNama" placeholder="Contoh: Pinjaman Modal ke Bank XYZ"></div>
+      <div class="field-row">
+        <div class="field"><label>Kategori</label>
+          <select id="liabKategori">
+            <option value="Hutang Bank/Lembaga">🏦 Hutang Bank/Lembaga</option>
+            <option value="Hutang Pihak Ketiga">🤝 Hutang Pihak Ketiga</option>
+            <option value="Simpanan Anggota">👥 Simpanan Anggota (Kewajiban ke Anggota)</option>
+            <option value="Kewajiban Lain">📋 Kewajiban Lain</option>
+          </select>
+        </div>
+        <div class="field"><label>Nilai (Rp)</label><input type="number" id="liabNilai" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Jatuh Tempo</label><input type="date" id="liabJatuhTempo"></div>
+      <div class="field"><label>Keterangan</label><textarea id="liabKet" placeholder="Deskripsi kewajiban..."></textarea></div>
+      <button class="btn btn-primary btn-block" onclick="saveLiabilitas()">💾 Simpan</button>
     </div>
   </div>
 </div>
@@ -11683,12 +12033,14 @@ let DB = {
   polling: [],
   pohonImpian: [],
   aset: [],
+  liabilitas: [],
   pembiayaan: [],
   rencoIncome: [],
   nextKKId: 1,
   nextTxnId: 1,
   nextPinId: 1,
   nextAsetId: 1,
+  nextLiabilitasId: 1,
   shuSetting: {
     pctSHU: 70,
     pctNasabah: 40,
@@ -11704,6 +12056,7 @@ let DB = {
     multiplierSimpanan: 0
   },
   rencoPay: null,
+  loker: [],
   users: [],
   pengurusList: [],
   nextPengurusId: 1,
@@ -11717,8 +12070,8 @@ let DB = {
 function _dbMigrate() {
   // Pastikan semua koleksi array ada
   const ARRAYS = [
-    'nasabah','transaksi','pinjaman','aset','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
-    'shuDistribusi','arisanPeserta','arisanHistory','forum','polling','pohonImpian',
+    'nasabah','transaksi','pinjaman','aset','liabilitas','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
+    'shuDistribusi','arisanPeserta','arisanHistory','forum','polling','pohonImpian','loker',
     'users',  // akun nasabah — disimpan di DB agar sync ke Supabase
     'pengurusList'  // struktur pengurus koperasi (nama, jabatan, pendidikan, pengalaman, foto)
   ];
@@ -11762,6 +12115,9 @@ function _dbMigrate() {
   if (typeof DB.nextTxnId !== 'number' || DB.nextTxnId < 1) DB.nextTxnId = _maxId(DB.transaksi,'txn') + 1;
   if (typeof DB.nextPinId !== 'number' || DB.nextPinId < 1) DB.nextPinId = _maxId(DB.pinjaman,  'pin') + 1;
   if (typeof DB.nextAsetId!== 'number' || DB.nextAsetId< 1) DB.nextAsetId= _maxId(DB.aset,     'aset')+ 1;
+  if (typeof DB.nextLiabilitasId !== 'number' || DB.nextLiabilitasId < 1) DB.nextLiabilitasId = _maxId(DB.liabilitas, 'liab') + 1;
+  // Migrasi: pastikan tiap aset punya array dokumen (arsip dokumen asli)
+  (DB.aset||[]).forEach(function(a){ if (!Array.isArray(a.dokumen)) a.dokumen = []; });
   if (typeof DB.nextPengurusId !== 'number' || DB.nextPengurusId < 1) DB.nextPengurusId = _maxId(DB.pengurusList, 'peng') + 1;
   // Pastikan tiap entri pengurus punya field lengkap (migrasi data lama)
   (DB.pengurusList||[]).forEach(function(p, idx) {
@@ -11917,6 +12273,7 @@ function nextId(type) {
     case 'pin':  return 'pin'  + (DB.nextPinId++);
     case 'kk':   return 'kk'   + (DB.nextKKId++);
     case 'aset': return 'aset' + (DB.nextAsetId++);
+    case 'liab': return 'liab' + (DB.nextLiabilitasId++);
     default:     return type   + '_' + uid();
   }
 }
@@ -15499,9 +15856,27 @@ function navTo(page) {
     fabNs.style.display = showFab ? 'flex' : 'none';
     fabNs.classList.remove('show'); // selalu mulai tersembunyi di pinggir saat pindah halaman
   }
+  var lokerFab = document.getElementById('lokerFab');
+  if (lokerFab) lokerFab.style.display = (page === 'semetonPlus') ? 'flex' : 'none';
+  if (page === 'keuangan') {
+    var navKeu = document.querySelector('.nav-item[data-nav="keuangan"]');
+    if (navKeu) {
+      navKeu.classList.add('nav-selected-pulse');
+      setTimeout(function(){ navKeu.classList.remove('nav-selected-pulse'); }, 500);
+    }
+  }
   currentPage = page;
   renderPage(page);
   document.getElementById('content').scrollTop = 0;
+}
+
+/* ── Animasi pilih tombol Aksi Cepat (mis. Simpanan/Rp) sebelum membuka modal ── */
+function quickBtnSelect(el, modalId) {
+  if (el) {
+    el.classList.add('qbtn-selected');
+    setTimeout(function() { el.classList.remove('qbtn-selected'); }, 500);
+  }
+  if (typeof openModal === 'function') openModal(modalId);
 }
 
 function fabAction() {
@@ -15574,6 +15949,7 @@ function renderPage(p) {
   }
   else if (p==='arisan') { renderForum(); forumTab('arisan'); }
   else if (p==='forum') { renderForum(); forumTab('diskusi'); setTimeout(_updateBersihkanChatBtn, 100); }
+  else if (p==='semetonPlus') { renderSemetonPlus(); }
   else if (p==='laporan') {
     // Apply tab restriction berdasarkan role terlebih dahulu
     var _lprAdm = (typeof isAdmin === 'function') ? isAdmin() : true;
@@ -21591,6 +21967,7 @@ function renderHomeTagihanList() {
 }
 
 function renderHome() {
+  if (typeof _lokerUpdateAdminNotif === 'function') _lokerUpdateAdminNotif();
   document.getElementById('heroDate').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan').reduce((a,b)=>a+b.jumlah,0)
@@ -23206,7 +23583,7 @@ function keuanganTab(tab, el) {
   else if (tab==='pembiayaan-syariah' || ['murabahah','mudharabah','musyarakah','ijarah','istishna'].includes(tab)) {
     c.innerHTML = renderRencoIncomeHTML();
   }
-  if (tab==='aset') renderAsetList();
+  if (tab==='aset') { renderAsetList(); renderLiabilitasListFull(); }
 }
 
 function renderRencoIncomeHTML() {
@@ -28513,8 +28890,10 @@ function saveSHUSetting() {
 
 function toggleAsetUsahaFields() {
   const kat = document.getElementById('asetKategori')?.value;
-  const box = document.getElementById('asetUsahaFields');
-  if (box) box.style.display = kat === 'Aset Usaha' ? 'block' : 'none';
+  const boxUsaha = document.getElementById('asetUsahaFields');
+  if (boxUsaha) boxUsaha.style.display = kat === 'Aset Usaha' ? 'block' : 'none';
+  const boxInv = document.getElementById('asetInvestasiFields');
+  if (boxInv) boxInv.style.display = kat === 'Investasi' ? 'block' : 'none';
 }
 
 function updateAsetUsahaCalc() {
@@ -28535,6 +28914,93 @@ function updateAsetUsahaCalc() {
   }
 }
 
+function updateAsetInvestasiCalc() {
+  const nilai = parseFloat(document.getElementById('asetNilai')?.value)||0;
+  const ret = parseFloat(document.getElementById('asetReturnInvestasi')?.value)||0;
+  const box = document.getElementById('asetInvestasiCalcBox');
+  if (!box) return;
+  if (ret > 0) {
+    box.style.display = 'block';
+    const roi = nilai > 0 ? ((ret/nilai)*100).toFixed(2)+'% / bulan' : fmt(ret)+'/bulan';
+    document.getElementById('asetInvestasiROI').textContent = roi;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+// ========== ARSIP DOKUMEN ASLI (per item Aset) ==========
+let _asetDokumenTemp = [];
+
+function handleAsetDokumenSelect(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  let pending = files.length;
+  files.forEach(file => {
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('⚠️ File "' + file.name + '" terlalu besar (maks 4MB)');
+      pending--;
+      if (pending === 0) input.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      _asetDokumenTemp.push({
+        nama: file.name,
+        tipe: file.type,
+        data: e.target.result,
+        tanggal: nowISO()
+      });
+      renderAsetDokumenTempList();
+      pending--;
+      if (pending === 0) input.value = '';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderAsetDokumenTempList() {
+  const el = document.getElementById('asetDokumenList');
+  if (!el) return;
+  if (!_asetDokumenTemp.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-soft);text-align:center;padding:10px">Belum ada dokumen diunggah</div>';
+    return;
+  }
+  el.innerHTML = _asetDokumenTemp.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.03);border-radius:10px;padding:8px 10px;margin-bottom:6px">
+      <div style="font-size:18px">${(d.tipe||'').includes('pdf')?'📄':'🖼️'}</div>
+      <div style="flex:1;min-width:0;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nama}</div>
+      <button type="button" class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px;border-radius:8px" onclick="hapusAsetDokumenTemp(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function hapusAsetDokumenTemp(idx) {
+  _asetDokumenTemp.splice(idx, 1);
+  renderAsetDokumenTempList();
+}
+
+function lihatDokumenAset(id) {
+  const a = DB.aset.find(x=>x.id===id);
+  if (!a) return;
+  const docs = a.dokumen || [];
+  const el = document.getElementById('asetDokumenViewList');
+  if (!el) return;
+  if (!docs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📎</div><h3>Belum Ada Dokumen</h3></div>';
+  } else {
+    el.innerHTML = docs.map((d,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.03);border-radius:12px;padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:24px">${(d.tipe||'').includes('pdf')?'📄':'🖼️'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nama}</div>
+          <div style="font-size:10px;color:var(--text-soft)">${fmtDate(d.tanggal)}</div>
+        </div>
+        <a href="${d.data}" target="_blank" rel="noopener" class="btn btn-sm btn-outline" style="padding:6px 10px;font-size:11px;border-radius:8px">👁 Lihat</a>
+        <a href="${d.data}" download="${d.nama}" class="btn btn-sm btn-outline" style="padding:6px 10px;font-size:11px;border-radius:8px">⬇️</a>
+      </div>`).join('');
+  }
+  openModal('modalAsetDokumenView');
+}
+
 let _asetTab = 'semua';
 function setAsetTab(t, el) {
   _asetTab = t;
@@ -28543,14 +29009,76 @@ function setAsetTab(t, el) {
   renderAsetListFull();
 }
 
+// ========== GRAFIK PERTUMBUHAN KEKAYAAN (Wealth Growth) ==========
+function buildWealthGrowthData() {
+  const events = [];
+  (DB.aset||[]).forEach(a => events.push({ date: a.tanggal || nowISO(), delta: (a.nilai||0) }));
+  (DB.liabilitas||[]).forEach(l => events.push({ date: l.tanggal || nowISO(), delta: -(l.nilai||0) }));
+  events.sort((a,b) => new Date(a.date) - new Date(b.date));
+  const map = {};
+  let running = 0;
+  events.forEach(e => {
+    const d = new Date(e.date);
+    if (isNaN(d)) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    running += e.delta;
+    map[key] = running;
+  });
+  const keys = Object.keys(map).sort();
+  return keys.map(k => ({ label: k, val: map[k] }));
+}
+
+function renderWealthGrowthChart() {
+  const data = buildWealthGrowthData();
+  if (data.length < 2) {
+    return '<div style="padding:24px 10px;text-align:center;color:var(--text-soft);font-size:12px">📊 Data belum cukup untuk menampilkan grafik pertumbuhan.<br>Tambahkan aset/liabilitas secara berkala untuk melihat tren kekayaan.</div>';
+  }
+  const w = 300, h = 120, pad = 8;
+  const vals = data.map(d=>d.val);
+  const maxV = Math.max(...vals, 0), minV = Math.min(...vals, 0);
+  const range = (maxV - minV) || 1;
+  const stepX = (w - pad*2) / (data.length - 1);
+  const coord = (d,i) => {
+    const x = pad + i*stepX;
+    const y = h - pad - ((d.val - minV)/range) * (h - pad*2);
+    return [x, y];
+  };
+  const pts = data.map((d,i)=>{ const [x,y]=coord(d,i); return x.toFixed(1)+','+y.toFixed(1); }).join(' ');
+  const lastPt = coord(data[data.length-1], data.length-1);
+  const firstPt = coord(data[0], 0);
+  const areaPts = firstPt[0].toFixed(1)+','+(h-pad) + ' ' + pts + ' ' + lastPt[0].toFixed(1)+','+(h-pad);
+  const lastVal = data[data.length-1].val;
+  const firstVal = data[0].val;
+  const growthPct = firstVal !== 0 ? (((lastVal-firstVal)/Math.abs(firstVal))*100).toFixed(1) : null;
+  const dots = data.map((d,i)=>{ const [x,y]=coord(d,i); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="#2d6a4f"/>`; }).join('');
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:130px;overflow:visible;display:block">
+      <polyline points="${areaPts}" fill="rgba(45,106,79,0.12)" stroke="none"/>
+      <polyline points="${pts}" fill="none" stroke="#2d6a4f" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-soft);margin-top:2px">
+      <span>${data[0].label}</span><span>${data[data.length-1].label}</span>
+    </div>
+    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:11px;color:var(--text-soft)">Kekayaan Bersih Terkini</div>
+      <div style="font-size:15px;font-weight:800;color:${lastVal>=0?'#2d6a4f':'#e63946'}">${fmt(lastVal)}</div>
+    </div>
+    ${growthPct!==null ? `<div style="text-align:right;font-size:11px;font-weight:700;color:${lastVal>=firstVal?'#2d6a4f':'#e63946'}">${lastVal>=firstVal?'📈':'📉'} ${growthPct}% sejak awal pencatatan</div>` : ''}`;
+}
+
 function renderAsetHTML() {
-  const total = DB.aset.reduce((a,b)=>a+(b.nilai||0),0);
   const totalUsaha = DB.aset.filter(a=>a.kategori==='Aset Usaha').reduce((s,a)=>s+(a.nilai||0),0);
   const totalTetap = DB.aset.filter(a=>a.kategori==='Aset Tetap').reduce((s,a)=>s+(a.nilai||0),0);
   const totalBergerak = DB.aset.filter(a=>a.kategori==='Aset Bergerak').reduce((s,a)=>s+(a.nilai||0),0);
   const totalLancar = DB.aset.filter(a=>a.kategori==='Aset Lancar').reduce((s,a)=>s+(a.nilai||0),0);
+  const totalInvestasi = DB.aset.filter(a=>a.kategori==='Investasi').reduce((s,a)=>s+(a.nilai||0),0);
+  const total = totalTetap + totalBergerak + totalLancar + totalUsaha + totalInvestasi;
   const totalPendapatan = DB.aset.filter(a=>a.kategori==='Aset Usaha').reduce((s,a)=>s+(parseFloat(a.pendapatanUsaha)||0),0);
   const totalModal = DB.aset.filter(a=>a.kategori==='Aset Usaha').reduce((s,a)=>s+(parseFloat(a.modalUsaha)||0),0);
+  const totalReturnInvestasi = DB.aset.filter(a=>a.kategori==='Investasi').reduce((s,a)=>s+(parseFloat(a.returnInvestasi)||0),0);
+  const totalLiabilitas = (DB.liabilitas||[]).reduce((s,l)=>s+(l.nilai||0),0);
+  const kekayaanBersih = total - totalLiabilitas;
 
   // Chart data
   const cats = [
@@ -28558,6 +29086,7 @@ function renderAsetHTML() {
     {label:'Aset Bergerak', val:totalBergerak, color:'#4361ee'},
     {label:'Aset Lancar', val:totalLancar, color:'#40916c'},
     {label:'Aset Usaha', val:totalUsaha, color:'#f4a922'},
+    {label:'Investasi', val:totalInvestasi, color:'#9d4edd'},
   ];
   const maxCat = Math.max(...cats.map(c=>c.val), 1);
   const chartBars = cats.map(c=>`
@@ -28577,15 +29106,39 @@ function renderAsetHTML() {
       <div class="amount" style="color:#0d2016">${fmt(total)}</div>
       <div class="sub" style="color:rgba(0,0,0,0.5)">${DB.aset.length} item aset tercatat</div>
     </div>
-    <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
-      <div class="stat-card"><div class="stat-icon">🏗</div><div class="stat-val" style="font-size:11px">${fmt(totalTetap)}</div><div class="stat-lbl">Tetap</div></div>
-      <div class="stat-card"><div class="stat-icon">🚗</div><div class="stat-val" style="font-size:11px">${fmt(totalBergerak)}</div><div class="stat-lbl">Bergerak</div></div>
-      <div class="stat-card"><div class="stat-icon">💧</div><div class="stat-val" style="font-size:11px">${fmt(totalLancar)}</div><div class="stat-lbl">Lancar</div></div>
-      <div class="stat-card"><div class="stat-icon">🏪</div><div class="stat-val" style="font-size:11px">${fmt(totalUsaha)}</div><div class="stat-lbl">Usaha</div></div>
+    <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr">
+      <div class="stat-card"><div class="stat-icon">🏗</div><div class="stat-val" style="font-size:10px">${fmt(totalTetap)}</div><div class="stat-lbl">Tetap</div></div>
+      <div class="stat-card"><div class="stat-icon">🚗</div><div class="stat-val" style="font-size:10px">${fmt(totalBergerak)}</div><div class="stat-lbl">Bergerak</div></div>
+      <div class="stat-card"><div class="stat-icon">💧</div><div class="stat-val" style="font-size:10px">${fmt(totalLancar)}</div><div class="stat-lbl">Lancar</div></div>
+      <div class="stat-card"><div class="stat-icon">🏪</div><div class="stat-val" style="font-size:10px">${fmt(totalUsaha)}</div><div class="stat-lbl">Usaha</div></div>
+      <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-val" style="font-size:10px">${fmt(totalInvestasi)}</div><div class="stat-lbl">Investasi</div></div>
+    </div>
+    <div class="card" style="margin:0 16px 12px;background:linear-gradient(135deg,rgba(13,32,22,0.03),rgba(45,106,79,0.05))">
+      <div class="card-header"><span class="card-title">⚖️ Posisi Keuangan Koperasi</span></div>
+      <div class="card-body" style="padding:14px 16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(45,106,79,0.08);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-bottom:4px">Total Aset</div>
+            <div style="font-size:14px;font-weight:800;color:var(--forest-mid)">${fmt(total)}</div>
+          </div>
+          <div style="background:rgba(230,57,70,0.08);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-bottom:4px">Total Liabilitas</div>
+            <div style="font-size:14px;font-weight:800;color:#e63946">${fmt(totalLiabilitas)}</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:10px 14px;background:rgba(244,169,34,0.1);border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:700;color:#b07a00">Kekayaan Bersih (Ekuitas)</span>
+          <span style="font-size:15px;font-weight:800;color:${kekayaanBersih>=0?'#2d6a4f':'#e63946'}">${fmt(kekayaanBersih)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin:0 16px 12px">
+      <div class="card-header"><span class="card-title">📊 Grafik Pertumbuhan Kekayaan</span></div>
+      <div class="card-body" style="padding:14px 16px">${renderWealthGrowthChart()}</div>
     </div>
     ${totalPendapatan > 0 ? `
     <div class="card" style="margin:0 16px 12px">
-      <div class="card-header"><span class="card-title">📊 Ringkasan Usaha</span></div>
+      <div class="card-header"><span class="card-title">🏪 Ringkasan Usaha</span></div>
       <div class="card-body" style="padding:14px 16px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div style="background:rgba(64,145,108,0.08);border-radius:10px;padding:12px;text-align:center">
@@ -28600,8 +29153,24 @@ function renderAsetHTML() {
         ${totalModal>0?`<div style="margin-top:10px;padding:8px 12px;background:rgba(67,97,238,0.07);border-radius:10px;font-size:12px;font-weight:700;color:#4361ee;text-align:center">ROI Rata-rata: ${(totalPendapatan/totalModal*100).toFixed(1)}% / bulan</div>`:''}
       </div>
     </div>` : ''}
+    ${totalInvestasi > 0 ? `
     <div class="card" style="margin:0 16px 12px">
-      <div class="card-header"><span class="card-title">📈 Komposisi Aset</span></div>
+      <div class="card-header"><span class="card-title">📈 Ringkasan Investasi</span></div>
+      <div class="card-body" style="padding:14px 16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(157,78,221,0.08);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-bottom:4px">Total Nilai Investasi</div>
+            <div style="font-size:14px;font-weight:800;color:#9d4edd">${fmt(totalInvestasi)}</div>
+          </div>
+          <div style="background:rgba(244,169,34,0.1);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-bottom:4px">Imbal Hasil/Bln</div>
+            <div style="font-size:14px;font-weight:800;color:#b07a00">${fmt(totalReturnInvestasi)}</div>
+          </div>
+        </div>
+      </div>
+    </div>` : ''}
+    <div class="card" style="margin:0 16px 12px">
+      <div class="card-header"><span class="card-title">🧩 Komposisi Aset</span></div>
       <div class="card-body" style="padding:14px 16px">${chartBars}</div>
     </div>
     ${(typeof isAdmin==='function'&&isAdmin()) ? `<div class="btn-row"><button class="btn btn-gold btn-sm" onclick="openAsetModal()">+ Tambah Aset</button></div>` : ''}
@@ -28611,8 +29180,17 @@ function renderAsetHTML() {
       <button class="tab-pill" onclick="setAsetTab('Aset Bergerak',this)">🚗 Bergerak</button>
       <button class="tab-pill" onclick="setAsetTab('Aset Lancar',this)">💧 Lancar</button>
       <button class="tab-pill" onclick="setAsetTab('Aset Usaha',this)">🏪 Usaha</button>
+      <button class="tab-pill" onclick="setAsetTab('Investasi',this)">📈 Investasi</button>
     </div>
-    <div class="card" id="asetListCard"><div id="asetList"></div></div>`;
+    <div class="card" id="asetListCard"><div id="asetList"></div></div>
+    <div class="card" style="margin:16px">
+      <div class="card-header">
+        <span class="card-title">📉 Liabilitas Koperasi</span>
+        <span style="font-size:12px;font-weight:800;color:#e63946">${fmt(totalLiabilitas)}</span>
+      </div>
+      ${(typeof isAdmin==='function'&&isAdmin()) ? `<div class="btn-row" style="padding:0 16px 10px"><button class="btn btn-outline btn-sm" onclick="openLiabilitasModal()">+ Tambah Liabilitas</button></div>` : ''}
+      <div id="liabilitasList"></div>
+    </div>`;
 }
 
 function openAsetModal() {
@@ -28622,9 +29200,11 @@ function openAsetModal() {
   document.getElementById('asetKategori').value = 'Aset Tetap';
   document.getElementById('asetNilai').value = '';
   document.getElementById('asetKet').value = '';
-  ['asetNamaUsaha','asetModalUsaha','asetNilaiUsaha','asetPendapatanUsaha'].forEach(id=>{
+  ['asetNamaUsaha','asetModalUsaha','asetNilaiUsaha','asetPendapatanUsaha','asetJenisInvestasi','asetMitraInvestasi','asetReturnInvestasi','asetJangkaInvestasi'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value='';
   });
+  _asetDokumenTemp = [];
+  renderAsetDokumenTempList();
   toggleAsetUsahaFields();
   openModal('modalAset');
 }
@@ -28640,7 +29220,7 @@ function renderAsetListFull() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏢</div><h3>Belum Ada Aset</h3></div>';
     return;
   }
-  const icons = {'Aset Tetap':'🏗','Aset Bergerak':'🚗','Aset Lancar':'💧','Aset Usaha':'🏪','Usaha':'🏪','Kas':'💵','Lainnya':'📦'};
+  const icons = {'Aset Tetap':'🏗','Aset Bergerak':'🚗','Aset Lancar':'💧','Aset Usaha':'🏪','Investasi':'📈','Usaha':'🏪','Kas':'💵','Lainnya':'📦'};
   el.innerHTML = list.map(a=>`
     <div class="asset-card" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(0,0,0,0.04);${(typeof isAdmin==='function'&&isAdmin())?'cursor:pointer':''}" ${(typeof isAdmin==='function'&&isAdmin())?`onclick="toggleAsetActions('${a.id}')"`:''}>
       <div style="width:44px;height:44px;border-radius:13px;background:rgba(244,169,34,0.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${icons[a.kategori]||'📦'}</div>
@@ -28656,6 +29236,17 @@ function renderAsetListFull() {
             ${a.pendapatanUsaha?`<span>Pendapatan: <b style="color:var(--forest-light)">${fmt(a.pendapatanUsaha)}/bln</b></span>`:''}
           </div>
         </div>` : ''}
+        ${a.kategori==='Investasi' && a.jenisInvestasi ? `
+        <div style="margin-top:8px;background:rgba(157,78,221,0.08);border-radius:8px;padding:8px 10px;font-size:11px">
+          <div style="font-weight:700;color:#9d4edd;margin-bottom:4px">📈 ${a.jenisInvestasi}${a.mitraInvestasi?' · '+a.mitraInvestasi:''}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:var(--text-soft)">
+            ${a.returnInvestasi?`<span>Imbal Hasil: <b style="color:var(--forest-light)">${fmt(a.returnInvestasi)}/bln</b></span>`:''}
+            ${a.jangkaInvestasi?`<span>Jangka: <b style="color:var(--text)">${a.jangkaInvestasi} bln</b></span>`:''}
+          </div>
+        </div>` : ''}
+        ${(a.dokumen && a.dokumen.length) ? `
+        <button type="button" onclick="event.stopPropagation();lihatDokumenAset('${a.id}')" style="margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:rgba(45,106,79,0.08);border:none;border-radius:99px;padding:4px 10px;font-size:10px;font-weight:700;color:var(--forest-mid);cursor:pointer">📎 ${a.dokumen.length} Dokumen Asli</button>
+        ` : ''}
         ${(typeof isAdmin==='function'&&isAdmin()) ? `
         <div id="asetActions_${a.id}" style="overflow:hidden;max-height:0;opacity:0;transition:max-height 0.35s cubic-bezier(.4,0,.2,1),opacity 0.3s ease,margin-top 0.3s ease;margin-top:0">
           <div style="display:flex;gap:8px;padding-top:10px">
@@ -28691,7 +29282,7 @@ function hapusAset(id) {
   DB.aset = DB.aset.filter(x => x.id !== id);
   saveDB();
   const contentEl = document.getElementById('keuanganContent');
-  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); }
+  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); renderLiabilitasListFull(); }
   showToast('🗑 Aset "' + a.nama + '" berhasil dihapus');
 }
 
@@ -28703,7 +29294,8 @@ function saveAset() {
   const data = {
     nama, kategori,
     nilai: parseFloat(document.getElementById('asetNilai').value)||0,
-    keterangan: document.getElementById('asetKet').value
+    keterangan: document.getElementById('asetKet').value,
+    dokumen: _asetDokumenTemp.slice()
   };
   if (kategori === 'Aset Usaha') {
     data.namaUsaha = document.getElementById('asetNamaUsaha')?.value || '';
@@ -28711,6 +29303,12 @@ function saveAset() {
     data.nilaiUsaha = parseFloat(document.getElementById('asetNilaiUsaha')?.value)||0;
     data.pendapatanUsaha = parseFloat(document.getElementById('asetPendapatanUsaha')?.value)||0;
     if (!data.nilai && data.nilaiUsaha) data.nilai = data.nilaiUsaha;
+  }
+  if (kategori === 'Investasi') {
+    data.jenisInvestasi = document.getElementById('asetJenisInvestasi')?.value || '';
+    data.mitraInvestasi = document.getElementById('asetMitraInvestasi')?.value || '';
+    data.returnInvestasi = parseFloat(document.getElementById('asetReturnInvestasi')?.value)||0;
+    data.jangkaInvestasi = parseFloat(document.getElementById('asetJangkaInvestasi')?.value)||0;
   }
   if (editId) {
     const idx = DB.aset.findIndex(a=>a.id===editId);
@@ -28720,7 +29318,7 @@ function saveAset() {
   }
   saveDB(); closeModal('modalAset'); 
   const contentEl = document.getElementById('keuanganContent');
-  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); }
+  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); renderLiabilitasListFull(); }
   showToast('✅ Aset tersimpan');
 }
 
@@ -28740,8 +29338,120 @@ function editAset(id) {
     f('asetNilaiUsaha') && (f('asetNilaiUsaha').value = a.nilaiUsaha||'');
     f('asetPendapatanUsaha') && (f('asetPendapatanUsaha').value = a.pendapatanUsaha||'');
   }
+  if (a.kategori === 'Investasi') {
+    const f = id=>{const el=document.getElementById(id);if(el)return el;};
+    f('asetJenisInvestasi') && (f('asetJenisInvestasi').value = a.jenisInvestasi||'');
+    f('asetMitraInvestasi') && (f('asetMitraInvestasi').value = a.mitraInvestasi||'');
+    f('asetReturnInvestasi') && (f('asetReturnInvestasi').value = a.returnInvestasi||'');
+    f('asetJangkaInvestasi') && (f('asetJangkaInvestasi').value = a.jangkaInvestasi||'');
+  }
+  _asetDokumenTemp = (a.dokumen || []).slice();
+  renderAsetDokumenTempList();
   toggleAsetUsahaFields();
   openModal('modalAset');
+}
+
+// ========== LIABILITAS KOPERASI ==========
+function openLiabilitasModal() {
+  document.getElementById('modalLiabilitasTitle').textContent = '📉 Tambah Liabilitas';
+  document.getElementById('editLiabilitasId').value = '';
+  document.getElementById('liabNama').value = '';
+  document.getElementById('liabKategori').value = 'Hutang Bank/Lembaga';
+  document.getElementById('liabNilai').value = '';
+  document.getElementById('liabJatuhTempo').value = '';
+  document.getElementById('liabKet').value = '';
+  openModal('modalLiabilitas');
+}
+
+function saveLiabilitas() {
+  const nama = document.getElementById('liabNama').value.trim();
+  if (!nama) { showToast('⚠️ Nama kewajiban wajib diisi'); return; }
+  const editId = document.getElementById('editLiabilitasId').value;
+  const data = {
+    nama,
+    kategori: document.getElementById('liabKategori').value,
+    nilai: parseFloat(document.getElementById('liabNilai').value)||0,
+    jatuhTempo: document.getElementById('liabJatuhTempo').value || '',
+    keterangan: document.getElementById('liabKet').value
+  };
+  if (!Array.isArray(DB.liabilitas)) DB.liabilitas = [];
+  if (editId) {
+    const idx = DB.liabilitas.findIndex(l=>l.id===editId);
+    if (idx>-1) DB.liabilitas[idx] = {...DB.liabilitas[idx],...data};
+  } else {
+    DB.liabilitas.push({id: nextId('liab'), ...data, tanggal: nowISO()});
+  }
+  saveDB(); closeModal('modalLiabilitas');
+  const contentEl = document.getElementById('keuanganContent');
+  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); renderLiabilitasListFull(); }
+  showToast('✅ Liabilitas tersimpan');
+}
+
+function editLiabilitas(id) {
+  const l = (DB.liabilitas||[]).find(x=>x.id===id);
+  if (!l) return;
+  document.getElementById('modalLiabilitasTitle').textContent = '✏️ Edit Liabilitas';
+  document.getElementById('editLiabilitasId').value = id;
+  document.getElementById('liabNama').value = l.nama||'';
+  document.getElementById('liabKategori').value = l.kategori||'Hutang Bank/Lembaga';
+  document.getElementById('liabNilai').value = l.nilai||0;
+  document.getElementById('liabJatuhTempo').value = l.jatuhTempo||'';
+  document.getElementById('liabKet').value = l.keterangan||'';
+  openModal('modalLiabilitas');
+}
+
+function hapusLiabilitas(id) {
+  const l = (DB.liabilitas||[]).find(x=>x.id===id);
+  if (!l) return;
+  if (!confirm(`Hapus liabilitas "${l.nama}"?\n\nData ini akan dihapus permanen.`)) return;
+  DB.liabilitas = (DB.liabilitas||[]).filter(x=>x.id!==id);
+  saveDB();
+  const contentEl = document.getElementById('keuanganContent');
+  if (contentEl) { contentEl.innerHTML = renderAsetHTML(); renderAsetListFull(); renderLiabilitasListFull(); }
+  showToast('🗑 Liabilitas "' + l.nama + '" berhasil dihapus');
+}
+
+function renderLiabilitasListFull() {
+  const el = document.getElementById('liabilitasList');
+  if (!el) return;
+  const list = DB.liabilitas || [];
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📉</div><h3>Belum Ada Liabilitas</h3></div>';
+    return;
+  }
+  const icons = {'Hutang Bank/Lembaga':'🏦','Hutang Pihak Ketiga':'🤝','Simpanan Anggota':'👥','Kewajiban Lain':'📋'};
+  el.innerHTML = list.map(l=>`
+    <div class="asset-card" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(0,0,0,0.04);${(typeof isAdmin==='function'&&isAdmin())?'cursor:pointer':''}" ${(typeof isAdmin==='function'&&isAdmin())?`onclick="toggleLiabilitasActions('${l.id}')"`:''}>
+      <div style="width:44px;height:44px;border-radius:13px;background:rgba(230,57,70,0.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${icons[l.kategori]||'📋'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:var(--text)">${l.nama}</div>
+        <div style="font-size:12px;font-weight:700;color:#e63946;margin-top:2px">${fmt(l.nilai||0)}</div>
+        <div style="font-size:10px;color:var(--text-soft);margin-top:2px">${l.kategori}${l.jatuhTempo?' · Jatuh tempo: '+fmtDate(l.jatuhTempo):''}${l.keterangan?' · '+l.keterangan:''}</div>
+        ${(typeof isAdmin==='function'&&isAdmin()) ? `
+        <div id="liabActions_${l.id}" style="overflow:hidden;max-height:0;opacity:0;transition:max-height 0.35s cubic-bezier(.4,0,.2,1),opacity 0.3s ease,margin-top 0.3s ease;margin-top:0">
+          <div style="display:flex;gap:8px;padding-top:10px">
+            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editLiabilitas('${l.id}')" style="flex:1;justify-content:center;padding:8px 0;font-size:12px;border-radius:10px">✏️ Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();hapusLiabilitas('${l.id}')" style="flex:1;justify-content:center;padding:8px 0;font-size:12px;border-radius:10px">🗑 Hapus</button>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function toggleLiabilitasActions(id) {
+  const el = document.getElementById('liabActions_' + id);
+  if (!el) return;
+  const isOpen = el.style.maxHeight !== '0px' && el.style.maxHeight !== '';
+  document.querySelectorAll('[id^="liabActions_"]').forEach(e => {
+    e.style.maxHeight = '0px';
+    e.style.opacity = '0';
+    e.style.marginTop = '0';
+  });
+  if (!isOpen) {
+    el.style.maxHeight = '80px';
+    el.style.opacity = '1';
+    el.style.marginTop = '0';
+  }
 }
 
 function updatePinjamKasInfo() {
@@ -30880,6 +31590,308 @@ function saveForumPost() {
 function likePost(id) {
   const p = DB.forum.find(f=>f.id===id);
   if (p) { p.likes=(p.likes||0)+1; saveDB(); renderForum(); }
+}
+
+// ========== SEMETON+ (LOKER ANGGOTA) ==========
+var LOKER_KATEGORI = {
+  cariKerja:      { label: '🔎 Cari Pekerjaan',        short: '🔎 Cari Kerja' },
+  pasangLowongan: { label: '📢 Pasang Lowongan',        short: '📢 Lowongan' },
+  cariMitra:      { label: '🤝 Cari Mitra Usaha',       short: '🤝 Mitra Usaha' },
+  butuhKaryawan:  { label: '🏪 Butuh Karyawan',         short: '🏪 Butuh Karyawan' },
+  tawarkanJasa:   { label: '🛠️ Tawarkan Keahlian/Jasa', short: '🛠️ Jasa/Keahlian' }
+};
+var _lokerActiveTab = 'semua';
+
+function _lokerCurrentUser() {
+  var nama = (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? (AUTH.user.nama || AUTH.user.username) : 'Anonim';
+  var uid_ = (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? (AUTH.user.id || AUTH.user.username) : null;
+  return { nama: nama, id: uid_ };
+}
+
+function semetonTab(kat, btn) {
+  _lokerActiveTab = kat;
+  document.querySelectorAll('#lokerTabBar .loker-grid-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  else {
+    var el = document.querySelector('#lokerTabBar .loker-grid-btn[data-kat="'+kat+'"]');
+    if (el) el.classList.add('active');
+  }
+  renderSemetonPlus();
+}
+
+/* ── Notifikasi persetujuan Semeton+ untuk admin (nav bawah + tab Verifikasi) ── */
+function _lokerUpdateAdminNotif() {
+  var adm = (typeof isAdmin === 'function' && isAdmin()) || (typeof AUTH !== 'undefined' && AUTH && AUTH.user && AUTH.user.role === 'admin');
+  var count = (Array.isArray(DB.loker) ? DB.loker : []).filter(function(l){ return l.status === 'pending'; }).length;
+  var navB = document.getElementById('lokerNavNotif');
+  if (navB) {
+    if (adm && count > 0) { navB.textContent = count > 99 ? '99+' : count; navB.style.display = 'flex'; }
+    else navB.style.display = 'none';
+  }
+  var tabB = document.getElementById('lokerTabNotif');
+  if (tabB) {
+    if (adm && count > 0) { tabB.textContent = count > 99 ? '99+' : count; tabB.style.display = 'flex'; }
+    else tabB.style.display = 'none';
+  }
+}
+
+function renderSemetonPlus() {
+  if (!Array.isArray(DB.loker)) DB.loker = [];
+  _lokerUpdateAdminNotif();
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var vTab = document.getElementById('lokerTabVerifikasi');
+  if (vTab) vTab.style.display = adm ? '' : 'none';
+
+  var user = _lokerCurrentUser();
+  var list = DB.loker.slice().sort(function(a,b){ return new Date(b.tanggal) - new Date(a.tanggal); });
+  var filtered;
+
+  if (_lokerActiveTab === 'verifikasi') {
+    filtered = adm ? list.filter(function(l){ return l.status === 'pending'; }) : [];
+  } else if (_lokerActiveTab === 'punyaSaya') {
+    filtered = list.filter(function(l){ return l.penulisId === user.id || l.penulis === user.nama; });
+  } else if (_lokerActiveTab === 'semua') {
+    filtered = list.filter(function(l){ return l.status === 'aktif'; });
+  } else {
+    filtered = list.filter(function(l){ return l.status === 'aktif' && l.kategori === _lokerActiveTab; });
+  }
+
+  var listEl = document.getElementById('lokerList');
+  if (!listEl) return;
+
+  if (filtered.length === 0) {
+    var msg = _lokerActiveTab === 'verifikasi' ? '✅ Tidak ada info yang menunggu verifikasi'
+            : _lokerActiveTab === 'punyaSaya' ? '📭 Anda belum memasang info apapun'
+            : '📭 Belum ada info di kategori ini';
+    listEl.innerHTML = '<div class="loker-empty">' + msg + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(function(l) {
+    var kat = LOKER_KATEGORI[l.kategori] || { short: l.kategori };
+    var isOwner = (l.penulisId === user.id || l.penulis === user.nama);
+    var canManage = isOwner || adm;
+    var statusLabel = { pending: '⏳ Menunggu', aktif: '✅ Aktif', ditolak: '❌ Ditolak' }[l.status] || l.status;
+    var tersedia = (l.tersedia !== false); // default tersedia jika belum diset (data lama)
+
+    var actions = '';
+    if (_lokerActiveTab === 'verifikasi' && adm) {
+      actions = '<div class="loker-card-actions">'
+        + '<button class="btn btn-sm btn-primary" style="flex:1" onclick="lokerApprove(\'' + l.id + '\')">✅ Setujui</button>'
+        + '<button class="btn btn-sm btn-outline" style="flex:1" onclick="lokerReject(\'' + l.id + '\')">❌ Tolak</button>'
+        + '</div>';
+    } else if (canManage) {
+      actions = '<div class="loker-card-actions">'
+        + (l.status === 'aktif' ? '<button class="btn btn-sm btn-outline" style="flex:1" onclick="event.stopPropagation();lokerToggleTersedia(\'' + l.id + '\')">' + (tersedia ? '🔒 Tandai Selesai' : '🔓 Buka Lagi') + '</button>' : '')
+        + '<button class="btn btn-sm btn-outline" style="flex:0 0 auto;padding:0 12px;color:#e63946;border-color:rgba(230,57,70,0.35)" onclick="event.stopPropagation();lokerHapus(\'' + l.id + '\')">🗑️</button>'
+        + '</div>';
+    }
+
+    var deskripsiFull = escLoker(l.deskripsi || '').replace(/\n/g,'<br>');
+    var syaratFull = l.syarat ? ('<div class="loker-card-detail-block"><b>Persyaratan:</b> ' + escLoker(l.syarat).replace(/\n/g,'<br>') + '</div>') : '';
+
+    return '<div class="loker-card' + (!tersedia ? ' loker-card-closed' : '') + '" onclick="lokerCardToggle(\'' + l.id + '\')">'
+      + '<div class="loker-card-top">'
+      +   '<span class="loker-cat-tag">' + kat.short + '</span>'
+      +   '<div style="display:flex;align-items:center;gap:5px">'
+      +     (l.status === 'aktif'
+               ? '<span class="loker-tersedia-badge ' + (tersedia ? 'yes' : 'no') + (canManage ? ' clickable' : '') + '"' + (canManage ? ' onclick="event.stopPropagation();lokerToggleTersedia(\'' + l.id + '\')"' : '') + '>' + (tersedia ? '🟢 Tersedia' : '🔴 Tidak Tersedia') + '</span>'
+               : '')
+      +     ((_lokerActiveTab === 'punyaSaya' || _lokerActiveTab === 'verifikasi') ? '<span class="loker-status-badge ' + l.status + '">' + statusLabel + '</span>' : '')
+      +   '</div>'
+      + '</div>'
+      + '<div class="loker-card-title">' + escLoker(l.judul) + '</div>'
+      + '<div class="loker-card-meta-compact">'
+      +   (l.usaha ? '<span>🏷️ ' + escLoker(l.usaha) + '</span>' : '')
+      +   (l.lokasi ? '<span>📍 ' + escLoker(l.lokasi) + '</span>' : '')
+      +   '<span>🗓️ ' + fmtDate(l.tanggal) + '</span>'
+      +   '<span class="loker-expand-hint">Detail ▾</span>'
+      + '</div>'
+      + '<div class="loker-card-detail" id="lokerDetail_' + l.id + '">'
+      +   '<div class="loker-card-detail-block">' + deskripsiFull + '</div>'
+      +   syaratFull
+      +   '<div class="loker-card-meta-compact" style="margin:6px 0 0"><span>👤 ' + escLoker(l.penulis) + '</span></div>'
+      +   (l.status === 'aktif' ? _lokerContactHtml(l.kontak) : '')
+      +   actions
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function escLoker(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+/* ── Normalisasi nomor kontak untuk link WA (wa.me) & telp (tel:) ── */
+function _lokerPhoneLinks(kontak) {
+  var digits = String(kontak || '').replace(/[^\d]/g, '');
+  if (!digits) return null;
+  if (digits.charAt(0) === '0') digits = '62' + digits.slice(1);
+  else if (digits.slice(0,2) !== '62') digits = '62' + digits;
+  return { wa: 'https://wa.me/' + digits, tel: 'tel:+' + digits };
+}
+
+function _lokerContactHtml(kontak) {
+  var links = _lokerPhoneLinks(kontak);
+  if (!links) {
+    return '<div class="loker-card-contact"><span class="loker-contact-num">📞 ' + escLoker(kontak) + '</span></div>';
+  }
+  return '<div class="loker-card-contact" onclick="event.stopPropagation()">'
+    + '<span class="loker-contact-num">' + escLoker(kontak) + '</span>'
+    + '<a class="loker-contact-btn wa" href="' + links.wa + '" target="_blank" rel="noopener" title="Chat WhatsApp">'
+    +   '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.24.66-1.2 1.24-1.94 1.4-.5.1-1.16.18-3.4-.73-2.86-1.16-4.7-4.05-4.84-4.24-.14-.19-1.15-1.53-1.15-2.92s.72-2.07 1-2.35c.24-.24.55-.32.73-.32h.53c.17 0 .4-.03.62.48.24.55.8 1.9.87 2.04.07.14.12.3.02.49-.1.19-.15.3-.3.46-.15.16-.31.36-.44.48-.15.14-.3.3-.13.6.17.3.75 1.26 1.62 2.05 1.12 1.02 2.05 1.34 2.35 1.5.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.77.85 2.07 1.01.3.15.5.23.57.36.08.13.08.72-.16 1.38z"/></svg>'
+    + '</a>'
+    + '<a class="loker-contact-btn call" href="' + links.tel + '" title="Telepon Langsung">'
+    +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    + '</a>'
+    + '</div>';
+}
+
+function lokerFormAdapt(kategori) {
+  var cfg = {
+    cariKerja: {
+      judul: 'Judul', judulPh: 'Contoh: Mencari Kerja sebagai Admin Toko',
+      usaha: 'Posisi yang Dicari', usahaPh: 'Contoh: Kasir / Admin / Serabutan',
+      deskripsi: 'Ceritakan Pengalaman & Keahlian Anda', deskripsiPh: 'Jelaskan pengalaman kerja dan keahlian Anda...',
+      syarat: 'Kualifikasi Anda (opsional)', syaratPh: 'Contoh: Lulusan SMA, bisa mengoperasikan komputer'
+    },
+    pasangLowongan: {
+      judul: 'Judul', judulPh: 'Contoh: Dibutuhkan Kasir Toko Kelontong',
+      usaha: 'Nama Usaha & Posisi', usahaPh: 'Contoh: Toko Berkah Jaya - Kasir',
+      deskripsi: 'Jelaskan Detail Lowongan', deskripsiPh: 'Jelaskan detail pekerjaan, jam kerja, gaji, dsb...',
+      syarat: 'Persyaratan Pelamar', syaratPh: 'Contoh: Jujur, mau belajar, usia max 35 tahun'
+    },
+    cariMitra: {
+      judul: 'Judul', judulPh: 'Contoh: Cari Mitra Usaha Warung Sembako',
+      usaha: 'Jenis Usaha', usahaPh: 'Contoh: Warung Sembako',
+      deskripsi: 'Jelaskan Peluang Kerja Sama', deskripsiPh: 'Jelaskan bentuk kerja sama yang ditawarkan...',
+      syarat: 'Kriteria Mitra yang Dicari (opsional)', syaratPh: 'Contoh: Punya modal, lokasi strategis'
+    },
+    butuhKaryawan: {
+      judul: 'Judul', judulPh: 'Contoh: Butuh Karyawan Toko',
+      usaha: 'Nama Usaha', usahaPh: 'Contoh: Toko Berkah Jaya',
+      deskripsi: 'Jelaskan Kebutuhan Karyawan', deskripsiPh: 'Jelaskan posisi, jumlah, jam kerja, gaji, dsb...',
+      syarat: 'Persyaratan Karyawan', syaratPh: 'Contoh: Jujur, rajin, usia max 35 tahun'
+    },
+    tawarkanJasa: {
+      judul: 'Judul', judulPh: 'Contoh: Jasa Service Elektronik',
+      usaha: 'Nama Jasa / Keahlian', usahaPh: 'Contoh: Service Elektronik & Kelistrikan',
+      deskripsi: 'Jelaskan Jasa/Keahlian yang Ditawarkan', deskripsiPh: 'Jelaskan layanan, cakupan kerja, tarif, dsb...',
+      syarat: 'Catatan Tambahan (opsional)', syaratPh: 'Contoh: Melayani panggilan ke rumah'
+    }
+  };
+  var c = cfg[kategori] || cfg.cariKerja;
+  var lJudul = document.getElementById('lokerLabelJudul');
+  var lUsaha = document.getElementById('lokerLabelUsaha');
+  var lDeskripsi = document.getElementById('lokerLabelDeskripsi');
+  var lSyarat = document.getElementById('lokerLabelSyarat');
+  var iJudul = document.getElementById('lokerJudul');
+  var iUsaha = document.getElementById('lokerUsaha');
+  var iDeskripsi = document.getElementById('lokerDeskripsi');
+  var iSyarat = document.getElementById('lokerSyarat');
+  if (lJudul) lJudul.textContent = c.judul;
+  if (lUsaha) lUsaha.textContent = c.usaha;
+  if (lDeskripsi) lDeskripsi.textContent = c.deskripsi;
+  if (lSyarat) lSyarat.textContent = c.syarat;
+  if (iJudul) iJudul.placeholder = c.judulPh;
+  if (iUsaha) iUsaha.placeholder = c.usahaPh;
+  if (iDeskripsi) iDeskripsi.placeholder = c.deskripsiPh;
+  if (iSyarat) iSyarat.placeholder = c.syaratPh;
+}
+
+function openLokerModal() {
+  var kategoriAwal = (['cariKerja','pasangLowongan','cariMitra','butuhKaryawan','tawarkanJasa'].indexOf(_lokerActiveTab) !== -1)
+    ? _lokerActiveTab : 'cariKerja';
+  document.getElementById('lokerKategori').value = kategoriAwal;
+  document.getElementById('lokerJudul').value = '';
+  document.getElementById('lokerUsaha').value = '';
+  document.getElementById('lokerLokasi').value = '';
+  document.getElementById('lokerDeskripsi').value = '';
+  document.getElementById('lokerSyarat').value = '';
+  document.getElementById('lokerKontak').value = '';
+  lokerFormAdapt(kategoriAwal);
+  openModal('modalLokerPost');
+}
+
+function saveLokerPost() {
+  var judul = document.getElementById('lokerJudul').value.trim();
+  var deskripsi = document.getElementById('lokerDeskripsi').value.trim();
+  var kontak = document.getElementById('lokerKontak').value.trim();
+  if (!judul) { showToast('⚠️ Judul wajib diisi'); return; }
+  if (!deskripsi) { showToast('⚠️ Deskripsi wajib diisi'); return; }
+  if (!kontak) { showToast('⚠️ Kontak wajib diisi'); return; }
+
+  var user = _lokerCurrentUser();
+  if (!Array.isArray(DB.loker)) DB.loker = [];
+  DB.loker.push({
+    id: uid(),
+    kategori: document.getElementById('lokerKategori').value,
+    judul: judul,
+    usaha: document.getElementById('lokerUsaha').value.trim(),
+    lokasi: document.getElementById('lokerLokasi').value.trim(),
+    deskripsi: deskripsi,
+    syarat: document.getElementById('lokerSyarat').value.trim(),
+    kontak: kontak,
+    penulis: user.nama,
+    penulisId: user.id,
+    status: (typeof isAdmin === 'function' && isAdmin()) ? 'aktif' : 'pending',
+    tersedia: true,
+    tanggal: nowISO()
+  });
+  saveDB();
+  closeModal('modalLokerPost');
+  showToast((typeof isAdmin === 'function' && isAdmin()) ? '✅ Info loker diposting' : '📤 Terkirim, menunggu verifikasi admin');
+  renderSemetonPlus();
+}
+
+/* ── Compact card: expand/collapse detail & toggle ketersediaan ── */
+function lokerCardToggle(id) {
+  var el = document.getElementById('lokerDetail_' + id);
+  if (!el) return;
+  var card = el.closest('.loker-card');
+  el.classList.toggle('open');
+  if (card) card.classList.toggle('loker-card-expanded');
+}
+
+function lokerToggleTersedia(id) {
+  var user = _lokerCurrentUser();
+  var l = DB.loker.find(function(x){ return x.id === id; });
+  if (!l) return;
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var isOwner = (l.penulisId === user.id || l.penulis === user.nama);
+  if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+  l.tersedia = (l.tersedia === false) ? true : false;
+  saveDB();
+  renderSemetonPlus();
+  showToast(l.tersedia ? '🔓 Ditandai masih tersedia' : '🔒 Ditandai sudah tidak tersedia');
+}
+
+function lokerApprove(id) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var l = DB.loker.find(function(x){ return x.id === id; });
+  if (l) { l.status = 'aktif'; saveDB(); renderSemetonPlus(); showToast('✅ Info loker disetujui & tayang'); }
+}
+
+function lokerReject(id) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var l = DB.loker.find(function(x){ return x.id === id; });
+  if (l) { l.status = 'ditolak'; saveDB(); renderSemetonPlus(); showToast('❌ Info loker ditolak'); }
+}
+
+function lokerHapus(id) {
+  var user = _lokerCurrentUser();
+  var l = DB.loker.find(function(x){ return x.id === id; });
+  if (!l) return;
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var isOwner = (l.penulisId === user.id || l.penulis === user.nama);
+  if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+  if (!confirm('Hapus info ini?')) return;
+  DB.loker = DB.loker.filter(function(x){ return x.id !== id; });
+  saveDB();
+  renderSemetonPlus();
+  showToast('🗑️ Info loker dihapus');
 }
 
 // ========== FORUM TABS ==========
@@ -36988,7 +38000,7 @@ window.addEventListener('load', ()=>{
   const safeOn = (id, fn) => { const el = document.getElementById(id); if(el) el.addEventListener('click', fn); };
   safeOn('modalSimpan', e=>{ if(!e.target.closest('.modal-sheet')) closeModal('modalSimpan'); });
   safeOn('modalPinjam', e=>{ if(!e.target.closest('.modal-sheet')) closeModal('modalPinjam'); });
-  ['modalKK','modalCicilan','modalArisanSetting','modalTambahPeserta','modalForumPost','modalAset','modalDetailNasabah','modalSimpan','modalPinjam','modalTarikTunai','modalManualTxn','modalEditTxn','modalEditPinjaman','modalBuatPolling','modalTambahPembiayaan','modalDetailPembiayaan','modalEditSlide','modalCatatAngsuran','modalBankInfo'].forEach(id=>{
+  ['modalKK','modalCicilan','modalArisanSetting','modalTambahPeserta','modalForumPost','modalLokerPost','modalAset','modalDetailNasabah','modalSimpan','modalPinjam','modalTarikTunai','modalManualTxn','modalEditTxn','modalEditPinjaman','modalBuatPolling','modalTambahPembiayaan','modalDetailPembiayaan','modalEditSlide','modalCatatAngsuran','modalBankInfo'].forEach(id=>{
     safeOn(id, function(e){ if(e.target===this) closeModal(id); });
   });
   // modalBackup: pastikan overlay konfirmasi ikut ditutup saat klik backdrop
@@ -51863,35 +52875,48 @@ window.renderTabunganBerjangkaHTML = function() {
       var nasabahObj = typeof getNasabah === 'function' ? getNasabah(tb.kkId) : null;
       var estBH = tb.status === 'aktif' ? tbBagiHasil(tb, nowISO()) : (tb.bagiHasilDiterima || 0);
 
-      // ── Kartu minimalis khusus Berjangka yang sedang AKTIF ──
+      // ── Kartu Berjangka AKTIF — pakai gaya komponen "Pengingat Tagihan" (ht-card) ──
       if (tb.status === 'aktif') {
         var sisaHariAktif = tbSisaHari(tb);
         var siapCair = sisaHariAktif <= 0;
-        var dotClr = siapCair ? '#1a6640' : '#1a472a';
-        var statusTxt = siapCair ? 'Siap dicairkan' : sisaHariAktif + ' hari lagi';
-        return '<div class="card" style="margin:0 0 10px;padding:14px 16px">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
-          + '<div style="min-width:0">'
-          + (myId ? '' : '<div style="font-size:11px;font-weight:700;color:var(--text-soft);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (nasabahObj ? nasabahObj.nama : tb.kkId) + '</div>')
-          + '<div style="font-family:\'Playfair Display\',serif;font-size:19px;font-weight:700;color:var(--forest)">' + fmt(tb.jumlah) + '</div>'
-          + '<div style="font-size:10.5px;color:var(--text-soft);margin-top:2px">Tenor ' + tb.tenorBulan + ' bln · Jatuh tempo ' + fmtDate(tb.tanggalJatuhTempo) + '</div>'
+        var dateBadgeClass = siapCair ? 'normal' : sisaHariAktif <= 7 ? 'soon' : 'normal';
+        var dateBadgeTxt = siapCair ? 'Siap Dicairkan' : sisaHariAktif + ' hari lagi';
+
+        var mulaiMs  = new Date(tb.tanggalMulai).getTime();
+        var jatuhMs  = new Date(tb.tanggalJatuhTempo).getTime();
+        var totalMs  = jatuhMs - mulaiMs;
+        var pctTenor = totalMs > 0 ? Math.min(100, Math.max(0, Math.round(((Date.now() - mulaiMs) / totalMs) * 100))) : 0;
+
+        var namaBaris = myId ? ('Tenor ' + tb.tenorBulan + ' bulan') : (nasabahObj ? nasabahObj.nama : tb.kkId);
+        var subBaris  = myId ? ('Akad ' + (tb.akad || 'Mudharabah')) : ('Tenor ' + tb.tenorBulan + ' bulan · Akad ' + (tb.akad || 'Mudharabah'));
+
+        return '<div class="card ht-card' + (dateBadgeClass === 'soon' ? ' upcoming' : '') + '" style="margin:0 0 10px" data-tb-id="' + tb.id + '">'
+          + '<div class="ht-card-date">'
+          + '<span>Jatuh tempo ' + fmtDate(tb.tanggalJatuhTempo) + '</span>'
+          + '<span class="ht-date-badge ' + dateBadgeClass + '">' + dateBadgeTxt + '</span>'
           + '</div>'
-          + '<div style="text-align:right;flex-shrink:0">'
-          + '<div style="width:7px;height:7px;border-radius:50%;background:' + dotClr + ';margin-left:auto;margin-bottom:4px"></div>'
-          + '<div style="font-size:9.5px;font-weight:700;color:' + dotClr + ';white-space:nowrap">' + statusTxt + '</div>'
+          + '<div class="ht-card-body">'
+          + '<div class="ht-card-row">'
+          + '<div class="ht-avatar" style="background:rgba(176,122,0,0.12);color:#b07a00">🔒</div>'
+          + '<div class="ht-info">'
+          + '<div class="ht-info-name">' + namaBaris + '</div>'
+          + '<div class="ht-info-sub">' + subBaris + '</div>'
+          + '<div class="ht-progress-bar"><div class="ht-progress-fill" style="width:' + pctTenor + '%;background:linear-gradient(90deg,#b07a00,#d9a441)"></div></div>'
           + '</div>'
+          + '<div class="ht-amount">'
+          + '<div class="ht-amount-val">' + fmt(tb.jumlah) + '</div>'
+          + '<div class="ht-amount-progress">Bagi Hasil <b style="color:#b07a00">' + fmt(estBH) + '</b></div>'
           + '</div>'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.06)">'
-          + '<span style="font-size:10.5px;color:var(--text-soft)">Estimasi Bagi Hasil</span>'
-          + '<span style="font-size:12.5px;font-weight:700;color:#b07a00">' + fmt(estBH) + '</span>'
           + '</div>'
           + (tb.keterangan ? '<div style="font-size:10.5px;color:var(--text-soft);margin-top:8px;font-style:italic">"' + tb.keterangan + '"</div>' : '')
-          + '<div style="display:flex;gap:8px;margin-top:10px">'
-          + '<button class="keu-action-btn keu-action-primary" style="flex:1;padding:8px;font-size:11.5px" onclick="bukaCairTB(\'' + tb.id + '\')">Cairkan</button>'
-          + '<button class="keu-action-btn keu-action-secondary" style="flex:1;padding:8px;font-size:11.5px" onclick="unduhAkadTB(\'' + tb.id + '\')">📄 Unduh Dokumen Akad (PDF)</button>'
+          + '</div>'
+          + '<div class="ht-card-actions">'
+          + '<button class="ht-btn ht-btn-detail" onclick="unduhAkadTB(\'' + tb.id + '\')">📄 Unduh Dokumen Akad (PDF)</button>'
+          + '<button class="ht-btn ht-btn-bayar" style="background:#b07a00;box-shadow:0 2px 6px rgba(176,122,0,0.3)" onclick="bukaCairTB(\'' + tb.id + '\')">💸 Cairkan</button>'
           + '</div>'
           + '</div>';
       }
+
 
       var actions = '';
       if (tb.status === 'menunggu' && isAdm) {
@@ -53256,12 +54281,26 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
 (function(){
   'use strict';
 
+  var _lastTBSnapshot = null;
+  function _tbSnapshot() {
+    try {
+      var list = (typeof getTBList === 'function') ? getTBList() : ((window.DB && window.DB.tabunganBerjangka) || []);
+      return JSON.stringify(list.map(function(t){
+        return [t.id, t.status, t.jumlah, t.tandaTanganPengurus ? 1 : 0, t.tanggalCair || '', t.bagiHasilDiterima || 0];
+      }));
+    } catch (e) { return null; }
+  }
+
   function _redrawTBTabIfOpen() {
     try {
       if (typeof window.keuanganTab !== 'function') return;
       if (!document.getElementById('keuanganContent')) return;
       if (window._rencoActiveKeuanganTab === 'tabungan-berjangka' ||
           window._rencoActiveKeuanganTab === 'transparansi-dana') {
+        // Cegah render ulang (dan kedipan layar) jika data belum benar-benar berubah
+        var snap = _tbSnapshot();
+        if (snap !== null && snap === _lastTBSnapshot) return;
+        _lastTBSnapshot = snap;
         window.keuanganTab(window._rencoActiveKeuanganTab, null);
       }
     } catch (e) { /* diamkan — jangan sampai patch ini yang bikin error */ }
@@ -53287,7 +54326,9 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
 
   // Fallback tambahan: ikut polling notifikasi approval yang sudah ada
   // (setiap 8 detik) supaya tetap ter-cover walau hook di atas gagal
-  // terpasang karena urutan load script.
+  // terpasang karena urutan load script. _redrawTBTabIfOpen sendiri sudah
+  // membandingkan snapshot data, jadi tab TIDAK akan digambar ulang
+  // (dan layar TIDAK berkedip) kecuali memang ada perubahan status nyata.
   setInterval(_redrawTBTabIfOpen, 8000);
 
   console.log('✅ Patch: Status pengajuan BERKAH di sisi Nasabah kini auto-refresh saat disetujui/ditolak admin');
