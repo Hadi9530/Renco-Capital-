@@ -3321,6 +3321,13 @@ body {
   font-family: inherit;
 }
 .loker-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 12.5px; }
+.loker-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 10px; }
+.loker-stats-grid .stat-card { padding: 10px 8px; }
+.loker-stats-grid .stat-card .stat-icon { font-size: 20px; min-height: 26px; margin-bottom: 3px; }
+.loker-stats-grid .stat-card .stat-val { font-size: 16px; }
+.loker-stats-list { padding: 0 16px 14px; font-size: 12px; line-height: 2; color: var(--text-soft); }
+.loker-stats-list b { color: var(--text); }
+.loker-stats-updated { padding: 0 16px 12px; font-size: 10px; color: #9ca3af; text-align: right; font-style: italic; }
 
 /* Grid tab Semeton+ — tampilan sama seperti grid menu Hiburan, ditambah animasi gradient di pinggir tab aktif */
 .loker-tab-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
@@ -5243,6 +5250,9 @@ function _catatLoginLog(username, nama, role, kkId) {
 }
 
 function authLogout() {
+  if (typeof auditLog === 'function' && AUTH && AUTH.user) {
+    auditLog('Logout', (AUTH.user.nama || AUTH.user.username) + ' keluar dari sistem', 'login');
+  }
   AUTH = { loggedIn: false, user: null };
   try { sessionStorage.removeItem(AUTH_KEY); } catch(e) {}
   closeModal('modalUserProfile');
@@ -5642,7 +5652,10 @@ function applyRoleRestrictions() {
 
 
 function historyLog(aksi, detail) {
-  if (!isAdmin()) return; // hanya rekam tindakan admin
+  // Catat juga ke Audit Log permanen (tidak bisa dihapus) sebelum cek role,
+  // supaya seluruh histori bawaan aplikasi otomatis ikut terekam di sana.
+  if (typeof auditLog === 'function') auditLog(aksi, detail, 'umum');
+  if (!isAdmin()) return; // hanya rekam tindakan admin ke History (yang bisa dibersihkan)
   try {
     var logs = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     logs.unshift({
@@ -5659,6 +5672,133 @@ function historyLog(aksi, detail) {
 
 function historyGetLogs() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   AUDIT LOG — mencatat SEMUA aktivitas penting di sistem.
+   Berbeda dengan "History Perubahan Data" di atas (yang boleh
+   dibersihkan oleh admin), Audit Log ini SENGAJA tidak diberi
+   tombol atau fungsi hapus/bersihkan sama sekali di seluruh
+   aplikasi — demi menjaga integritas jejak audit. Data disimpan
+   di DB.auditLog sehingga ikut tersinkron ke Supabase (cloud),
+   bukan cuma localStorage per-perangkat.
+═══════════════════════════════════════════════════════ */
+var AUDIT_LOG_MAX = 5000; // batas praktis penyimpanan — HANYA entri TERLAMA yang terpangkas otomatis
+
+function auditLog(aksi, detail, kategori) {
+  try {
+    if (!window.DB) return;
+    if (!Array.isArray(DB.auditLog)) DB.auditLog = [];
+    var u = (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? AUTH.user : null;
+    DB.auditLog.push({
+      id       : 'aud' + Date.now() + Math.random().toString(36).slice(2, 7),
+      waktu    : new Date().toISOString(),
+      aksi     : aksi || '-',
+      detail   : detail || '',
+      kategori : kategori || 'umum',
+      user     : u ? (u.nama || u.username) : 'Sistem',
+      username : u ? (u.username || '-') : '-',
+      role     : u ? (u.role || '-') : '-',
+      device   : (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent.substring(0, 80) : '-'
+    });
+    // Pangkas otomatis dari entri TERLAMA saja jika sudah melewati batas —
+    // ini bukan "hapus manual", murni menjaga ukuran penyimpanan tetap wajar.
+    if (DB.auditLog.length > AUDIT_LOG_MAX) DB.auditLog = DB.auditLog.slice(DB.auditLog.length - AUDIT_LOG_MAX);
+    if (typeof saveDB === 'function') saveDB();
+  } catch(e) {}
+}
+
+function auditLogGetAll() {
+  try { return (window.DB && Array.isArray(DB.auditLog)) ? DB.auditLog.slice().reverse() : []; } catch(e) { return []; }
+}
+
+function renderAuditLogHTML(filterKategori, filterTeks) {
+  var logs = auditLogGetAll();
+  if (filterKategori && filterKategori !== 'semua') {
+    logs = logs.filter(function(l){ return l.kategori === filterKategori; });
+  }
+  if (filterTeks) {
+    var ft = filterTeks.toLowerCase();
+    logs = logs.filter(function(l) {
+      return (l.aksi||'').toLowerCase().indexOf(ft) !== -1 ||
+             (l.detail||'').toLowerCase().indexOf(ft) !== -1 ||
+             (l.user||'').toLowerCase().indexOf(ft) !== -1 ||
+             (l.username||'').toLowerCase().indexOf(ft) !== -1;
+    });
+  }
+  var fmt = function(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+           d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  };
+  var ikonMap = {
+    'Tambah':'➕', 'Edit':'✏️', 'Hapus':'🗑️', 'Login':'🔐', 'Logout':'🚪',
+    'Simpan':'💾', 'Bayar':'💰', 'Approve':'✅', 'Setuju':'✅', 'Tolak':'❌',
+    'Admin':'👑', 'Password':'🔑', 'Nonaktif':'🔒', 'Aktifkan':'🔓'
+  };
+  function getIkon(aksi) {
+    for (var k in ikonMap) { if (aksi && aksi.indexOf(k) !== -1) return ikonMap[k]; }
+    return '📌';
+  }
+  var html = '<div style="padding:0 0 20px">';
+  html += '<div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);border-radius:10px;padding:9px 11px;margin-bottom:12px;font-size:10.5px;color:#991b1b;line-height:1.5">' +
+    '🔒 <strong>Audit Log permanen.</strong> Semua aktivitas tercatat di sini secara otomatis dan <strong>tidak dapat dihapus</strong> oleh siapa pun, termasuk admin, demi menjaga integritas jejak audit.' +
+  '</div>';
+  html += '<div style="display:flex;gap:6px;margin-bottom:10px">' +
+    '<input type="text" id="auditLogSearch" placeholder="🔍 Cari aksi, detail, atau nama user..." value="' + (filterTeks ? filterTeks.replace(/"/g,'&quot;') : '') + '" oninput="_auditLogRefresh()" style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:12px;font-family:inherit;background:white;outline:none">' +
+  '</div>';
+  html += '<div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px">' +
+    ['semua','login','user-mgmt','nasabah','transaksi','keuangan'].map(function(k){
+      var label = { semua:'Semua', login:'🔐 Login', 'user-mgmt':'👥 User/Admin', nasabah:'👤 Nasabah', transaksi:'💰 Transaksi', keuangan:'📊 Keuangan' }[k];
+      var active = (filterKategori||'semua') === k;
+      return '<button onclick="_auditLogSetFilter(\'' + k + '\')" style="white-space:nowrap;padding:6px 12px;border-radius:99px;border:1.5px solid ' + (active ? '#2d6a4f' : '#e5e7eb') + ';background:' + (active ? '#2d6a4f' : 'white') + ';color:' + (active ? 'white' : '#6b7280') + ';font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit">' + label + '</button>';
+    }).join('') +
+  '</div>';
+
+  if (!logs.length) {
+    html += '<div style="text-align:center;padding:60px 20px;color:var(--text-soft)">' +
+      '<div style="font-size:40px;margin-bottom:12px">📭</div>' +
+      '<div style="font-size:14px;font-weight:700">Belum ada catatan audit</div>' +
+      '<div style="font-size:12px;margin-top:4px">Setiap aktivitas penting akan otomatis tercatat di sini</div>' +
+    '</div>';
+  } else {
+    logs.slice(0, 300).forEach(function(log) {
+      var isAdm = log.role === 'admin';
+      html += '<div style="background:white;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(220,38,38,0.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + getIkon(log.aksi) + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:700;color:var(--text)">' + (log.aksi||'-') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-soft);margin-top:2px">' + (log.detail||'-') + '</div>' +
+          '<div style="font-size:10px;color:#aaa;margin-top:4px">' + (isAdm ? '👑' : '👤') + ' ' + (log.user||'-') + ' (' + (log.username||'-') + ') · 🕐 ' + fmt(log.waktu) + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+    if (logs.length > 300) {
+      html += '<div style="text-align:center;padding:12px;color:#9ca3af;font-size:11px">Menampilkan 300 dari ' + logs.length + ' catatan terbaru. Download PDF untuk melihat seluruhnya.</div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+window._auditLogFilterKategori = 'semua';
+window._auditLogFilterTeks = '';
+function _auditLogRefresh() {
+  var el = document.getElementById('auditLogSearch');
+  window._auditLogFilterTeks = el ? el.value : '';
+  var c = document.getElementById('auditLogBody');
+  if (c) c.innerHTML = renderAuditLogHTML(window._auditLogFilterKategori, window._auditLogFilterTeks);
+  setTimeout(function(){ var s = document.getElementById('auditLogSearch'); if (s) { s.focus(); var v=s.value; s.value=''; s.value=v; } }, 0);
+}
+function _auditLogSetFilter(k) {
+  window._auditLogFilterKategori = k;
+  var c = document.getElementById('auditLogBody');
+  if (c) c.innerHTML = renderAuditLogHTML(window._auditLogFilterKategori, window._auditLogFilterTeks);
+}
+function downloadAuditLogPDF() {
+  var logs = auditLogGetAll();
+  if (!logs.length) { if (typeof showToast==='function') showToast('⚠️ Belum ada catatan audit untuk didownload'); return; }
+  _downloadLaporanTabPDF('audit-log', 'Audit Log');
 }
 
 function renderHistoryHTML() {
@@ -7152,18 +7292,23 @@ window.submitAdminChangePassword = function() {
       AUTH.user = { username:'admin', nama:'Administrator', role:'admin' };
       if (typeof authSave === 'function') authSave();
       if (typeof _catatLoginLog === 'function') _catatLoginLog('admin', 'Administrator', 'admin');
-      if (typeof historyLog === 'function') setTimeout(function(){ historyLog('Login', 'Admin masuk'); }, 500);
+      if (typeof historyLog === 'function') setTimeout(function(){ historyLog('Login', 'Admin (utama) masuk'); }, 500);
+      if (typeof auditLog === 'function') auditLog('Login Berhasil', 'Admin utama (admin) masuk ke sistem', 'login');
       return true;
     }
     if (typeof usersLoad === 'function') {
       var users = usersLoad();
       var found = users.find(function(x){ return x.username.toLowerCase()===u && x.password===password && x.aktif; });
       if (found) {
+        // Role diambil dari data user itu sendiri — mendukung akun Admin ke-2/ke-3
+        // (role:'admin') selain akun nasabah biasa (role:'nasabah').
+        var role = found.role || 'nasabah';
         AUTH.loggedIn = true;
-        AUTH.user = { id:found.id, username:found.username, nama:found.nama, role:'nasabah', nasabahId:found.nasabahId, aksesMenu:found.aksesMenu };
+        AUTH.user = { id:found.id, username:found.username, nama:found.nama, role:role, nasabahId:found.nasabahId, aksesMenu:found.aksesMenu };
         if (typeof authSave === 'function') authSave();
-        if (typeof _catatLoginLog === 'function') _catatLoginLog(found.username, found.nama, 'nasabah', found.id);
-        if (typeof historyLog === 'function') setTimeout(function(){ historyLog('Login', (found.nama||found.username) + ' masuk'); }, 500);
+        if (typeof _catatLoginLog === 'function') _catatLoginLog(found.username, found.nama, role, found.id);
+        if (typeof historyLog === 'function') setTimeout(function(){ historyLog('Login', (found.nama||found.username) + (role === 'admin' ? ' (Admin) masuk' : ' masuk')); }, 500);
+        if (typeof auditLog === 'function') auditLog('Login Berhasil', (found.nama||found.username) + ' (' + role + ') masuk ke sistem', 'login');
         // ── Nasabah wajib baca data langsung dari Supabase ──
         // Paksa muat ulang segera agar tidak memakai data lokal/offline
         // yang mungkin sempat termuat sebelum login (mis. saat splash offline).
@@ -7171,6 +7316,8 @@ window.submitAdminChangePassword = function() {
         return true;
       }
     }
+    // ── Login gagal — tetap dicatat ke Audit Log demi keamanan ──
+    if (typeof auditLog === 'function') auditLog('Login Gagal', 'Percobaan login gagal untuk username: ' + (username||'-'), 'login');
     return false;
   };
 })();
@@ -7208,12 +7355,14 @@ function renderUserProfile() {
     (adm ?
       ('<div class="adminp-grid">' +
         '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalUserMgmt' + q + ')},200)" style="--apc:#2d6a4f;--apc-bg:rgba(45,106,79,0.14)"><div class="adminp-icon">&#x1F465;</div><span class="adminp-label">Kelola User Nasabah</span></button>' +
+        '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalAdminMgmt' + q + ')},200)" style="--apc:#b07a00;--apc-bg:rgba(244,169,34,0.18)"><div class="adminp-icon">&#x1F451;</div><span class="adminp-label">Kelola Admin</span></button>' +
         '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalPengurusMgmt' + q + ')},200)" style="--apc:#2d6a4f;--apc-bg:rgba(45,106,79,0.14)"><div class="adminp-icon">&#x1F4CB;</div><span class="adminp-label">Struktur Pengurus</span></button>' +
+        '<button class="adminp-card" onclick="closeModal(' + q + 'modalUserProfile' + q + ');setTimeout(function(){openModal(' + q + 'modalAuditLog' + q + ')},200)" style="--apc:#dc2626;--apc-bg:rgba(220,38,38,0.12)"><div class="adminp-icon">&#x1F6E1;&#xFE0F;</div><span class="adminp-label">Audit Log</span></button>' +
         '<button class="adminp-card" onclick="showAdminChangePassword()" style="--apc:#4361ee;--apc-bg:rgba(67,97,238,0.14)"><div class="adminp-icon">&#x1F510;</div><span class="adminp-label">Ganti Password</span></button>' +
         '<button class="adminp-card" onclick="authLogout()" style="--apc:#dc2626;--apc-bg:rgba(220,38,38,0.12)"><div class="adminp-icon">&#x1F6AA;</div><span class="adminp-label">Keluar / Logout</span></button>' +
       '</div>' +
       '<style>' +
-        '.adminp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}' +
+        '.adminp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}' +
         '.adminp-card{display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.6);border-radius:14px;padding:11px 4px 9px;cursor:pointer;font-family:inherit;transition:all 0.18s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 10px rgba(0,0,0,0.05);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);-webkit-tap-highlight-color:transparent;text-align:center}' +
         '.adminp-card:active{transform:scale(0.95);background:rgba(255,255,255,0.55)}' +
         '.adminp-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;background:var(--apc-bg);border:1px solid rgba(255,255,255,0.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}' +
@@ -7443,6 +7592,139 @@ window.cancelUserForm = function() {
   document.getElementById('userFormId').value = '';
 };
 
+/* ═══════════════════════════════════════════════════════
+   KELOLA ADMIN (Admin ke-2, ke-3, dst.)
+   Akun-akun ini disimpan di DB.users seperti akun nasabah,
+   namun dengan role:'admin' sehingga mendapat akses penuh
+   sebagaimana akun admin utama (username tetap "admin" /
+   hardcoded, tidak bisa diganggu-gugat dari sini). Fitur ini
+   berguna jika koperasi punya lebih dari satu pengurus yang
+   perlu login sebagai admin dengan username masing-masing.
+═══════════════════════════════════════════════════════ */
+function _adminList() {
+  return usersLoad().filter(function(u){ return u.role === 'admin'; });
+}
+
+function renderAdminManagement() {
+  var admins = _adminList();
+  document.getElementById('amStatAdmin').textContent = admins.length;
+  document.getElementById('amStatAktif').textContent = admins.filter(function(u){ return u.aktif; }).length;
+
+  var html = admins.length === 0
+    ? '<div style="text-align:center;padding:28px 16px;color:#9ca3af;font-size:13px;border:2px dashed #e5e7eb;border-radius:14px;margin-bottom:12px"><div style="font-size:36px;margin-bottom:8px">&#x1F451;</div><div style="font-weight:700;color:#6b7280">Belum ada admin tambahan</div><div style="font-size:11px;margin-top:4px">Klik tombol di bawah untuk membuat akun admin baru</div></div>'
+    : admins.map(function(u) {
+        var initials = u.username.slice(0,2).toUpperCase();
+        return '<div style="background:white;border-radius:10px;border:1px solid rgba(0,0,0,0.07);padding:8px 9px;margin-bottom:5px;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;align-items:center;gap:8px">' +
+          '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#b07a00,#f4a922);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;flex-shrink:0">' + initials + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="display:flex;align-items:center;gap:5px">' +
+              '<span style="font-size:12px;font-weight:800;color:#1c3025">' + (u.nama || u.username) + '</span>' +
+              '<span style="font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:99px;background:' + (u.aktif ? 'rgba(45,106,79,0.12)' : 'rgba(220,38,38,0.1)') + ';color:' + (u.aktif ? '#2d6a4f' : '#dc2626') + '">' + (u.aktif ? 'Aktif' : 'Nonaktif') + '</span>' +
+            '</div>' +
+            '<div style="font-size:9.5px;color:#9ca3af;margin-top:1px">@' + u.username + ' &middot; Admin</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:4px;flex-shrink:0">' +
+            '<button onclick="editAdmin(\'' + u.id + '\')" title="Edit" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(45,106,79,0.3);background:rgba(45,106,79,0.07);color:#2d6a4f;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">&#x270F;&#xFE0F;</button>' +
+            '<button onclick="toggleAdminAktif(\'' + u.id + '\')" title="' + (u.aktif ? 'Nonaktifkan' : 'Aktifkan') + '" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(244,169,34,0.4);background:rgba(244,169,34,0.1);color:#b07a00;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">' + (u.aktif ? '&#x1F512;' : '&#x1F513;') + '</button>' +
+            '<button onclick="deleteAdmin(\'' + u.id + '\')" title="Hapus" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(220,38,38,0.25);background:rgba(220,38,38,0.07);color:#dc2626;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">&#x1F5D1;</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+  document.getElementById('adminMgmtList').innerHTML = html;
+}
+
+window.showNewAdminForm = function() {
+  renderAdminManagement();
+  document.getElementById('adminFormId').value = '';
+  document.getElementById('adminFormNama').value = '';
+  document.getElementById('adminFormUsername').value = '';
+  document.getElementById('adminFormPassword').value = '';
+  document.getElementById('adminFormPwHint').textContent = '';
+  document.getElementById('adminFormTitle').textContent = '&#x2795; Tambah Admin Baru';
+  document.getElementById('adminFormSection').style.display = 'block';
+  document.getElementById('adminFormSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+window.editAdmin = function(userId) {
+  var u = usersLoad().find(function(x){ return x.id === userId && x.role === 'admin'; });
+  if (!u) return;
+  document.getElementById('adminFormId').value = u.id;
+  document.getElementById('adminFormNama').value = u.nama || '';
+  document.getElementById('adminFormUsername').value = u.username;
+  document.getElementById('adminFormPassword').value = '';
+  document.getElementById('adminFormPwHint').textContent = 'Kosongkan jika tidak ingin mengubah password';
+  document.getElementById('adminFormTitle').textContent = '&#x270F;&#xFE0F; Edit Admin';
+  document.getElementById('adminFormSection').style.display = 'block';
+  document.getElementById('adminFormSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+window.toggleAdminAktif = function(userId) {
+  var users = usersLoad();
+  var u = users.find(function(x){ return x.id === userId && x.role === 'admin'; });
+  if (!u) return;
+  u.aktif = !u.aktif;
+  usersSave(users);
+  renderAdminManagement();
+  showToast(u.aktif ? '&#x2705; Admin diaktifkan' : '&#x1F512; Admin dinonaktifkan');
+  if (typeof auditLog === 'function') auditLog(u.aktif ? 'Aktifkan Admin' : 'Nonaktifkan Admin', 'Akun admin: ' + (u.nama || u.username) + ' (@' + u.username + ')', 'user-mgmt');
+};
+
+window.deleteAdmin = function(userId) {
+  if (window._deleteAdminBusy) return;
+  window._deleteAdminBusy = true;
+  setTimeout(function(){ window._deleteAdminBusy = false; }, 800);
+  var users = usersLoad();
+  var u = users.find(function(x){ return x.id === userId && x.role === 'admin'; });
+  if (!u) return;
+  if (!confirm('Hapus akun admin "' + (u.nama || u.username) + '"? Akun ini tidak bisa login lagi.')) return;
+
+  if (window.DB) {
+    if (!Array.isArray(window.DB.deletedUserIds)) window.DB.deletedUserIds = [];
+    if (!window.DB.deletedUserIds.includes(userId)) window.DB.deletedUserIds.push(userId);
+  }
+  usersSave(users.filter(function(x){ return x.id !== userId; }));
+  renderAdminManagement();
+  showToast('🗑️ Akun admin dihapus');
+  if (typeof auditLog === 'function') auditLog('Hapus Admin', 'Akun admin dihapus: ' + (u.nama || u.username) + ' (@' + u.username + ')', 'user-mgmt');
+};
+
+window.saveAdminForm = function() {
+  var id = document.getElementById('adminFormId').value;
+  var nama = document.getElementById('adminFormNama').value.trim();
+  var username = document.getElementById('adminFormUsername').value.trim();
+  var password = document.getElementById('adminFormPassword').value;
+
+  if (!nama) { showToast('&#x26A0;&#xFE0F; Nama wajib diisi'); return; }
+  if (!username) { showToast('&#x26A0;&#xFE0F; Username wajib diisi'); return; }
+  if (username.toLowerCase() === 'admin') { showToast('&#x26A0;&#xFE0F; Username "admin" sudah dipakai akun admin utama'); return; }
+  if (!id && !password) { showToast('&#x26A0;&#xFE0F; Password wajib diisi untuk admin baru'); return; }
+  if (password && password.length < 6) { showToast('&#x26A0;&#xFE0F; Password minimal 6 karakter'); return; }
+
+  var users = usersLoad();
+  var dup = users.find(function(x){ return x.username.toLowerCase() === username.toLowerCase() && x.id !== id; });
+  if (dup) { showToast('&#x26A0;&#xFE0F; Username sudah digunakan'); return; }
+
+  if (id) {
+    var u = users.find(function(x){ return x.id === id; });
+    if (u) { u.username = username; if (password) u.password = password; u.nama = nama; }
+    showToast('&#x2705; Admin berhasil diperbarui');
+    if (typeof auditLog === 'function') auditLog('Edit Admin', 'Akun admin diperbarui: ' + nama + ' (@' + username + ')', 'user-mgmt');
+  } else {
+    users.push({ id: 'adm_' + Date.now(), username: username, password: password, aktif: true, role: 'admin', nama: nama, createdAt: new Date().toISOString() });
+    showToast('&#x2705; Admin baru berhasil dibuat!');
+    if (typeof auditLog === 'function') auditLog('Tambah Admin', 'Akun admin baru dibuat: ' + nama + ' (@' + username + ')', 'user-mgmt');
+  }
+  usersSave(users);
+  if (typeof window._doSync === 'function') { setTimeout(function(){ window._doSync(); }, 100); }
+  cancelAdminForm();
+  renderAdminManagement();
+};
+
+window.cancelAdminForm = function() {
+  document.getElementById('adminFormSection').style.display = 'none';
+  document.getElementById('adminFormId').value = '';
+};
+
 // Override openModal for auth modals
 document.addEventListener('DOMContentLoaded', function() {
   var _orig = window.openModal;
@@ -7462,6 +7744,21 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isAdmin()) { showToast('&#x26A0;&#xFE0F; Akses hanya untuk admin'); return; }
       document.getElementById(id).classList.add('open');
       if (typeof renderPengurusManagement === 'function') renderPengurusManagement();
+      return;
+    }
+    if (id === 'modalAdminMgmt') {
+      if (!isAdmin()) { showToast('&#x26A0;&#xFE0F; Akses hanya untuk admin'); return; }
+      document.getElementById(id).classList.add('open');
+      if (typeof renderAdminManagement === 'function') renderAdminManagement();
+      return;
+    }
+    if (id === 'modalAuditLog') {
+      if (!isAdmin()) { showToast('&#x26A0;&#xFE0F; Akses hanya untuk admin'); return; }
+      document.getElementById(id).classList.add('open');
+      window._auditLogFilterKategori = 'semua';
+      window._auditLogFilterTeks = '';
+      var body = document.getElementById('auditLogBody');
+      if (body && typeof renderAuditLogHTML === 'function') body.innerHTML = renderAuditLogHTML('semua', '');
       return;
     }
     if (_orig) _orig(id);
@@ -8036,6 +8333,76 @@ window.deletePengurus = function(id) {
           <span style="font-size:9.5px;color:#9ca3af">&#x26A0;&#xFE0F; Ganti password setelah login pertama</span>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN MANAGEMENT MODAL — Admin ke-2 dst (Admin Only) ═══ -->
+<div class="modal-overlay" id="modalAdminMgmt">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">&#x1F451; Kelola Admin</h3>
+      <button class="modal-close" onclick="closeModal('modalAdminMgmt')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:linear-gradient(135deg,#b07a00,#f4a922);border-radius:12px;padding:10px;color:white;text-align:center">
+          <div style="font-size:20px;font-weight:800;line-height:1.1" id="amStatAdmin">0</div>
+          <div style="font-size:9.5px;opacity:0.85;margin-top:1px">Admin Tambahan</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#1a472a,#2d6a4f);border-radius:12px;padding:10px;color:white;text-align:center">
+          <div style="font-size:20px;font-weight:800;line-height:1.1" id="amStatAktif">0</div>
+          <div style="font-size:9.5px;opacity:0.7;margin-top:1px">Aktif</div>
+        </div>
+      </div>
+      <div style="background:rgba(244,169,34,0.08);border:1px solid rgba(244,169,34,0.25);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:10.5px;color:#b07a00;line-height:1.5">
+        &#x1F4A1; <strong>Admin ke-2, ke-3, dst.</strong> Akun di sini mendapat akses <strong>penuh sebagai admin</strong> (bukan akun nasabah). Cocok untuk pengurus lain yang perlu login dengan username sendiri. Akun admin utama <code>admin</code> tidak bisa diubah dari sini.
+      </div>
+      <div class="um-section-title">Daftar Akun Admin Tambahan</div>
+      <div id="adminMgmtList"></div>
+      <button onclick="showNewAdminForm()" style="width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,#b07a00,#f4a922);color:white;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin:6px 0 10px;display:flex;align-items:center;justify-content:center;gap:7px">
+        &#x2795; Buat Admin Baru
+      </button>
+      <!-- Form tambah/edit admin -->
+      <div id="adminFormSection" style="display:none;background:#f8faf9;border-radius:14px;padding:12px;border:1.5px solid rgba(244,169,34,0.25);margin-bottom:10px">
+        <div style="font-size:13.5px;font-weight:800;color:#1c3025;margin-bottom:10px" id="adminFormTitle">&#x2795; Tambah Admin Baru</div>
+        <input type="hidden" id="adminFormId">
+        <div class="field">
+          <label>Nama Lengkap</label>
+          <input type="text" id="adminFormNama" placeholder="contoh: Budi Santoso" autocomplete="off" style="background:white">
+        </div>
+        <div class="field">
+          <label>Username Login</label>
+          <input type="text" id="adminFormUsername" placeholder="contoh: budi.admin" autocomplete="off" style="background:white">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="adminFormPassword" placeholder="Minimal 6 karakter" autocomplete="new-password" style="background:white">
+          <div id="adminFormPwHint" style="font-size:10px;color:#9ca3af;margin-top:4px"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="cancelAdminForm()" style="flex:1;padding:10px;border-radius:10px;border:2px solid #e5e7eb;background:white;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;color:#6b7280">Batal</button>
+          <button onclick="saveAdminForm()" style="flex:2;padding:10px;border-radius:10px;background:linear-gradient(135deg,#b07a00,#f4a922);color:white;border:none;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">&#x1F4BE; Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AUDIT LOG MODAL — permanen, tanpa tombol hapus (Admin Only) ═══ -->
+<div class="modal-overlay" id="modalAuditLog">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">&#x1F6E1;&#xFE0F; Audit Log</h3>
+      <button class="modal-close" onclick="closeModal('modalAuditLog')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <button onclick="downloadAuditLogPDF()" style="width:100%;padding:11px;border-radius:12px;background:linear-gradient(135deg,#1a472a,#2d6a4f);color:white;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:7px">
+        &#x2B07;&#xFE0F; Download PDF Lengkap
+      </button>
+      <div id="auditLogBody"></div>
     </div>
   </div>
 </div>
@@ -9518,6 +9885,11 @@ window.deletePengurus = function(id) {
         <img src="assets/banner-semeton-plus.png" alt="Semeton+ — Berbagi informasi, membuka peluang untuk Semeton" loading="lazy">
       </div>
 
+      <details class="loker-rules" id="lokerStatsPanel" style="display:none">
+        <summary>📊 Statistik Kinerja Semeton+ <span style="opacity:0.5">▾</span></summary>
+        <div id="lokerStatsBody"></div>
+      </details>
+
       <details class="loker-rules">
         <summary>📋 Aturan Sederhana <span style="opacity:0.5">▾</span></summary>
         <div class="loker-rules-body">
@@ -10683,7 +11055,7 @@ window.deletePengurus = function(id) {
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h3 class="modal-title">💼 Pasang Info Loker</h3>
+      <h3 class="modal-title" id="lokerModalTitle">💼 Pasang Info Loker</h3>
       <button class="modal-close" onclick="closeModal('modalLokerPost')">✕</button>
     </div>
     <div class="modal-body">
@@ -10703,8 +11075,8 @@ window.deletePengurus = function(id) {
       <div class="field"><label id="lokerLabelDeskripsi">Deskripsi</label><textarea id="lokerDeskripsi" placeholder="Jelaskan detail lowongan/kebutuhan..." style="min-height:90px"></textarea></div>
       <div class="field"><label id="lokerLabelSyarat">Persyaratan (opsional)</label><textarea id="lokerSyarat" placeholder="Contoh: Jujur, mau belajar, usia max 35 tahun" style="min-height:60px"></textarea></div>
       <div class="field"><label>Kontak</label><input type="text" id="lokerKontak" placeholder="Nomor WA / Telepon yang bisa dihubungi"></div>
-      <div style="font-size:11px;color:var(--text-soft);background:var(--cream);border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.5">⏳ Info yang Anda kirim akan diperiksa admin terlebih dahulu sebelum tampil untuk anggota lain.</div>
-      <button class="btn btn-primary btn-block" onclick="saveLokerPost()">📤 Kirim untuk Diverifikasi</button>
+      <div style="font-size:11px;color:var(--text-soft);background:var(--cream);border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.5" id="lokerVerifNote">⏳ Info yang Anda kirim akan diperiksa admin terlebih dahulu sebelum tampil untuk anggota lain.</div>
+      <button class="btn btn-primary btn-block" id="lokerSubmitBtn" onclick="saveLokerPost()">📤 Kirim untuk Diverifikasi</button>
     </div>
   </div>
 </div>
@@ -12075,7 +12447,8 @@ let DB = {
   subKategoriOptions: {},
   appSettings: {
     loginWatermark: 'Koperasi Renco v0.1 · Diperbarui 04 Agustus 2026'
-  }
+  },
+  auditLog: [] // Audit Log permanen — tidak boleh direset/dihapus di mana pun dalam kode ini
 };
 
 /* ── Migrasi skema: tambah kolom baru yang belum ada ── */
@@ -12084,8 +12457,9 @@ function _dbMigrate() {
   const ARRAYS = [
     'nasabah','transaksi','pinjaman','aset','liabilitas','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
     'shuDistribusi','arisanPeserta','arisanHistory','forum','polling','pohonImpian','loker',
-    'users',  // akun nasabah — disimpan di DB agar sync ke Supabase
-    'pengurusList'  // struktur pengurus koperasi (nama, jabatan, pendidikan, pengalaman, foto)
+    'users',  // akun nasabah & admin — disimpan di DB agar sync ke Supabase
+    'pengurusList',  // struktur pengurus koperasi (nama, jabatan, pendidikan, pengalaman, foto)
+    'auditLog'  // jejak audit permanen — TIDAK PERNAH direset/dihapus oleh migrasi ini
   ];
   ARRAYS.forEach(function(k) { if (!Array.isArray(DB[k])) DB[k] = []; });
   // ── Migrasi foto nasabah: dari localStorage per-device → field DB.nasabah[].foto (tersimpan & sync ke Supabase) ──
@@ -14475,6 +14849,16 @@ function renderNasabahIuranWajib(targetKkId) {
     + (belumBayar.length>0 && !nonAktif
       ? '<button onclick="_ajukanIuranMulti()" style="margin-top:10px;width:100%;padding:9px;border-radius:12px;border:none;background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(4px)">💳 Bayar Semua ('+(belumBayar.length)+' bulan · '+fmtRp(totalHutang)+')</button>'
       : '')
+  + '</div>';
+
+  // ── Tombol Download PDF Rekap Iuran (nasabah) ──
+  // Menggunakan generator PDF native yang sama persis dengan yang dipakai admin
+  // (_dlRekapIuranAnggotaPDF → _pdfGenRekapIuranAnggota), bukan file terpisah.
+  html += '<div style="margin:0 14px 12px">'
+    + '<button onclick="_dlRekapIuranAnggotaPDF(\''+kkId+'\')" style="width:100%;padding:11px;border-radius:12px;border:1.5px solid rgba(45,106,79,0.3);background:linear-gradient(135deg,#1a3a2a,#2d6a4f);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 3px 10px rgba(26,58,42,0.25)">'
+      + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7 10 12 15 17 10" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>'
+      + 'Download Rekap Iuran Saya (PDF)'
+    + '</button>'
   + '</div>';
 
   // ── Banner status Tidak Aktif ──
@@ -31653,6 +32037,7 @@ function renderSemetonPlus() {
   var adm = (typeof isAdmin === 'function') && isAdmin();
   var vTab = document.getElementById('lokerTabVerifikasi');
   if (vTab) vTab.style.display = adm ? '' : 'none';
+  _lokerRenderStats(adm);
 
   var user = _lokerCurrentUser();
   var list = DB.loker.slice().sort(function(a,b){ return new Date(b.tanggal) - new Date(a.tanggal); });
@@ -31695,6 +32080,7 @@ function renderSemetonPlus() {
     } else if (canManage) {
       actions = '<div class="loker-card-actions">'
         + (l.status === 'aktif' ? '<button class="btn btn-sm btn-outline" style="flex:1" onclick="event.stopPropagation();lokerToggleTersedia(\'' + l.id + '\')">' + (tersedia ? '🔒 Tandai Selesai' : '🔓 Buka Lagi') + '</button>' : '')
+        + '<button class="btn btn-sm btn-outline" style="flex:0 0 auto;padding:0 12px" onclick="event.stopPropagation();lokerEdit(\'' + l.id + '\')">✏️ Edit</button>'
         + '<button class="btn btn-sm btn-outline" style="flex:0 0 auto;padding:0 12px;color:#e63946;border-color:rgba(230,57,70,0.35)" onclick="event.stopPropagation();lokerHapus(\'' + l.id + '\')">🗑️</button>'
         + '</div>';
     }
@@ -31728,6 +32114,74 @@ function renderSemetonPlus() {
       + '</div>'
       + '</div>';
   }).join('');
+}
+
+/* ── Catatan otomatis: statistik kinerja fitur Semeton+ (admin) ──
+   Dihitung ulang otomatis setiap kali renderSemetonPlus() dipanggil,
+   langsung dari data DB.loker — tidak perlu input manual. ── */
+function _lokerRenderStats(adm) {
+  var panel = document.getElementById('lokerStatsPanel');
+  if (!panel) return;
+  if (!adm) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  var data = Array.isArray(DB.loker) ? DB.loker : [];
+  var total = data.length;
+  var aktifArr = data.filter(function(l){ return l.status === 'aktif'; });
+  var pendingCount = data.filter(function(l){ return l.status === 'pending'; }).length;
+  var ditolakCount = data.filter(function(l){ return l.status === 'ditolak'; }).length;
+  var selesaiCount = aktifArr.filter(function(l){ return l.tersedia === false; }).length;
+  var tersediaCount = aktifArr.length - selesaiCount;
+
+  // Kategori teraktif (dari postingan yang tayang)
+  var katCount = {};
+  aktifArr.forEach(function(l){ katCount[l.kategori] = (katCount[l.kategori] || 0) + 1; });
+  var katTopKey = Object.keys(katCount).sort(function(a,b){ return katCount[b] - katCount[a]; })[0];
+  var katTopLabel = katTopKey ? (((typeof LOKER_KATEGORI !== 'undefined' && LOKER_KATEGORI[katTopKey]) || {}).short || katTopKey) + ' (' + katCount[katTopKey] + ')' : '-';
+
+  // Kontributor teraktif (dari seluruh postingan)
+  var userCount = {};
+  data.forEach(function(l){ var key = l.penulis || 'Anonim'; userCount[key] = (userCount[key] || 0) + 1; });
+  var userTopKey = Object.keys(userCount).sort(function(a,b){ return userCount[b] - userCount[a]; })[0];
+  var userTopLabel = userTopKey ? userTopKey + ' (' + userCount[userTopKey] + ' postingan)' : '-';
+
+  // Rata-rata waktu verifikasi admin (dari tanggal posting → tanggal diverifikasi)
+  var durasiJam = data
+    .filter(function(l){ return l.tanggalVerifikasi && l.tanggal; })
+    .map(function(l){ return (new Date(l.tanggalVerifikasi) - new Date(l.tanggal)) / 3600000; })
+    .filter(function(h){ return isFinite(h) && h >= 0; });
+  var avgJam = durasiJam.length ? (durasiJam.reduce(function(a,b){ return a + b; }, 0) / durasiJam.length) : null;
+  var avgLabel = avgJam == null ? 'Belum ada data' : (avgJam < 1 ? Math.round(avgJam * 60) + ' menit' : avgJam.toFixed(1) + ' jam');
+
+  // Aktivitas 7 hari terakhir
+  var seminggu = data.filter(function(l){
+    var t = new Date(l.tanggal).getTime();
+    return isFinite(t) && (Date.now() - t) <= 7 * 24 * 3600000;
+  }).length;
+
+  // Tingkat persetujuan dari yang sudah diputuskan admin (aktif vs ditolak)
+  var diputuskan = aktifArr.length + ditolakCount;
+  var approvalRate = diputuskan ? Math.round((aktifArr.length / diputuskan) * 100) : null;
+
+  var body = document.getElementById('lokerStatsBody');
+  if (!body) return;
+  body.innerHTML =
+      '<div class="loker-stats-grid">'
+    +   '<div class="stat-card"><div class="stat-icon">📋</div><div class="stat-val">' + total + '</div><div class="stat-lbl">Total Postingan</div></div>'
+    +   '<div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val">' + aktifArr.length + '</div><div class="stat-lbl">Aktif Tayang</div></div>'
+    +   '<div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val">' + pendingCount + '</div><div class="stat-lbl">Menunggu Verifikasi</div></div>'
+    +   '<div class="stat-card"><div class="stat-icon">❌</div><div class="stat-val">' + ditolakCount + '</div><div class="stat-lbl">Ditolak</div></div>'
+    +   '<div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-val">' + tersediaCount + '</div><div class="stat-lbl">Masih Tersedia</div></div>'
+    +   '<div class="stat-card"><div class="stat-icon">🔒</div><div class="stat-val">' + selesaiCount + '</div><div class="stat-lbl">Sudah Selesai</div></div>'
+    + '</div>'
+    + '<div class="loker-stats-list">'
+    +   '<div>🆕 <b>' + seminggu + '</b> postingan baru dalam 7 hari terakhir</div>'
+    +   '<div>📊 Tingkat persetujuan: <b>' + (approvalRate == null ? 'Belum ada data' : approvalRate + '%') + '</b></div>'
+    +   '<div>⏱️ Rata-rata waktu verifikasi: <b>' + avgLabel + '</b></div>'
+    +   '<div>🏷️ Kategori terpopuler: <b>' + katTopLabel + '</b></div>'
+    +   '<div>👤 Kontributor teraktif: <b>' + userTopLabel + '</b></div>'
+    + '</div>'
+    + '<div class="loker-stats-updated">Diperbarui otomatis · ' + fmtDate(nowISO()) + '</div>';
 }
 
 function escLoker(s) {
@@ -31813,9 +32267,19 @@ function lokerFormAdapt(kategori) {
   if (iSyarat) iSyarat.placeholder = c.syaratPh;
 }
 
+function _lokerResetModalChrome() {
+  var title = document.getElementById('lokerModalTitle');
+  if (title) title.textContent = '💼 Pasang Info Loker';
+  var btn = document.getElementById('lokerSubmitBtn');
+  if (btn) btn.textContent = '📤 Kirim untuk Diverifikasi';
+  var note = document.getElementById('lokerVerifNote');
+  if (note) note.textContent = '⏳ Info yang Anda kirim akan diperiksa admin terlebih dahulu sebelum tampil untuk anggota lain.';
+}
+
 function openLokerModal() {
   var kategoriAwal = (['cariKerja','pasangLowongan','cariMitra','butuhKaryawan','tawarkanJasa'].indexOf(_lokerActiveTab) !== -1)
     ? _lokerActiveTab : 'cariKerja';
+  document.getElementById('lokerEditId').value = '';
   document.getElementById('lokerKategori').value = kategoriAwal;
   document.getElementById('lokerJudul').value = '';
   document.getElementById('lokerUsaha').value = '';
@@ -31824,6 +32288,38 @@ function openLokerModal() {
   document.getElementById('lokerSyarat').value = '';
   document.getElementById('lokerKontak').value = '';
   lokerFormAdapt(kategoriAwal);
+  _lokerResetModalChrome();
+  openModal('modalLokerPost');
+}
+
+/* ── Edit info loker milik sendiri (atau oleh admin) ── */
+function lokerEdit(id) {
+  var l = DB.loker.find(function(x){ return x.id === id; });
+  if (!l) return;
+  var user = _lokerCurrentUser();
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var isOwner = (l.penulisId === user.id || l.penulis === user.nama);
+  if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+
+  document.getElementById('lokerEditId').value = l.id;
+  document.getElementById('lokerKategori').value = l.kategori;
+  document.getElementById('lokerJudul').value = l.judul || '';
+  document.getElementById('lokerUsaha').value = l.usaha || '';
+  document.getElementById('lokerLokasi').value = l.lokasi || '';
+  document.getElementById('lokerDeskripsi').value = l.deskripsi || '';
+  document.getElementById('lokerSyarat').value = l.syarat || '';
+  document.getElementById('lokerKontak').value = l.kontak || '';
+  lokerFormAdapt(l.kategori);
+
+  var title = document.getElementById('lokerModalTitle');
+  if (title) title.textContent = '✏️ Edit Info Loker';
+  var btn = document.getElementById('lokerSubmitBtn');
+  if (btn) btn.textContent = adm ? '💾 Simpan Perubahan' : '📤 Simpan & Kirim Ulang Verifikasi';
+  var note = document.getElementById('lokerVerifNote');
+  if (note) note.textContent = adm
+    ? 'ℹ️ Anda mengedit sebagai admin, perubahan langsung tayang.'
+    : '⏳ Setelah diedit, info akan diperiksa ulang oleh admin sebelum tampil kembali.';
+
   openModal('modalLokerPost');
 }
 
@@ -31836,6 +32332,31 @@ function saveLokerPost() {
   if (!kontak) { showToast('⚠️ Kontak wajib diisi'); return; }
 
   var user = _lokerCurrentUser();
+  var adm = (typeof isAdmin === 'function' && isAdmin());
+  var editId = document.getElementById('lokerEditId').value;
+
+  if (editId) {
+    var l = DB.loker.find(function(x){ return x.id === editId; });
+    if (!l) { showToast('⚠️ Data tidak ditemukan'); closeModal('modalLokerPost'); return; }
+    var isOwner = (l.penulisId === user.id || l.penulis === user.nama);
+    if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+
+    l.kategori = document.getElementById('lokerKategori').value;
+    l.judul = judul;
+    l.usaha = document.getElementById('lokerUsaha').value.trim();
+    l.lokasi = document.getElementById('lokerLokasi').value.trim();
+    l.deskripsi = deskripsi;
+    l.syarat = document.getElementById('lokerSyarat').value.trim();
+    l.kontak = kontak;
+    l.status = adm ? 'aktif' : 'pending';
+    if (adm) l.tanggalVerifikasi = nowISO(); else l.tanggalVerifikasi = null;
+    saveDB();
+    closeModal('modalLokerPost');
+    showToast(adm ? '✅ Perubahan disimpan' : '📤 Perubahan disimpan, menunggu verifikasi ulang');
+    renderSemetonPlus();
+    return;
+  }
+
   if (!Array.isArray(DB.loker)) DB.loker = [];
   DB.loker.push({
     id: uid(),
@@ -31848,13 +32369,14 @@ function saveLokerPost() {
     kontak: kontak,
     penulis: user.nama,
     penulisId: user.id,
-    status: (typeof isAdmin === 'function' && isAdmin()) ? 'aktif' : 'pending',
+    status: adm ? 'aktif' : 'pending',
     tersedia: true,
-    tanggal: nowISO()
+    tanggal: nowISO(),
+    tanggalVerifikasi: adm ? nowISO() : null
   });
   saveDB();
   closeModal('modalLokerPost');
-  showToast((typeof isAdmin === 'function' && isAdmin()) ? '✅ Info loker diposting' : '📤 Terkirim, menunggu verifikasi admin');
+  showToast(adm ? '✅ Info loker diposting' : '📤 Terkirim, menunggu verifikasi admin');
   renderSemetonPlus();
 }
 
@@ -31883,13 +32405,13 @@ function lokerToggleTersedia(id) {
 function lokerApprove(id) {
   if (typeof isAdmin !== 'function' || !isAdmin()) return;
   var l = DB.loker.find(function(x){ return x.id === id; });
-  if (l) { l.status = 'aktif'; saveDB(); renderSemetonPlus(); showToast('✅ Info loker disetujui & tayang'); }
+  if (l) { l.status = 'aktif'; l.tanggalVerifikasi = nowISO(); saveDB(); renderSemetonPlus(); showToast('✅ Info loker disetujui & tayang'); }
 }
 
 function lokerReject(id) {
   if (typeof isAdmin !== 'function' || !isAdmin()) return;
   var l = DB.loker.find(function(x){ return x.id === id; });
-  if (l) { l.status = 'ditolak'; saveDB(); renderSemetonPlus(); showToast('❌ Info loker ditolak'); }
+  if (l) { l.status = 'ditolak'; l.tanggalVerifikasi = nowISO(); saveDB(); renderSemetonPlus(); showToast('❌ Info loker ditolak'); }
 }
 
 function lokerHapus(id) {
@@ -33299,6 +33821,127 @@ function _pdfGenNasabahPribadi(jsPDFCls) {
   doc.save(fname);
   return fname;
 }
+window._pdfGenNasabahPribadi = _pdfGenNasabahPribadi;
+
+// ── Laporan Pribadi (khusus nasabah sendiri) — pakai generator native yang sama
+//    (helper _pdfKop/_pdfSection/_pdfRingkasan/_pdfTabel/_pdfTtd) seperti laporan admin,
+//    hanya datanya dibatasi milik nasabah yang bersangkutan (privasi terjaga). ──
+function _pdfGenLaporanPribadiNasabah(jsPDFCls, kkId) {
+  var kk = (DB.nasabah || []).find(function (a) { return a.id === kkId; });
+  if (!kk) return null;
+
+  var now = new Date(), m = now.getMonth(), y = now.getFullYear();
+  var monthsFull = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var nowLabel = monthsFull[m] + ' ' + y;
+
+  var allSim = (DB.transaksi || []).filter(function (t) { return t.kkId === kkId && t.type === 'simpanan'; });
+  var allTarik = (DB.transaksi || []).filter(function (t) { return t.kkId === kkId && t.type === 'tarik-sukarela'; });
+  var simPokok = allSim.filter(function (t) { return t.jenis === 'pokok'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var simWajib = allSim.filter(function (t) { return t.jenis === 'wajib'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var simSukRaw = allSim.filter(function (t) { return t.jenis === 'sukarela'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var simTarik = allTarik.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var simSukarela = Math.max(0, simSukRaw - simTarik);
+  var simLainnya = allSim.filter(function (t) { return !t.jenis || ['pokok','wajib','sukarela'].indexOf(t.jenis) < 0; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var totalSim = simPokok + simWajib + simSukarela + simLainnya;
+
+  var pinAktif = (DB.pinjaman || []).filter(function (p) { return p.kkId === kkId && p.status === 'aktif'; });
+  var totalPin = pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
+  var cicilanPin = pinAktif.reduce(function (a, p) { return a + Math.round((p.jumlah + (p.jumlah * (p.bunga || 0) / 100 * (p.tenor || 12) / 12)) / (p.tenor || 12)); }, 0);
+
+  var pemAktif = (DB.pembiayaan || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui'); });
+  var pemSyrAktif = (DB.pembiayaanSyariah || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui'); });
+  var totalPem = pemAktif.reduce(function (a, p) { if (typeof p.sisaPokokRC === 'number') return a + p.sisaPokokRC; if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); } return a + (p.jumlah || 0); }, 0);
+  var totalPemSyr = pemSyrAktif.reduce(function (a, p) { if (typeof p.sisaPokok === 'number') return a + p.sisaPokok; if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); } return a + (p.jumlah || 0); }, 0);
+  var totalPemAll = totalPem + totalPemSyr;
+  var cicilanPem = pemAktif.reduce(function (a, p) { return a + (p.cicilanPerBln || 0); }, 0) + pemSyrAktif.reduce(function (a, p) { return a + (p.cicilan || 0); }, 0);
+  var cicilanBulan = cicilanPin + cicilanPem;
+  var saldoBersih = totalSim - totalPin - totalPemAll;
+
+  var doc = new jsPDFCls({ orientation: 'p', unit: 'mm', format: 'a4' });
+  var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+  var margin = 14, usableW = pageW - margin * 2;
+  var y = _pdfKop(doc, pageW, margin, 'LAPORAN KEUANGAN PRIBADI — ' + (kk.nama || '').toUpperCase(), 'Dicetak ' + _pdfTglPanjang() + '  |  Periode ' + nowLabel);
+
+  y = _pdfSection(doc, y, margin, 'Ringkasan', [26, 71, 42]);
+  y = _pdfRingkasan(doc, y, margin, usableW, [
+    { label: 'Total Simpanan', value: _pdfFmt(totalSim), color: [26, 71, 42] },
+    { label: 'Total Pinjaman/Pembiayaan', value: _pdfFmt(totalPin + totalPemAll), color: (totalPin + totalPemAll) > 0 ? [230, 57, 70] : [26, 71, 42] },
+    { label: 'Saldo Bersih', value: _pdfFmt(saldoBersih), color: saldoBersih >= 0 ? [26, 71, 42] : [230, 57, 70] },
+    { label: 'Cicilan / Bulan', value: cicilanBulan > 0 ? _pdfFmt(cicilanBulan) : '—', color: [180, 122, 0] }
+  ]);
+
+  y = _pdfSection(doc, y, margin, 'Komposisi Simpanan', [45, 106, 79]);
+  var simCols = [
+    { header: 'Jenis Simpanan', key: 'jenis', width: usableW * 0.55 },
+    { header: 'Jumlah', key: 'jumlahF', width: usableW * 0.45, colorFn: function () { return [26, 71, 42]; } }
+  ];
+  var simRows = [
+    { jenis: 'Simpanan Pokok', jumlahF: _pdfFmt(simPokok) },
+    { jenis: 'Simpanan Wajib', jumlahF: _pdfFmt(simWajib) },
+    { jenis: 'Simpanan Sukarela', jumlahF: _pdfFmt(simSukarela) }
+  ];
+  if (simLainnya > 0) simRows.push({ jenis: 'Simpanan Lainnya', jumlahF: _pdfFmt(simLainnya) });
+  simRows.push({ jenis: 'TOTAL SIMPANAN', jumlahF: _pdfFmt(totalSim), _total: true });
+  y = _pdfTabel(doc, y, margin, usableW, pageH, simCols, simRows);
+
+  if (pinAktif.length) {
+    y = _pdfSection(doc, y + 3, margin, 'Pinjaman Koperasi Aktif', [230, 57, 70]);
+    var pinCols = [
+      { header: 'Tujuan', key: 'tujuan', width: usableW * 0.34 },
+      { header: 'Tenor', key: 'tenorF', width: usableW * 0.16 },
+      { header: 'Sisa Pokok', key: 'sisaF', width: usableW * 0.25, colorFn: function () { return [230, 57, 70]; } },
+      { header: 'Cicilan/Bln', key: 'cicilanF', width: usableW * 0.25, colorFn: function () { return [180, 122, 0]; } }
+    ];
+    var pinRows = pinAktif.map(function (p) {
+      var ang = Math.round((p.jumlah + (p.jumlah * (p.bunga || 0) / 100 * (p.tenor || 12) / 12)) / (p.tenor || 12));
+      return { tujuan: p.tujuan || 'Pinjaman Koperasi', tenorF: (p.tenor || 12) + ' bln', sisaF: _pdfFmt(p.sisaPokok || 0), cicilanF: _pdfFmt(ang) };
+    });
+    y = _pdfTabel(doc, y, margin, usableW, pageH, pinCols, pinRows);
+  }
+
+  var allPemAktif = pemAktif.concat(pemSyrAktif);
+  if (allPemAktif.length) {
+    y = _pdfSection(doc, y + 3, margin, 'Pembiayaan Renco Capital Aktif', [107, 33, 168]);
+    var pemCols = [
+      { header: 'Tujuan', key: 'tujuan', width: usableW * 0.28 },
+      { header: 'Akad', key: 'akadF', width: usableW * 0.22 },
+      { header: 'Sisa Pokok', key: 'sisaF', width: usableW * 0.25, colorFn: function () { return [107, 33, 168]; } },
+      { header: 'Cicilan/Bln', key: 'cicilanF', width: usableW * 0.25, colorFn: function () { return [180, 122, 0]; } }
+    ];
+    var pemRows = allPemAktif.map(function (p) {
+      var tenor = p.tenor || 12, bayar = p.angsuranDibayar || 0;
+      var sp = typeof p.sisaPokokRC === 'number' ? p.sisaPokokRC : (typeof p.sisaPokok === 'number' ? p.sisaPokok : Math.round((p.jumlah || 0) / tenor * Math.max(0, tenor - bayar)));
+      var cic = p.cicilanPerBln || p.cicilan || 0;
+      var jl = { syariah: 'Murabahah', qardh: 'Qardh', 'modal-usaha': 'Mudharabah', murabahah: 'Murabahah', mudharabah: 'Mudharabah', ijarah: 'Ijarah', musyarakah: 'Musyarakah' }[p.jenis || p.akad || ''] || (p.jenis || p.akad || 'Pembiayaan');
+      return { tujuan: p.tujuan || jl, akadF: jl, sisaF: _pdfFmt(sp), cicilanF: _pdfFmt(cic) };
+    });
+    y = _pdfTabel(doc, y, margin, usableW, pageH, pemCols, pemRows);
+  }
+
+  var riwayat = (DB.transaksi || []).filter(function (t) { return t.kkId === kkId; }).sort(function (a, b) { return new Date(b.tanggal || 0) - new Date(a.tanggal || 0); }).slice(0, 15);
+  var tLbl = { simpanan: 'Simpanan', pinjaman: 'Pencairan', cicilan: 'Cicilan', 'tarik-sukarela': 'Penarikan', pembiayaan: 'Pembiayaan', 'angsuran-rc': 'Angsuran RC' };
+  if (riwayat.length) {
+    y = _pdfSection(doc, y + 3, margin, 'Riwayat Transaksi Terbaru (15 Terakhir)', [26, 71, 42]);
+    var txCols = [
+      { header: 'Tanggal', key: 'tglF', width: usableW * 0.25 },
+      { header: 'Jenis', key: 'jenisF', width: usableW * 0.25 },
+      { header: 'Keterangan', key: 'ketF', width: usableW * 0.30 },
+      { header: 'Jumlah', key: 'jumlahF', width: usableW * 0.20, colorFn: function () { return [26, 71, 42]; } }
+    ];
+    var txRows = riwayat.map(function (t) {
+      var d = new Date(t.tanggal);
+      return { tglF: isNaN(d) ? '—' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }), jenisF: tLbl[t.type] || t.type || '-', ketF: t.keterangan || tLbl[t.type] || '-', jumlahF: _pdfFmt(t.jumlah || 0) };
+    });
+    y = _pdfTabel(doc, y, margin, usableW, pageH, txCols, txRows);
+  }
+
+  y = _pdfTtd(doc, y + 6, pageW, pageH, margin);
+  _pdfFooterSemua(doc, pageW, pageH, margin, 'Laporan Pribadi — ' + (kk.nama || ''));
+  var fname = 'laporan-pribadi-' + (kk.nama || 'nasabah').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
+  doc.save(fname);
+  return fname;
+}
+window._pdfGenLaporanPribadiNasabah = _pdfGenLaporanPribadiNasabah;
 
 function _pdfGenKoperasi(jsPDFCls) {
   var today = new Date();
@@ -33715,8 +34358,13 @@ window._dlRekapIuranSemuaPDF = function () {
 };
 
 // ── Trigger tombol download Rekap Iuran (per anggota) ──
+// Dipakai baik oleh admin (untuk anggota manapun) maupun nasabah (khusus data miliknya sendiri),
+// menghasilkan file PDF native yang sama persis — bukan file/berkas terpisah.
 window._dlRekapIuranAnggotaPDF = function (kkId) {
-  if (typeof isAdmin === 'function' && !isAdmin()) { if (typeof showToast === 'function') showToast('⚠️ Hanya admin yang bisa mengunduh PDF'); return; }
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var ownKkId = (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? AUTH.user.nasabahId : null;
+  var isOwner = ownKkId && ownKkId === kkId;
+  if (!adm && !isOwner) { if (typeof showToast === 'function') showToast('⚠️ Anda tidak punya akses ke data ini'); return; }
   var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
   if (!jsPDFCls) {
     if (typeof showToast === 'function') showToast('⏳ Memuat library PDF...');
@@ -33894,6 +34542,36 @@ function _pdfGenHistory(jsPDFCls) {
   return fname;
 }
 
+function _pdfGenAuditLog(jsPDFCls) {
+  var logs = (typeof auditLogGetAll === 'function') ? auditLogGetAll() : [];
+  function fmtWaktu(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  var doc = new jsPDFCls({ orientation: 'p', unit: 'mm', format: 'a4' });
+  var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+  var margin = 14, usableW = pageW - margin * 2;
+  var y = _pdfKop(doc, pageW, margin, 'AUDIT LOG — CATATAN AKTIVITAS PERMANEN', 'Dicetak ' + _pdfTglPanjang() + '  |  ' + logs.length + ' catatan  |  Tidak dapat dihapus');
+
+  y = _pdfSection(doc, y, margin, 'Seluruh Aktivitas Tercatat', [220, 38, 38]);
+  var cols = [
+    { header: 'Waktu', key: 'waktuF', width: usableW * 0.22 },
+    { header: 'Aksi', key: 'aksi', width: usableW * 0.18, bold: true },
+    { header: 'Detail', key: 'detail', width: usableW * 0.32 },
+    { header: 'User', key: 'user', width: usableW * 0.16 },
+    { header: 'Role', key: 'role', width: usableW * 0.12 }
+  ];
+  var rows = logs.map(function (l) {
+    return { waktuF: fmtWaktu(l.waktu), aksi: l.aksi || '-', detail: l.detail || '-', user: (l.user||'-') + (l.username ? ' (@' + l.username + ')' : ''), role: l.role || '-' };
+  });
+  if (!rows.length) rows.push({ waktuF: '', aksi: 'Belum ada catatan audit', detail: '', user: '', role: '' });
+  y = _pdfTabel(doc, y, margin, usableW, pageH, cols, rows);
+  _pdfFooterSemua(doc, pageW, pageH, margin, 'Audit Log');
+  var fname = 'laporan-renco-audit-log-' + new Date().toISOString().slice(0, 10) + '.pdf';
+  doc.save(fname);
+  return fname;
+}
+
 // ── Dispatcher utama (dipanggil oleh tombol toolbar & tombol lama) ──
 async function _downloadLaporanTabPDF(tab, label) {
   var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
@@ -33907,7 +34585,8 @@ async function _downloadLaporanTabPDF(tab, label) {
       'keseluruhan': _pdfGenKeseluruhan,
       'arsip': _pdfGenArsipRingkas,
       'tunggakan': _pdfGenTunggakan,
-      'history': _pdfGenHistory
+      'history': _pdfGenHistory,
+      'audit-log': _pdfGenAuditLog
     }[tab];
     if (!gen) { if (typeof showToast === 'function') showToast('⚠️ Laporan ini belum mendukung download PDF'); return; }
     var fname = gen(jsPDFCls);
@@ -47562,7 +48241,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       const hColor = {sehat:'#2d6a4f',stabil:'#b07a00',perhatian:'#e63946'}[health];
       const hLabel = {sehat:'✅ Sehat',stabil:'🟡 Stabil',perhatian:'⚠️ Perhatian'}[health];
       const ini = (kk.nama||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-      return {kk,sim,tb,pin,net,cicilan,setor,health,hColor,hLabel,ini};
+      const foto = (typeof getMemberPhoto==='function') ? getMemberPhoto(kk.id) : (kk.foto||null);
+      return {kk,sim,tb,pin,net,cicilan,setor,health,hColor,hLabel,ini,foto};
     }).sort((a,b)=>b.sim-a.sim);
 
     const sehat=listNasabah.filter(x=>x.health==='sehat').length;
@@ -47633,7 +48313,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           <div style="background:white;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06);border-left:4px solid ${x.hColor};overflow:hidden">
             <!-- Baris kompak — selalu tampil, klik untuk expand -->
             <div onclick="(function(el){var d=el.nextElementSibling;var open=d.style.display!=='none';d.style.display=open?'none':'block';el.querySelector('.lapNsChev').style.transform=open?'rotate(0deg)':'rotate(180deg)'})(this)" style="padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none">
-              <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1a472a,#40916c);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${x.ini}</div>
+              <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1a472a,#40916c);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;overflow:hidden">${x.foto?`<img src="${x.foto}" style="width:100%;height:100%;object-fit:cover" alt="${x.kk.nama}">`:x.ini}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:12px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.kk.nama}</div>
                 <div style="font-size:10px;color:var(--text-soft);display:flex;gap:8px;margin-top:1px">
@@ -49337,10 +50017,11 @@ window.renderLaporanNasabahUser = function() {
   var tIcon={simpanan:'💵',pinjaman:'📤',cicilan:'💳','tarik-sukarela':'💸',pembiayaan:'🏦','angsuran-rc':'💳'};
   var tLbl={simpanan:'Simpanan',pinjaman:'Pencairan',cicilan:'Cicilan','tarik-sukarela':'Penarikan',pembiayaan:'Pembiayaan','angsuran-rc':'Angsuran RC'};
   var ini=(kk.nama||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+  var fotoKk=(typeof getMemberPhoto==='function') ? getMemberPhoto(kkId) : (kk.foto||null);
   var html='<div id="laporanNasabahUserContent">';
   html+='<div style="background:linear-gradient(135deg,#1a3a2a,#2d6a4f);padding:18px;margin:12px 14px;border-radius:18px;color:white;position:relative;overflow:hidden">'
     +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'
-      +'<div style="width:48px;height:48px;border-radius:14px;background:rgba(232,201,126,0.2);border:2px solid rgba(232,201,126,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#e8c97e;flex-shrink:0">'+ini+'</div>'
+      +'<div style="width:48px;height:48px;border-radius:14px;background:rgba(232,201,126,0.2);border:2px solid rgba(232,201,126,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#e8c97e;flex-shrink:0;overflow:hidden">'+(fotoKk?'<img src="'+fotoKk+'" style="width:100%;height:100%;object-fit:cover" alt="'+(kk.nama||'')+'">':ini)+'</div>'
       +'<div><div style="font-size:16px;font-weight:800;color:white">'+(kk.nama||'—')+'</div><div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px">'+(kk.phone||kk.alamat||'Anggota Koperasi Renco')+'</div><div style="margin-top:6px;background:'+hColor+'25;border:1px solid '+hColor+'50;border-radius:99px;padding:3px 10px;display:inline-block;font-size:9px;font-weight:800;color:'+hColor+'">'+hLabel+'</div></div>'
     +'</div>'
     +'<div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.8px">Laporan Keuangan Pribadi · '+nowLabel+'</div>'
@@ -49882,38 +50563,26 @@ window.downloadLaporanPribadiImg = async function() {
   } catch(e) { showToast('❌ Gagal menyimpan foto'); console.error(e); }
 };
 
+// Diarahkan ke generator PDF native (kop surat + tabel bergaris asli) — sama persis
+// dengan pendekatan yang dipakai admin di tab-tab Laporan lain, bukan screenshot html2canvas.
 window.downloadLaporanPribadiPDF = async function() {
-  var el = document.getElementById('laporanNasabahUserContent');
-  if (!el || typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') { showToast('⚠️ Library PDF tidak tersedia'); return; }
+  var kkId = AUTH && AUTH.user && AUTH.user.nasabahId;
+  if (!kkId) { showToast('⚠️ Akun tidak terhubung ke data nasabah'); return; }
+  var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if (!jsPDFCls) {
+    showToast('⏳ Memuat library PDF...');
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = function() { window.downloadLaporanPribadiPDF(); };
+    document.head.appendChild(s);
+    return;
+  }
   showToast('📄 Membuat PDF laporan...');
   try {
-    var kk = (DB.nasabah||[]).find(function(a){return a.id===(AUTH&&AUTH.user&&AUTH.user.nasabahId);});
-    var nama = kk ? kk.nama.replace(/\s+/g,'-').toLowerCase() : 'nasabah';
-    var canvas = await html2canvas(el, {scale:2, backgroundColor:'#f0f7f2', useCORS:true, scrollX:0, scrollY:0});
-    var jsPDF = window.jspdf.jsPDF;
-    var pdf = new jsPDF('p', 'mm', 'a4');
-    var pageW = pdf.internal.pageSize.getWidth();
-    var pageH = pdf.internal.pageSize.getHeight();
-    var imgH  = (canvas.height * pageW) / canvas.width;
-    if (imgH <= pageH) {
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, imgH);
-    } else {
-      var yOffset = 0;
-      var sliceH  = Math.floor(canvas.width * pageH / pageW);
-      while (yOffset < canvas.height) {
-        var sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width  = canvas.width;
-        sliceCanvas.height = Math.min(sliceH, canvas.height - yOffset);
-        sliceCanvas.getContext('2d').drawImage(canvas, 0, -yOffset);
-        var sh2 = (sliceCanvas.height * pageW) / canvas.width;
-        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, sh2);
-        yOffset += sliceH;
-        if (yOffset < canvas.height) pdf.addPage();
-      }
-    }
-    pdf.save('laporan-' + nama + '-' + new Date().toISOString().slice(0,10) + '.pdf');
-    showToast('✅ PDF laporan berhasil disimpan');
-  } catch(e) { showToast('❌ Gagal membuat PDF'); console.error(e); }
+    var fname = _pdfGenLaporanPribadiNasabah(jsPDFCls, kkId);
+    if (fname) showToast('✅ PDF laporan berhasil diunduh');
+    else showToast('⚠️ Data nasabah tidak ditemukan');
+  } catch(e) { showToast('❌ Gagal membuat PDF'); console.error('[LaporanPribadiPDF]', e); }
 };
 
 /* ═══════════════════════════════════════════════════════
