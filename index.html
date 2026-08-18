@@ -1956,9 +1956,55 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--forest) 0%, var(--forest-mid) 100%);
   color: white; padding: 12px 10px 10px;
-  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; gap: 8px;
   flex-shrink: 0; position: relative; z-index: 10;
   box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+}
+.app-header-top {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 6px;
+}
+/* ── Mode Switcher: tab mendatar Koperasi / Semeton+ / Kifayah ── */
+.mode-switcher {
+  display: flex; gap: 4px;
+  background: rgba(0,0,0,0.2); border-radius: 14px; padding: 4px;
+  position: relative; z-index: 1;
+}
+.mode-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  padding: 13px 3px; border-radius: 11px; white-space: nowrap; overflow: hidden;
+  color: rgba(255,255,255,0.62); font-size: clamp(12.5px, 4.2vw, 16px); font-weight: 800;
+  letter-spacing: 0.1px;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.mode-tab:active { transform: scale(0.97); }
+.mode-tab.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #1a2e1f;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+/* ── Saat salah satu tab aktif, tab lain tampak samar (dimmed) ── */
+.mode-switcher:has(.mode-tab.active) .mode-tab:not(.active),
+.mode-switcher .mode-tab.dimmed {
+  opacity: 0.4;
+  filter: saturate(0.7);
+}
+.mode-switcher .mode-tab { transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease; }
+/* ── Tema warna per mode: Koperasi=Emas, Kifayah=Ungu, Semeton+=Biru ── */
+#modeTabKoperasi.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #1a2e1f;
+  box-shadow: 0 2px 10px rgba(244,169,34,0.35);
+}
+#modeTabKifayah.active {
+  background: linear-gradient(135deg, #7b2d8b, #9b59b6);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(123,45,139,0.40);
+}
+#modeTabSemeton.active {
+  background: linear-gradient(135deg, #1e5b8a, #4361ee);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(67,97,238,0.40);
 }
 .app-header .logo { display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; overflow: hidden; }
 .app-header .logo-icon {
@@ -2263,7 +2309,7 @@ body {
 .tab-pill.tab-cicilan.active  { background: #2563eb; border-color: #2563eb; color: white; }
 .tab-pill.tab-angsuran.active { background: #7b2d8b; border-color: #7b2d8b; color: white; }
 .tab-pill.tab-pembayaran.active { background: linear-gradient(135deg,#2563eb,#7b2d8b); border-color: #2563eb; color: white; }
-.pembayaran-subtab-bar { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px 6px; position:relative; z-index:5; }
+.pembayaran-subtab-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:14px 16px 6px; position:relative; z-index:5; }
 .pembayaran-subtab {
   padding:13px 10px; border-radius:14px; border:2px solid rgba(0,0,0,0.10);
   background:white; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
@@ -2282,6 +2328,10 @@ body {
 .pembayaran-subtab.aktif-capital {
   background:linear-gradient(135deg,#3b0764,#7b2d8b); border-color:#7b2d8b;
   color:#f3e8ff; box-shadow:0 4px 18px rgba(123,45,139,0.28);
+}
+.pembayaran-subtab.aktif-kifayah {
+  background:linear-gradient(135deg,#b45309,#d97706); border-color:#b45309;
+  color:#fef3c7; box-shadow:0 4px 18px rgba(180,83,9,0.28);
 }
 .tab-pill.tab-phu.active      { background: #5b21b6; border-color: #5b21b6; color: white; }
 .tab-pill.tab-shu.active      { background: #b45309; border-color: #b45309; color: white; }
@@ -3272,9 +3322,51 @@ body {
   display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800;
   padding: 3px 9px; border-radius: 99px; background: rgba(45,106,79,0.1); color: var(--forest-mid);
 }
+/* ── Statistik & Aturan Semeton+ — tampilan modern, diposisikan di bawah grid ── */
+.sem-bottom-section { padding: 14px 16px 6px; display: flex; flex-direction: column; gap: 10px; }
+.sem-card-modern {
+  background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: hidden; border: 1px solid rgba(0,0,0,0.04);
+}
+.sem-card-summary {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent;
+}
+.sem-card-summary::-webkit-details-marker { display: none; }
+.sem-card-icon {
+  width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15); color: white;
+}
+.sem-card-summary-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sem-card-title { font-size: 13.5px; font-weight: 800; color: var(--text); }
+.sem-card-sub { font-size: 10.5px; color: var(--text-soft); font-weight: 600; }
+.sem-chevron { color: #9ca3af; flex-shrink: 0; transition: transform 0.25s ease; }
+.sem-card-modern[open] .sem-chevron { transform: rotate(180deg); }
+.sem-card-modern[open] .sem-card-summary { border-bottom: 1px solid #f0f2f4; }
+.sem-card-body { padding: 6px 16px 14px; }
+.sem-rule-item { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; }
+.sem-rule-item + .sem-rule-item { border-top: 1px dashed #eef0f3; }
+.sem-rule-num {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+  background: rgba(45,106,79,0.1); color: var(--forest-mid);
+  font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+}
+.sem-rule-text { display: flex; flex-direction: column; gap: 2px; }
+.sem-rule-text b { font-size: 12.5px; color: var(--text); font-weight: 800; }
+.sem-rule-text span { font-size: 11.5px; color: var(--text-soft); line-height: 1.5; }
+/* ── Daftar Semeton+ dalam panel: 1 kartu per baris, 1 animasi tunggal saat terbuka (tanpa bertahap) ── */
+@keyframes lokerListOpen {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+#lokerList {
+  padding: 4px 16px 10px;
+  animation: lokerListOpen 0.22s ease both;
+}
 .loker-card {
   background: white; border-radius: 14px; box-shadow: var(--card-shadow);
-  margin: 8px 16px; padding: 11px 14px; position: relative; cursor: pointer;
+  margin: 0 0 10px; padding: 11px 14px; position: relative; cursor: pointer;
   transition: box-shadow 0.2s ease, opacity 0.2s ease;
 }
 .loker-card:active { box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
@@ -3284,8 +3376,9 @@ body {
 .loker-card-title { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.35; }
 .loker-card-meta-compact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 10.5px; color: var(--text-soft); margin-top: 4px; }
 .loker-card-meta-compact span { display: flex; align-items: center; gap: 3px; }
-.loker-expand-hint { margin-left: auto; font-weight: 800; color: var(--forest-mid); font-size: 10px; transition: transform 0.2s ease; }
-.loker-card-expanded .loker-expand-hint { transform: rotate(180deg); }
+.loker-expand-hint { margin-left: auto; font-weight: 800; color: var(--forest-mid); font-size: 10px; }
+.loker-expand-hint .loker-expand-arrow { display: inline-block; transition: transform 0.2s ease; }
+.loker-card-expanded .loker-expand-hint .loker-expand-arrow { transform: rotate(180deg); }
 .loker-card-detail { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.2s ease; }
 .loker-card-detail.open { max-height: 600px; opacity: 1; margin-top: 8px; }
 .loker-card-detail-block { font-size: 12px; color: var(--text); line-height: 1.6; margin-bottom: 6px; }
@@ -3312,7 +3405,7 @@ body {
 .loker-tersedia-badge.no { background: rgba(107,114,128,0.14); color: #6b7280; }
 .loker-tersedia-badge.clickable { cursor: pointer; }
 .loker-tersedia-badge.clickable:active { transform: scale(0.94); }
-.loker-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.loker-card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .loker-fab {
   position: fixed; right: 16px; bottom: 88px; z-index: 90;
   background: linear-gradient(135deg, var(--forest), var(--forest-mid)); color: white;
@@ -3321,7 +3414,7 @@ body {
   font-family: inherit;
 }
 .loker-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 12.5px; }
-.loker-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 10px; }
+.loker-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 0 4px; }
 .loker-stats-grid .stat-card { padding: 10px 8px; }
 .loker-stats-grid .stat-card .stat-icon { font-size: 20px; min-height: 26px; margin-bottom: 3px; }
 .loker-stats-grid .stat-card .stat-val { font-size: 16px; }
@@ -4206,6 +4299,7 @@ body {
   opacity: 0.6;
 }
 .app-header .logo, .app-header .header-menu-wrap { position: relative; z-index: 1; }
+.app-header .app-header-top { position: relative; z-index: 1; }
 
 /* ── Lambang logo: tampilan statis sederhana (tanpa animasi) ── */
 .kop-logo-wrap {
@@ -5146,6 +5240,21 @@ function authSave() {
 function usersLoad() {
   // Prioritas: dari DB utama (tersinkronisasi ke Supabase)
   if (window.DB && Array.isArray(window.DB.users)) {
+    // Migrasi satu-kali: sebelum menu "Kifayah Renco" resmi masuk ke sistem
+    // hak akses (aksesMenu), halaman Kifayah bisa diakses semua Nasabah lewat
+    // tab header tanpa kontrol admin. Supaya user lama tidak mendadak
+    // kehilangan akses begitu kontrol ini aktif, beri akses default sekali
+    // saja — setelahnya admin bebas mencabut lewat menu Kelola User.
+    var _kfDirty = false;
+    window.DB.users.forEach(function(u) {
+      if (u && u.role === 'nasabah' && !u._kfAksesMigrated) {
+        if (!Array.isArray(u.aksesMenu)) u.aksesMenu = ['home'];
+        if (u.aksesMenu.indexOf('kifayah') === -1) u.aksesMenu.push('kifayah');
+        u._kfAksesMigrated = true;
+        _kfDirty = true;
+      }
+    });
+    if (_kfDirty && typeof saveDB === 'function') saveDB();
     // Selalu percaya DB.users jika DB sudah ada — bahkan jika kosong (artinya semua sudah dihapus)
     return window.DB.users;
   }
@@ -5645,6 +5754,10 @@ function applyRoleRestrictions() {
     if (tabHistory) tabHistory.style.display = '';
     var rnTabIuran = document.getElementById('rnTabIuran');
     if (rnTabIuran) rnTabIuran.style.display = '';
+    var modeTabKfAdm = document.getElementById('modeTabKifayah');
+    if (modeTabKfAdm) modeTabKfAdm.style.display = '';
+    var modeTabSmAdm = document.getElementById('modeTabSemeton');
+    if (modeTabSmAdm) modeTabSmAdm.style.display = '';
   } else if (isNasabah()) {
     applyNasabahMode();
   }
@@ -6017,6 +6130,15 @@ function applyNasabahMode() {
   if (fab) fab.style.display = 'none';
   var txnFilterBar0 = document.getElementById('homeTxnFilterBar');
   if (txnFilterBar0) txnFilterBar0.style.display = 'none';
+  // Tab Mode Switcher di headbar (Kifayah Renco / Semeton+) juga tunduk pada
+  // aksesMenu — bukan cuma bottom nav — supaya Nasabah yang tidak diberi izin
+  // tidak melihat tab yang tidak bisa mereka pakai.
+  var modeTabKf = document.getElementById('modeTabKifayah');
+  if (modeTabKf) modeTabKf.style.display = allowed.includes('kifayah') ? '' : 'none';
+  var modeTabSm = document.getElementById('modeTabSemeton');
+  if (modeTabSm) modeTabSm.style.display = allowed.includes('semetonPlus') ? '' : 'none';
+  var qaKf = document.getElementById('qaKifayahBtn');
+  if (qaKf) qaKf.style.display = allowed.includes('kifayah') ? '' : 'none';
   var activePage = document.querySelector('.page.active');
   if (activePage) {
     var pid = activePage.id.replace('page-', '');
@@ -7441,7 +7563,8 @@ var UM_MENUS = [
   { id:'laporan', label:'&#x1F4CA; Laporan' },
   { id:'rencoPay', label:'&#x1F4B3; RencoPay' },
   { id:'forum', label:'&#x1F3AE; Hiburan' },
-  { id:'semetonPlus', label:'&#x1F4BC; Semeton+' }
+  { id:'semetonPlus', label:'&#x1F4BC; Semeton+' },
+  { id:'kifayah', label:'&#x1F6CD; Kifayah Renco' }
 ];
 
 function renderUserManagement() {
@@ -8561,6 +8684,7 @@ window.deletePengurus = function(id) {
 <!-- APP SHELL -->
 <div id="app">
   <header class="app-header">
+    <div class="app-header-top">
     <div class="logo">
       <img src="assets/logo-renco-capital.png" alt="Koperasi Renco" style="height:clamp(30px,9vw,44px);width:auto;max-width:100%;display:block;opacity:0.9;">
     </div>
@@ -8597,6 +8721,26 @@ window.deletePengurus = function(id) {
 
       <button class="icon-btn" id="headerProfileBtn" onclick="showProfile()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
     </div>
+    </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         MODE SWITCHER — Koperasi / Semeton+ / Kifayah
+         Tab mendatar di headbar. Ketiga tab ("Koperasi",
+         "Semeton+", "Kifayah") sudah mengarah ke halaman
+         sungguhan masing-masing (lihat switchAppMode()).
+         Kifayah = marketplace warung anggota (page-kifayah).
+    ═══════════════════════════════════════════ -->
+    <div class="mode-switcher" id="appModeSwitcher" role="tablist" aria-label="Mode Aplikasi">
+      <button class="mode-tab active" id="modeTabKoperasi" data-mode="koperasi" onclick="switchAppMode('koperasi')" role="tab" aria-selected="true">
+        <span>KOPERASI</span>
+      </button>
+      <button class="mode-tab dimmed" id="modeTabKifayah" data-mode="kifayah" onclick="switchAppMode('kifayah')" role="tab" aria-selected="false">
+        <span>KIFAYAH</span>
+      </button>
+      <button class="mode-tab dimmed" id="modeTabSemeton" data-mode="semeton" onclick="switchAppMode('semeton')" role="tab" aria-selected="false">
+        <span>SEMETON+</span>
+      </button>
     </div>
   </header>
 
@@ -8648,6 +8792,56 @@ window.deletePengurus = function(id) {
       setTimeout(function() { toggleHeaderMenu(false); }, 120);
     }
   });
+
+  // ── Mode Switcher: Koperasi / Semeton+ / Kifayah ──
+  // Mengganti tab aktif secara visual, menyimpan pilihan terakhir, dan
+  // menavigasi langsung ke halaman sungguhan masing-masing mode
+  // (lihat navTo). Kifayah = marketplace warung anggota (page-kifayah).
+  var RENCO_APP_MODES = ['koperasi', 'semeton', 'kifayah'];
+  var RENCO_MODE_LABELS = { koperasi: 'Koperasi', semeton: 'Semeton+', kifayah: 'Kifayah' };
+
+  function switchAppMode(mode) {
+    if (RENCO_APP_MODES.indexOf(mode) === -1) return;
+    RENCO_APP_MODES.forEach(function(m) {
+      var tab = document.getElementById('modeTab' + m.charAt(0).toUpperCase() + m.slice(1));
+      if (!tab) return;
+      var active = (m === mode);
+      tab.classList.toggle('active', active);
+      tab.classList.toggle('dimmed', !active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    try { localStorage.setItem('rencoAppMode', mode); } catch (e) {}
+    // Bottom nav Koperasi hanya tampil di mode "koperasi" — Semeton+ (dan mode
+    // lain nantinya) punya bottom nav sendiri, jadi nav Koperasi disembunyikan.
+    var bottomNavKoperasi = document.getElementById('bottomNavKoperasi');
+    if (bottomNavKoperasi) bottomNavKoperasi.style.display = (mode === 'koperasi') ? '' : 'none';
+    if (mode === 'semeton') {
+      // Semeton+ sudah punya halaman sendiri (page-semetonPlus) — arahkan langsung ke sana.
+      if (typeof navTo === 'function') navTo('semetonPlus');
+    } else if (mode === 'kifayah') {
+      // Kifayah sudah punya halaman sendiri (page-kifayah) — arahkan langsung ke sana.
+      if (typeof navTo === 'function') navTo('kifayah');
+    } else if (mode === 'koperasi') {
+      // Kembali ke konten Koperasi kalau sebelumnya sedang berada di halaman Semeton+/Kifayah.
+      if (typeof navTo === 'function' && typeof currentPage !== 'undefined' && (currentPage === 'semetonPlus' || currentPage === 'kifayah')) navTo('home');
+    }
+  }
+
+  // Setiap kali aplikasi dibuka (fresh load), mode SELALU kembali ke
+  // "Koperasi" — tidak lagi mengingat mode terakhir yang dipilih sebelumnya.
+  (function resetAppModeToKoperasi() {
+    RENCO_APP_MODES.forEach(function(m) {
+      var tab = document.getElementById('modeTab' + m.charAt(0).toUpperCase() + m.slice(1));
+      if (!tab) return;
+      var active = (m === 'koperasi');
+      tab.classList.toggle('active', active);
+      tab.classList.toggle('dimmed', !active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    try { localStorage.setItem('rencoAppMode', 'koperasi'); } catch (e) {}
+    var bottomNavKoperasi = document.getElementById('bottomNavKoperasi');
+    if (bottomNavKoperasi) bottomNavKoperasi.style.display = '';
+  })();
   </script>
 
 
@@ -8904,6 +9098,10 @@ window.deletePengurus = function(id) {
         <button class="quick-btn" id="qaTagihanBtn" style="display:none" onclick="(function(){var s=document.getElementById('_home_tagihan_section');s.style.display='';s.scrollIntoView({behavior:'smooth',block:'nearest'});if(typeof renderHomeTagihan==='function')renderHomeTagihan();})();">
           <span class="q-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#e63946" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="#e63946" stroke-width="2" stroke-linecap="round"/></svg></span>
           <span class="q-label">Tagihan</span>
+        </button>
+        <button class="quick-btn" id="qaKifayahBtn" onclick="switchAppMode('kifayah')">
+          <span class="q-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="qaKf" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#9b59b6"/><stop offset="1" stop-color="#7b2d8b"/></linearGradient></defs><path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5A2 2 0 0 1 5.5 19L4 8Z" fill="url(#qaKf)" opacity="0.15" stroke="url(#qaKf)" stroke-width="1.8"/><path d="M8 8V6a4 4 0 0 1 8 0v2" stroke="url(#qaKf)" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <span class="q-label">Kifayah</span>
         </button>
       </div>
 
@@ -9579,16 +9777,8 @@ window.deletePengurus = function(id) {
         background:linear-gradient(135deg,var(--forest),var(--forest-mid));
       }
 
-      /* ── Panel animasi ── */
+      /* ── Panel ── */
       #keuPanelOverlay.open { display:block !important; }
-      #keuPanelCard.expanding {
-        transition:
-          top    0.38s cubic-bezier(.4,0,.2,1),
-          left   0.38s cubic-bezier(.4,0,.2,1),
-          width  0.38s cubic-bezier(.4,0,.2,1),
-          height 0.38s cubic-bezier(.4,0,.2,1),
-          border-radius 0.38s cubic-bezier(.4,0,.2,1);
-      }
       </style>
     </div>
 
@@ -9885,26 +10075,10 @@ window.deletePengurus = function(id) {
         <img src="assets/banner-semeton-plus.png" alt="Semeton+ — Berbagi informasi, membuka peluang untuk Semeton" loading="lazy">
       </div>
 
-      <details class="loker-rules" id="lokerStatsPanel" style="display:none">
-        <summary>📊 Statistik Kinerja Semeton+ <span style="opacity:0.5">▾</span></summary>
-        <div id="lokerStatsBody"></div>
-      </details>
-
-      <details class="loker-rules">
-        <summary>📋 Aturan Sederhana <span style="opacity:0.5">▾</span></summary>
-        <div class="loker-rules-body">
-          <div><b>1. Khusus Anggota</b> — Info loker berasal dari anggota, untuk anggota.</div>
-          <div><b>2. Gratis</b> — Tidak ada biaya untuk membagikan informasi lowongan.</div>
-          <div><b>3. Verifikasi</b> — Setiap lowongan diperiksa admin sebelum dipublikasikan.</div>
-          <div><b>4. Transparan</b> — Cantumkan nama usaha, posisi, lokasi, persyaratan & kontak dengan jelas.</div>
-          <div><b>5. Koperasi Sebagai Penghubung</b> — Koperasi tidak menjadi pihak dalam hubungan kerja antara pemberi kerja & pencari kerja.</div>
-        </div>
-      </details>
-
       <div style="background:transparent;padding:14px 14px 10px;border-bottom:1.5px solid #eef0f3">
         <div class="loker-tab-grid" id="lokerTabBar">
 
-          <button class="forum-grid-btn loker-grid-btn active" data-kat="semua" onclick="semetonTab('semua',this)">
+          <button class="forum-grid-btn loker-grid-btn active" id="sem-card-semua" data-kat="semua" onclick="semPanelOpen('semua',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
@@ -9916,7 +10090,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Semua</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="cariKerja" onclick="semetonTab('cariKerja',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-cariKerja" data-kat="cariKerja" onclick="semPanelOpen('cariKerja',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="10.5" cy="10.5" r="6.5" stroke="#2563eb" stroke-width="1.8"/>
@@ -9926,7 +10100,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Cari Kerja</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="pasangLowongan" onclick="semetonTab('pasangLowongan',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-pasangLowongan" data-kat="pasangLowongan" onclick="semPanelOpen('pasangLowongan',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M3 11l14-6v14L3 13v-2z" stroke="#d97706" stroke-width="1.7" stroke-linejoin="round"/>
@@ -9937,7 +10111,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Lowongan</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="cariMitra" onclick="semetonTab('cariMitra',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-cariMitra" data-kat="cariMitra" onclick="semPanelOpen('cariMitra',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="8" cy="7.5" r="2.6" stroke="#9333ea" stroke-width="1.6"/>
@@ -9950,7 +10124,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Mitra Usaha</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="butuhKaryawan" onclick="semetonTab('butuhKaryawan',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-butuhKaryawan" data-kat="butuhKaryawan" onclick="semPanelOpen('butuhKaryawan',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M3 9.5l1.4-4.2A1.5 1.5 0 0 1 5.8 4.3h12.4a1.5 1.5 0 0 1 1.4 1l1.4 4.2" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -9961,7 +10135,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Butuh Karyawan</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="tawarkanJasa" onclick="semetonTab('tawarkanJasa',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-tawarkanJasa" data-kat="tawarkanJasa" onclick="semPanelOpen('tawarkanJasa',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M14.5 6.5a3.5 3.5 0 0 1-4.6 4.6L4 17v3h3l6-6a3.5 3.5 0 0 1 4.6-4.6l-2.4 2.4-1.7-1.7 2.4-2.4z" stroke="#ec4899" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -9970,7 +10144,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Jasa/Keahlian</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="punyaSaya" onclick="semetonTab('punyaSaya',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="sem-card-punyaSaya" data-kat="punyaSaya" onclick="semPanelOpen('punyaSaya',this)">
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="3.6" stroke="#6b7280" stroke-width="1.7"/>
@@ -9980,7 +10154,7 @@ window.deletePengurus = function(id) {
             <span class="fgb-label">Punya Saya</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" data-kat="verifikasi" id="lokerTabVerifikasi" style="display:none;position:relative" onclick="semetonTab('verifikasi',this)">
+          <button class="forum-grid-btn loker-grid-btn" id="lokerTabVerifikasi" data-kat="verifikasi" style="display:none;position:relative" onclick="semPanelOpen('verifikasi',this)">
             <span class="nav-badge-count" id="lokerTabNotif" style="display:none;top:-3px;left:auto;right:6px">0</span>
             <div class="fgb-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -9994,13 +10168,392 @@ window.deletePengurus = function(id) {
         </div>
       </div>
 
-      <div id="lokerList"></div>
+      <!-- ══ Statistik & Aturan — dipindah ke bawah grid, tampilan modern ══ -->
+      <div class="sem-bottom-section">
+        <details class="sem-card-modern" id="lokerStatsPanel" style="display:none">
+          <summary class="sem-card-summary">
+            <span class="sem-card-icon" style="background:linear-gradient(135deg,#1a472a,#40916c)">📊</span>
+            <span class="sem-card-summary-text">
+              <span class="sem-card-title">Statistik Kinerja Semeton+</span>
+              <span class="sem-card-sub">Ringkasan performa fitur loker</span>
+            </span>
+            <svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="sem-card-body" id="lokerStatsBody"></div>
+        </details>
+
+        <details class="sem-card-modern">
+          <summary class="sem-card-summary">
+            <span class="sem-card-icon" style="background:linear-gradient(135deg,#b07a00,#f4a922)">📋</span>
+            <span class="sem-card-summary-text">
+              <span class="sem-card-title">Aturan Sederhana</span>
+              <span class="sem-card-sub">Panduan penggunaan Semeton+</span>
+            </span>
+            <svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="sem-card-body">
+            <div class="sem-rule-item">
+              <span class="sem-rule-num">1</span>
+              <div class="sem-rule-text"><b>Khusus Anggota</b><span>Info loker berasal dari anggota, untuk anggota.</span></div>
+            </div>
+            <div class="sem-rule-item">
+              <span class="sem-rule-num">2</span>
+              <div class="sem-rule-text"><b>Gratis</b><span>Tidak ada biaya untuk membagikan informasi lowongan.</span></div>
+            </div>
+            <div class="sem-rule-item">
+              <span class="sem-rule-num">3</span>
+              <div class="sem-rule-text"><b>Verifikasi</b><span>Setiap lowongan diperiksa admin sebelum dipublikasikan.</span></div>
+            </div>
+            <div class="sem-rule-item">
+              <span class="sem-rule-num">4</span>
+              <div class="sem-rule-text"><b>Transparan</b><span>Cantumkan nama usaha, posisi, lokasi, persyaratan & kontak dengan jelas.</span></div>
+            </div>
+            <div class="sem-rule-item">
+              <span class="sem-rule-num">5</span>
+              <div class="sem-rule-text"><b>Koperasi Sebagai Penghubung</b><span>Koperasi tidak menjadi pihak dalam hubungan kerja antara pemberi kerja & pencari kerja.</span></div>
+            </div>
+          </div>
+        </details>
+      </div>
+
     </div>
+
+    <!-- ══ FULLSCREEN PANEL SEMETON+ (muncul dari kartu grid, meniru menu Keuangan) ══ -->
+    <div id="semPanelOverlay" style="
+      display:none;
+      position:fixed;inset:0;z-index:500;
+      pointer-events:none;
+    ">
+      <div id="semPanelCard" style="
+        position:absolute;
+        border-radius:18px;
+        overflow:hidden;
+        pointer-events:all;
+        will-change:transform,border-radius;
+        box-shadow:0 8px 40px rgba(0,0,0,0.25);
+        display:flex;flex-direction:column;
+        background:white;
+      ">
+        <div id="semPanelHeader" style="
+          display:flex;align-items:center;justify-content:space-between;
+          padding:14px 16px 12px;flex-shrink:0;
+          background:linear-gradient(135deg,var(--forest),var(--forest-mid));
+        ">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="semPanelIconWrap" style="width:34px;height:34px;border-radius:10px;background:rgba(244,169,34,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;line-height:1"></div>
+            <span id="semPanelTitle" style="font-size:15px;font-weight:800;color:white;letter-spacing:0.2px"></span>
+          </div>
+          <button onclick="semPanelClose()" style="
+            width:32px;height:32px;border-radius:50%;
+            background:rgba(255,255,255,0.2);border:none;
+            color:white;font-size:18px;font-weight:700;
+            cursor:pointer;display:flex;align-items:center;justify-content:center;
+            font-family:inherit;flex-shrink:0;
+            -webkit-tap-highlight-color:transparent;
+          ">✕</button>
+        </div>
+        <div id="semPanelContent" style="
+          flex:1;overflow-y:auto;overflow-x:hidden;
+          background:#f4f6f8;
+          -webkit-overflow-scrolling:touch;
+          padding-bottom:80px;
+        "></div>
+      </div>
+    </div>
+
+    <style>
+    #semPanelOverlay.open { display:block !important; }
+    </style>
 
     <button class="loker-fab" id="lokerFab" onclick="openLokerModal()">
       <span style="font-size:15px">＋</span> Pasang Info
     </button>
 
+
+    <!-- ═══════════════════════════ KIFAYAH MARKETPLACE PAGE ═══════════════════════════ -->
+    <style>
+    /* .kf-tab kini hanya dipakai sebagai selector JS (lihat kifayahTab()) —
+       tampilan visualnya memakai .nav-item (bottom nav), disamakan dengan Koperasi.
+       Aksen warna ungu Kifayah tetap dipertahankan lewat override di bawah. */
+    #bottomNavKifayah .nav-item.active .nav-icon,
+    #bottomNavKifayah .nav-item.active .nav-label { color: #7b2d8b; }
+    #bottomNavKifayah .nav-item.active .nav-indicator { background: linear-gradient(135deg,#7b2d8b,#9b59b6); }
+    .kf-panel { display:none; padding:14px; }
+    .kf-panel.active { display:block; }
+    .kf-search-row { display:flex; gap:8px; margin-bottom:10px; }
+    .kf-search-row input { flex:1; padding:10px 14px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:13px; font-family:inherit; }
+    .kf-cart-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; cursor:pointer; flex-shrink:0; }
+    .kf-cart-badge { position:absolute; top:-6px; right:-6px; background:#dc2626; color:#fff; font-size:10px; font-weight:800; border-radius:10px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+    .kf-kat-scroll { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; }
+    .kf-kat-chip { flex-shrink:0; padding:6px 12px; border-radius:20px; border:1.5px solid #e5e7eb; background:#fff; font-size:11.5px; font-weight:700; color:#6b7280; cursor:pointer; font-family:inherit; }
+    .kf-kat-chip.active { background:#7b2d8b; border-color:#7b2d8b; color:#fff; }
+    .kf-produk-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .kf-produk-card { background:#fff; border-radius:14px; border:1.5px solid #f0eef3; overflow:hidden; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+    .kf-produk-img { height:110px; background:#f4f1f7; position:relative; }
+    .kf-produk-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .kf-produk-noimg { display:flex; align-items:center; justify-content:center; height:100%; font-size:30px; }
+    .kf-habis-badge { position:absolute; inset:0; background:rgba(0,0,0,0.55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; text-align:center; }
+    .kf-produk-info { padding:8px 10px 10px; }
+    .kf-produk-nama { font-size:12px; font-weight:700; color:#1f2937; line-height:1.3; margin-bottom:3px; }
+    .kf-produk-harga { font-size:13px; font-weight:800; color:#7b2d8b; }
+    .kf-produk-warung { font-size:10px; color:#9ca3af; margin-top:2px; }
+    .kf-empty, .kf-empty-cta { text-align:center; padding:40px 20px; color:#9ca3af; font-size:12.5px; }
+    .kf-warung-grid { border-radius:14px; overflow:hidden; border:1.5px solid #f0eef3; background:#fff; }
+    .kf-warung-card { background:#fff; border-radius:14px; border:1.5px solid #f0eef3; overflow:hidden; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.04); padding-bottom:10px; }
+    .kf-warung-card-logo { height:88px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:30px; }
+    .kf-warung-card-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .kf-warung-card-info { padding:8px 10px 0; }
+    .kf-warung-card-nama { font-size:12.5px; font-weight:800; color:#1f2937; line-height:1.3; margin-bottom:2px; }
+    .kf-warung-card-meta { font-size:10px; color:#9ca3af; }
+    .kf-warung-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .kf-warung-header-back { width:32px; height:32px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; font-size:14px; cursor:pointer; flex-shrink:0; font-family:inherit; }
+    .kf-warung-header-logo { width:38px; height:38px; border-radius:11px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:17px; overflow:hidden; flex-shrink:0; }
+    .kf-warung-header-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .kf-warung-header-nama { font-size:18px; font-weight:800; color:#1f2937; line-height:1.25; font-family:'Playfair Display', serif; }
+    .kf-warung-header-meta { font-size:10.5px; color:#9ca3af; margin-top:2px; }
+    .kf-qty-btn { width:34px; height:34px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; font-weight:800; cursor:pointer; }
+    .kf-warung-profile { display:flex; align-items:center; gap:12px; background:#fff; border:1.5px solid #f0eef3; border-radius:14px; padding:12px; margin-bottom:12px; }
+    #kfWarungInfo { background:#fff; border:1.5px solid #f0eef3; border-radius:14px; margin-bottom:12px; overflow:hidden; }
+    #kfWarungInfo .info-row { padding:9px 14px; }
+    #kfWarungInfo .info-row:last-child { border-bottom:none; }
+    #kfWarungInfo .info-label { font-size:9.5px; }
+    #kfWarungInfo .info-val { font-size:11.5px; margin-top:1px; }
+    .kf-wa-contact { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .kf-wa-btn { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:8px; text-decoration:none; flex-shrink:0; }
+    .kf-wa-btn.wa { background:rgba(37,211,102,0.12); color:#25D366; }
+    .kf-wa-btn.call { background:rgba(45,106,79,0.1); color:#2d6a4f; }
+    .kf-warung-logo-placeholder { width:56px; height:56px; border-radius:14px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+    .kf-edit-btn { width:34px; height:34px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; cursor:pointer; flex-shrink:0; }
+    .kf-warung-actions { display:flex; gap:8px; margin-bottom:16px; }
+    .kf-section-title { font-size:12.5px; font-weight:800; color:#374151; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
+    .kf-pending-count { background:#dc2626; color:#fff; font-size:10px; font-weight:800; border-radius:10px; padding:1px 7px; }
+    .kf-myproduk-list, .kf-pesanan-list { display:flex; flex-direction:column; gap:8px; }
+    .kf-myproduk-item { display:flex; align-items:center; gap:10px; background:#fff; border:1.5px solid #f0eef3; border-radius:12px; padding:8px; }
+    .kf-myproduk-item img, .kf-produk-noimg-sm { width:48px; height:48px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+    .kf-produk-noimg-sm { background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .kf-mini-btn { width:26px; height:26px; border-radius:7px; border:1px solid #e5e7eb; background:#fff; font-size:11px; cursor:pointer; }
+    .kf-pesanan-card { background:#fff; border:1.5px solid #f0eef3; border-radius:12px; padding:10px 12px; }
+    .kf-status-badge { font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:8px; white-space:nowrap; background:#f4f1f7; color:#7b2d8b; }
+    .kf-status-selesai { background:#dcfce7; color:#16a34a; }
+    .kf-status-dibatalkan { background:#fee2e2; color:#dc2626; }
+    .kf-status-dikirim { background:#dbeafe; color:#2563eb; }
+    .kf-mini-action { flex:1; padding:6px; border-radius:8px; border:none; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .kf-accept { background:#7b2d8b; color:#fff; }
+    .kf-reject { background:#fee2e2; color:#dc2626; }
+    .kf-cart-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0eef3; }
+    .kf-cart-remove { background:none; border:none; font-size:16px; cursor:pointer; }
+    .kf-logo-upload, .kf-foto-upload { width:72px; height:72px; border-radius:14px; border:1.5px dashed #d1d5db; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; margin:0 auto 12px; overflow:hidden; background:#fafafa; position:relative; }
+    .kf-logo-upload-wrap { position:relative; width:72px; margin:0 auto 12px; }
+    .kf-logo-upload-wrap .kf-logo-upload { margin:0; }
+    .kf-logo-remove-btn { position:absolute; bottom:-2px; right:-2px; width:24px; height:24px; border-radius:50%; background:#dc2626; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .kf-actas-banner { display:none; align-items:center; gap:8px; background:linear-gradient(135deg,#7b2d8b,#9b59b6); color:#fff; border-radius:12px; padding:9px 12px; margin-bottom:10px; font-size:11.5px; font-weight:700; }
+    .kf-actas-banner .kf-actas-icon { font-size:16px; flex-shrink:0; }
+    .kf-actas-banner .kf-actas-text { flex:1; min-width:0; line-height:1.35; }
+    .kf-actas-banner .kf-actas-text small { display:block; font-weight:500; opacity:0.85; font-size:9.5px; margin-top:1px; }
+    .kf-actas-banner button { flex-shrink:0; border:none; background:rgba(255,255,255,0.22); color:#fff; font-size:10.5px; font-weight:800; padding:6px 10px; border-radius:9px; cursor:pointer; font-family:inherit; }
+    .kf-actas-pick-item { display:flex; align-items:center; gap:10px; padding:10px 8px; border-radius:12px; cursor:pointer; }
+    .kf-actas-pick-item:active { background:#faf7fb; }
+    .kf-actas-pick-avatar { width:36px; height:36px; border-radius:10px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; font-weight:800; color:#7b2d8b; }
+    /* Grid menu Admin Kifayah */
+    .kf-adm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:6px; }
+    .kf-adm-card { position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; background:#fff; border:1px solid #f2eef6; border-radius:18px; padding:16px 6px 12px; cursor:pointer; font-family:inherit; transition:transform 0.15s cubic-bezier(.4,0,.2,1), box-shadow 0.15s; box-shadow:0 3px 12px rgba(123,45,139,0.07); -webkit-tap-highlight-color:transparent; text-align:center; }
+    .kf-adm-card:active { transform:scale(0.94); box-shadow:0 1px 4px rgba(123,45,139,0.08); }
+    .kf-adm-icon { width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:20px; background:linear-gradient(135deg,var(--ac1),var(--ac2)); box-shadow:0 5px 12px var(--acs); color:#fff; }
+    .kf-adm-label { font-size:10.5px; font-weight:800; color:#374151; letter-spacing:0.1px; line-height:1.25; }
+    .kf-adm-badge { position:absolute; top:8px; right:10px; background:#dc2626; color:#fff; font-size:9px; font-weight:800; border-radius:99px; min-width:17px; text-align:center; padding:1.5px 5px; line-height:1.4; box-shadow:0 2px 6px rgba(220,38,38,0.35); }
+    /* Bar Saldo Kifayah (terhubung dengan Simpanan Sukarela) */
+    .kf-saldo-bar { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#1a472a,#2d6a4f); color:#e8c97e; border-radius:14px; padding:12px 14px; margin-bottom:12px; box-shadow:0 4px 14px rgba(26,71,42,0.22); }
+    .kf-saldo-bar .kf-saldo-icon { font-size:22px; flex-shrink:0; }
+    .kf-saldo-bar .kf-saldo-info { flex:1; min-width:0; }
+    .kf-saldo-bar .kf-saldo-label { font-size:9.5px; font-weight:700; opacity:0.8; letter-spacing:0.3px; text-transform:uppercase; }
+    .kf-saldo-bar .kf-saldo-nilai { font-size:16px; font-weight:800; margin-top:1px; }
+    .kf-saldo-bar.kf-saldo-minus { background:linear-gradient(135deg,#7f1d1d,#b91c1c); color:#fecaca; }
+    </style>
+    <div class="page" id="page-kifayah">
+      <!-- Banner: aktif saat admin sedang berperan sebagai nasabah tertentu -->
+      <div class="kf-actas-banner" id="kfActAsBanner">
+        <span class="kf-actas-icon">🕵️</span>
+        <div class="kf-actas-text">Berperan sebagai: <span id="kfActAsNama">-</span><small>Aksi belanja/warung tercatat atas nama nasabah ini</small></div>
+        <button onclick="_kifayahStopActingAs()">Kembali ke Admin</button>
+      </div>
+      <!-- BELANJA -->
+      <div class="kf-panel active" id="kfPanel-belanja">
+        <div class="kf-saldo-bar" id="kfSaldoBar" style="display:none">
+          <span class="kf-saldo-icon">💰</span>
+          <div class="kf-saldo-info">
+            <div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>
+            <div class="kf-saldo-nilai" id="kfSaldoNilai">Rp 0</div>
+          </div>
+        </div>
+        <div class="kf-search-row">
+          <input type="text" id="kfSearchInput" placeholder="Cari warung atau produk..." oninput="renderKifayahBelanja()">
+          <button class="kf-cart-btn" onclick="kifayahOpenCart()">🛒<span class="kf-cart-badge" id="kfCartBadge" style="display:none">0</span></button>
+        </div>
+        <!-- Daftar Warung: tampil dulu sebelum produk, karena 1 pesanan/checkout hanya untuk 1 warung -->
+        <div class="kf-warung-grid" id="kfWarungListGrid"></div>
+        <div class="kf-empty" id="kfWarungListEmpty" style="display:none">
+          <div style="font-size:38px">🏪</div>
+          <div>Belum ada warung terdaftar</div>
+        </div>
+        <!-- Detail Warung + Produk: tampil setelah warung dipilih -->
+        <div class="kf-warung-header" id="kfWarungHeader" style="display:none"></div>
+        <div class="kf-kat-scroll" id="kfKatScroll" style="display:none"></div>
+        <div class="kf-produk-grid" id="kfProdukGrid"></div>
+        <div class="kf-empty" id="kfBelanjaEmpty" style="display:none">
+          <div style="font-size:38px">🛍️</div>
+          <div>Belum ada produk di warung ini</div>
+        </div>
+      </div>
+
+      <!-- WARUNG SAYA -->
+      <div class="kf-panel" id="kfPanel-warungSaya">
+        <div id="kfWarungSayaContent"></div>
+      </div>
+
+      <!-- KELOLA BARANG -->
+      <div class="kf-panel" id="kfPanel-kelolaBarang">
+        <div id="kfKelolaBarangContent"></div>
+      </div>
+
+      <!-- PESANAN SAYA -->
+      <div class="kf-panel" id="kfPanel-pesanan">
+        <div id="kfPesananSayaContent"></div>
+      </div>
+
+      <!-- CICILAN -->
+      <div class="kf-panel" id="kfPanel-cicilan">
+        <div id="kfCicilanContent"></div>
+      </div>
+
+      <!-- LAPORAN KEUANGAN -->
+      <div class="kf-panel" id="kfPanel-laporanKeuangan">
+        <div id="kfLaporanKeuanganContent"></div>
+      </div>
+
+      <!-- ADMIN (khusus akun admin — oversight lintas warung) -->
+      <div class="kf-panel" id="kfPanel-admin">
+        <div id="kfAdminContent"></div>
+      </div>
+    </div>
+
+    <!-- MODAL: Berperan sebagai Nasabah (khusus Admin) -->
+    <div class="modal-overlay" id="modalKfActAs">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">🕵️ Berperan sebagai Nasabah</h3>
+          <button class="modal-close" onclick="closeModal('modalKfActAs')">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <div style="background:rgba(123,45,139,0.08);border:1px solid rgba(123,45,139,0.2);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:10.5px;color:#7b2d8b;line-height:1.5">
+            &#x1F4A1; Pilih nasabah untuk sementara mengakses Kifayah atas nama mereka (buka warung, belanja, cicilan). Anda tetap login sebagai Admin di menu lain — tinggal tekan "Kembali ke Admin" kapan saja.
+          </div>
+          <input type="text" id="kfActAsSearch" placeholder="Cari nama nasabah..." oninput="_kifayahRenderActAsList()" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none;margin-bottom:8px">
+          <div id="kfActAsList" style="max-height:50vh;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Detail Produk -->
+    <div class="modal-overlay" id="modalKfProdukDetail">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">🛍️ Detail Produk</h3>
+          <button class="modal-close" onclick="closeModal('modalKfProdukDetail')">✕</button>
+        </div>
+        <div class="modal-body" id="kfProdukDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- MODAL: Keranjang Belanja -->
+    <div class="modal-overlay" id="modalKfCart">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">🛒 Keranjang Belanja</h3>
+          <button class="modal-close" onclick="closeModal('modalKfCart')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="kfCartBody"></div>
+          <div id="kfCartFooter" style="display:none;margin-top:10px;padding-top:12px;border-top:1.5px solid #f0eef3">
+            <div style="display:flex;justify-content:space-between;font-weight:800;font-size:15px;margin-bottom:12px">
+              <span>Total</span><span id="kfCartTotal" style="color:#7b2d8b">Rp 0</span>
+            </div>
+            <div class="field" style="margin-bottom:10px">
+              <label>Metode Pembayaran</label>
+              <select id="kfCartMetode" onchange="_kfToggleTenorField()">
+                <option value="tunai">💵 Tunai (langsung lunas)</option>
+                <option value="saldo">💰 Saldo Kifayah (Simpanan Sukarela)</option>
+                <option value="cicilan">💳 Cicilan (angsuran bulanan)</option>
+              </select>
+            </div>
+            <div class="field" id="kfCartSaldoWrap" style="display:none;margin-bottom:10px;font-size:11.5px;color:#6b7280">
+              Saldo Kifayah tersedia: <strong id="kfCartSaldoAngka">Rp 0</strong>
+              <div id="kfCartSaldoWarning" style="display:none;color:#dc2626;font-weight:700;margin-top:3px">⚠️ Saldo tidak mencukupi untuk pesanan ini</div>
+            </div>
+            <div class="field" id="kfCartTenorWrap" style="display:none;margin-bottom:10px">
+              <div style="background:rgba(67,97,238,0.06);border:1.5px solid rgba(67,97,238,0.18);border-radius:12px;padding:10px 12px;font-size:11px;color:#374151;line-height:1.5">
+                🤲 <strong>Akad Qardh Koperasi Renco</strong> — pinjaman kebajikan tanpa bunga/margin, tenor tetap <strong>4 bulan</strong>. Pengajuan akan diajukan sebagai pinjaman Qardh dan menunggu persetujuan admin. Angsuran dibayar lewat tab Pembayaran → <strong>Koperasi Renco</strong>.
+              </div>
+              <div id="kfCartCicilanWarning" style="display:none;color:#dc2626;font-weight:700;margin-top:6px;font-size:11px"></div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="kifayahCheckout()">Buat Pesanan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Form Warung -->
+    <div class="modal-overlay" id="modalKfWarungForm">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalKfWarungFormTitle">🏪 Buat Warung Saya</h3>
+          <button class="modal-close" onclick="closeModal('modalKfWarungForm')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="kf-logo-upload-wrap" id="kfLogoPreviewWrap">
+            <div class="kf-logo-upload" id="kfLogoPreview" onclick="kifayahUploadLogo()">🏪</div>
+          </div>
+          <div class="field"><label>Nama Warung</label><input type="text" id="kfWarungNama" placeholder="Contoh: Warung Bu Siti"></div>
+          <div class="field"><label>Kategori</label>
+            <select id="kfWarungKategori">
+              <option value="Sembako">Sembako</option>
+              <option value="Makanan &amp; Minuman">Makanan &amp; Minuman</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Kerajinan">Kerajinan</option>
+              <option value="Jasa">Jasa</option>
+              <option value="Umum">Umum</option>
+            </select>
+          </div>
+          <div class="field"><label>Deskripsi</label><input type="text" id="kfWarungDeskripsi" placeholder="Ceritakan warung Anda"></div>
+          <div class="field"><label>Kontak (WhatsApp)</label><input type="text" id="kfWarungKontak" placeholder="08xxxxxxxxxx"></div>
+          <div class="field"><label>Alamat</label><input type="text" id="kfWarungAlamat" placeholder="Lokasi warung / area layanan"></div>
+          <button class="btn btn-primary btn-block" onclick="kifayahSubmitWarung()">Simpan Warung</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Form Produk -->
+    <div class="modal-overlay" id="modalKfProdukForm">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalKfProdukFormTitle">+ Tambah Produk</h3>
+          <button class="modal-close" onclick="closeModal('modalKfProdukForm')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="kf-foto-upload" id="kfFotoProdukPreview" onclick="kifayahUploadFotoProduk()">🛍️</div>
+          <div class="field"><label>Nama Produk</label><input type="text" id="kfProdukNama" placeholder="Contoh: Beras 5kg"></div>
+          <div class="field"><label>Harga (Rp)</label><input type="number" id="kfProdukHarga" placeholder="0"></div>
+          <div class="field"><label>Stok</label><input type="number" id="kfProdukStok" placeholder="0"></div>
+          <div class="field"><label>Kategori</label><input type="text" id="kfProdukKategori" placeholder="Contoh: Sembako"></div>
+          <div class="field"><label>Deskripsi</label><input type="text" id="kfProdukDeskripsi" placeholder="Opsional"></div>
+          <button class="btn btn-primary btn-block" onclick="kifayahSubmitProduk()">Simpan Produk</button>
+        </div>
+      </div>
+    </div>
 
     <!-- PEMBIAYAAN PAGE -->
     <div class="page" id="page-pembiayaan">
@@ -10149,7 +10702,7 @@ window.deletePengurus = function(id) {
   </div>
 
   <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" id="bottomNavKoperasi">
 
     <!-- Beranda: simple clean home -->
     <button class="nav-item active" onclick="navTo('home')" data-nav="home">
@@ -10231,22 +10784,10 @@ window.deletePengurus = function(id) {
       <span class="nav-label">RencoPay</span>
     </button>
 
-    <!-- Semeton+: loker / info kerja antar anggota (briefcase+plus = peluang kerja/usaha baru) -->
-    <button class="nav-item" onclick="navTo('semetonPlus')" data-nav="semetonPlus">
-      <div class="nav-indicator"></div>
-      <span class="nav-badge-new">BARU</span>
-      <span class="nav-badge-count" id="lokerNavNotif" style="display:none">0</span>
-      <span class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2.5" y="8" width="19" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M8.3 8V6.3a2 2 0 0 1 2-2h3.4a2 2 0 0 1 2 2V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2.5 13.2h19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
-          <circle cx="17.3" cy="16.6" r="4" fill="var(--cream)" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M17.3 14.9v3.4M15.6 16.6h3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="nav-label">Semeton+</span>
-    </button>
+    <!-- Semeton+ dipindah keluar dari bottom nav — akses halamannya sekarang
+         lewat tab "Semeton+" pada mode-switcher di headbar (lihat switchAppMode()).
+         Badge notifikasi admin (lokerNavNotif) ikut dihapus; badge di tab
+         Verifikasi (lokerTabNotif) tetap ada sebagai penggantinya. -->
 
     <!-- Hiburan: orbit / broadcast signal -->
     <button class="nav-item" onclick="navTo('forum')" data-nav="forum">
@@ -10263,6 +10804,47 @@ window.deletePengurus = function(id) {
       <span class="nav-label">Hiburan</span>
     </button>
 </nav>
+
+  <!-- BOTTOM NAV — KIFAYAH RENCO (menggantikan kf-tabbar horizontal lama,
+       disamakan gaya & strukturnya dengan bottomNavKoperasi di atas) -->
+  <nav class="bottom-nav" id="bottomNavKifayah" style="display:none">
+    <button class="nav-item kf-tab active" data-kf="belanja" onclick="kifayahTab('belanja', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">🛒</span>
+      <span class="nav-label">Belanja</span>
+    </button>
+    <button class="nav-item kf-tab" data-kf="warungSaya" onclick="kifayahTab('warungSaya', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">🏪</span>
+      <span class="nav-label">Warung Saya</span>
+    </button>
+    <button class="nav-item kf-tab" data-kf="kelolaBarang" onclick="kifayahTab('kelolaBarang', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">📦</span>
+      <span class="nav-label">Kelola Barang</span>
+    </button>
+    <button class="nav-item kf-tab" data-kf="pesanan" onclick="kifayahTab('pesanan', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">🧾</span>
+      <span class="nav-label">Pesanan Saya</span>
+    </button>
+    <button class="nav-item kf-tab" data-kf="cicilan" onclick="kifayahTab('cicilan', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">💳</span>
+      <span class="nav-label">Cicilan</span>
+    </button>
+    <button class="nav-item kf-tab" data-kf="laporanKeuangan" onclick="kifayahTab('laporanKeuangan', this)">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Laporan</span>
+    </button>
+    <!-- Admin: hanya tampil untuk akun admin (lihat renderKifayah() / applyNasabahMode()) -->
+    <button class="nav-item kf-tab" id="kfNavAdmin" data-kf="admin" onclick="kifayahTab('admin', this)" style="display:none">
+      <div class="nav-indicator"></div>
+      <span class="nav-icon">🛠️</span>
+      <span class="nav-label">Admin</span>
+    </button>
+  </nav>
 </div>
 
 
@@ -12441,6 +13023,13 @@ let DB = {
   },
   rencoPay: null,
   loker: [],
+  // ── Kifayah Marketplace: warung anggota, produk, & pesanan ──
+  warung: [],
+  produkWarung: [],
+  pesananWarung: [],
+  nextWarungId: 1,
+  nextProdukId: 1,
+  nextPesananId: 1,
   users: [],
   pengurusList: [],
   nextPengurusId: 1,
@@ -12457,6 +13046,7 @@ function _dbMigrate() {
   const ARRAYS = [
     'nasabah','transaksi','pinjaman','aset','liabilitas','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
     'shuDistribusi','arisanPeserta','arisanHistory','forum','polling','pohonImpian','loker',
+    'warung','produkWarung','pesananWarung', // Kifayah Marketplace
     'users',  // akun nasabah & admin — disimpan di DB agar sync ke Supabase
     'pengurusList',  // struktur pengurus koperasi (nama, jabatan, pendidikan, pengalaman, foto)
     'auditLog'  // jejak audit permanen — TIDAK PERNAH direset/dihapus oleh migrasi ini
@@ -12505,6 +13095,13 @@ function _dbMigrate() {
   // Migrasi: pastikan tiap aset punya array dokumen (arsip dokumen asli)
   (DB.aset||[]).forEach(function(a){ if (!Array.isArray(a.dokumen)) a.dokumen = []; });
   if (typeof DB.nextPengurusId !== 'number' || DB.nextPengurusId < 1) DB.nextPengurusId = _maxId(DB.pengurusList, 'peng') + 1;
+  // Migrasi Kifayah Marketplace: pastikan counter & field ada
+  if (typeof DB.nextWarungId  !== 'number' || DB.nextWarungId  < 1) DB.nextWarungId  = 1;
+  if (typeof DB.nextProdukId  !== 'number' || DB.nextProdukId  < 1) DB.nextProdukId  = 1;
+  if (typeof DB.nextPesananId !== 'number' || DB.nextPesananId < 1) DB.nextPesananId = 1;
+  (DB.warung||[]).forEach(function(w){ if (!w.status) w.status = 'aktif'; });
+  (DB.produkWarung||[]).forEach(function(p){ if (!p.status) p.status = 'aktif'; if (typeof p.stok !== 'number') p.stok = 0; });
+  (DB.pesananWarung||[]).forEach(function(p){ if (!p.status) p.status = 'menunggu'; if (!Array.isArray(p.items)) p.items = []; });
   // Pastikan tiap entri pengurus punya field lengkap (migrasi data lama)
   (DB.pengurusList||[]).forEach(function(p, idx) {
     if (typeof p.urutan !== 'number') p.urutan = idx;
@@ -16240,6 +16837,16 @@ function checkKasLimit(kkId, jumlahBaru) {
 let currentPage = 'home';
 
 function navTo(page) {
+  // Pengaman akses: Nasabah hanya boleh membuka Kifayah Renco / Semeton+
+  // kalau admin sudah mengizinkannya lewat aksesMenu. Ini mencegah akses
+  // "nyelonong" walau tab header tidak sengaja masih terlihat/di-klik.
+  if (typeof isNasabah === 'function' && isNasabah() && (page === 'kifayah' || page === 'semetonPlus')) {
+    var _navAllowed = (typeof AUTH !== 'undefined' && AUTH.user && AUTH.user.aksesMenu) ? AUTH.user.aksesMenu : ['home'];
+    if (_navAllowed.indexOf(page) === -1) {
+      if (typeof showToast === 'function') showToast('⚠️ Menu ini belum diaktifkan admin untuk akun Anda');
+      page = 'home';
+    }
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>{
     n.classList.toggle('active', n.dataset.nav===page);
@@ -16254,6 +16861,9 @@ function navTo(page) {
   }
   var lokerFab = document.getElementById('lokerFab');
   if (lokerFab) lokerFab.style.display = (page === 'semetonPlus') ? 'flex' : 'none';
+  // Bottom nav Kifayah (menggantikan kf-tabbar lama) hanya tampil di halaman Kifayah.
+  var bottomNavKifayahEl = document.getElementById('bottomNavKifayah');
+  if (bottomNavKifayahEl) bottomNavKifayahEl.style.display = (page === 'kifayah') ? 'flex' : 'none';
   if (page === 'keuangan') {
     var navKeu = document.querySelector('.nav-item[data-nav="keuangan"]');
     if (navKeu) {
@@ -16264,6 +16874,22 @@ function navTo(page) {
   currentPage = page;
   renderPage(page);
   document.getElementById('content').scrollTop = 0;
+  if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
+
+  // Sinkronkan tab Mode Switcher di headbar (Koperasi/Semeton+/Kifayah) dengan halaman aktif,
+  // supaya tab Semeton+ ikut menyala walau halaman dibuka lewat bottom nav, bukan dari headbar.
+  if (typeof RENCO_APP_MODES !== 'undefined') {
+    var _modeNow = (page === 'semetonPlus') ? 'semeton' : (page === 'kifayah') ? 'kifayah' : 'koperasi';
+    RENCO_APP_MODES.forEach(function(m) {
+      var tab = document.getElementById('modeTab' + m.charAt(0).toUpperCase() + m.slice(1));
+      if (!tab) return;
+      var active = (m === _modeNow);
+      tab.classList.toggle('active', active);
+      tab.classList.toggle('dimmed', !active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    try { localStorage.setItem('rencoAppMode', _modeNow); } catch (e) {}
+  }
 }
 
 /* ── Animasi pilih tombol Aksi Cepat (mis. Simpanan/Rp) sebelum membuka modal ── */
@@ -16346,6 +16972,7 @@ function renderPage(p) {
   else if (p==='arisan') { renderForum(); forumTab('arisan'); }
   else if (p==='forum') { renderForum(); forumTab('diskusi'); setTimeout(_updateBersihkanChatBtn, 100); }
   else if (p==='semetonPlus') { renderSemetonPlus(); }
+  else if (p==='kifayah') { renderKifayah(); }
   else if (p==='laporan') {
     // Apply tab restriction berdasarkan role terlebih dahulu
     var _lprAdm = (typeof isAdmin === 'function') ? isAdmin() : true;
@@ -16379,6 +17006,1421 @@ function renderPage(p) {
     if (fab) fab.style.display = 'flex';
   }
   else if (p==='rencoPay') { renderRencoPay(); rpTab('pengaturan', document.getElementById('rptab_pengaturan')); }
+}
+
+// ========== KIFAYAH MARKETPLACE MODULE ==========
+// Warung anggota (nasabah bisa buka & kelola toko sendiri) + belanja online.
+// Keranjang belanja (_kfCart) bersifat sesi berjalan saja (tidak disimpan ke
+// DB/localStorage) — begitu checkout, tiap warung dalam keranjang menjadi
+// 1 entri DB.pesananWarung dan stok produk otomatis berkurang.
+var _kfCart = [];
+var _kfActiveTab = 'belanja';
+var _kfCartTotalCache = 0;
+var _kfActiveKat = 'semua';
+var _kfSelectedWarung = null; // id warung yang sedang dijelajahi di tab Belanja (null = tampilkan daftar warung)
+var _kfEditWarungMode = false;
+var _kfEditProdukId = null;
+var _kfLogoB64 = null;
+var _kfFotoProdukB64 = null;
+var _kfActingAsId = null;   // id nasabah yang sedang "diperankan" admin di Kifayah (null = tidak ada)
+var _kfActingAsNama = '';   // nama nasabah tsb, untuk ditampilkan di banner
+
+function renderKifayah() {
+  var tab = _kfActiveTab || 'belanja';
+  var navAdmin = document.getElementById('kfNavAdmin');
+  var _kfIsAdmin = (typeof isAdmin === 'function') && isAdmin();
+  if (navAdmin) navAdmin.style.display = _kfIsAdmin ? '' : 'none';
+  // Kalau tab admin sempat aktif lalu sesi berpindah ke akun non-admin, alihkan ke Belanja.
+  if (tab === 'admin' && !_kfIsAdmin) tab = _kfActiveTab = 'belanja';
+  // Kalau sesi bukan admin (atau logout), pastikan mode "berperan sebagai" ikut nonaktif.
+  if (!_kfIsAdmin) _kfActingAsId = null;
+  _kifayahUpdateActAsBanner();
+  kifayahTab(tab, document.querySelector('.kf-tab[data-kf="'+tab+'"]'));
+  _kfUpdateCartBadge();
+}
+
+function kifayahTab(tab, btnEl) {
+  _kfActiveTab = tab;
+  document.querySelectorAll('.kf-tab').forEach(function(b){ b.classList.remove('active'); });
+  if (btnEl) btnEl.classList.add('active');
+  else { var b = document.querySelector('.kf-tab[data-kf="'+tab+'"]'); if (b) b.classList.add('active'); }
+  document.querySelectorAll('.kf-panel').forEach(function(p){ p.classList.remove('active'); });
+  var panel = document.getElementById('kfPanel-'+tab);
+  if (panel) panel.classList.add('active');
+
+  if (tab === 'belanja') renderKifayahBelanja();
+  else if (tab === 'warungSaya') renderKifayahWarungSaya();
+  else if (tab === 'kelolaBarang') renderKifayahKelolaBarang();
+  else if (tab === 'pesanan') renderKifayahPesananSaya();
+  else if (tab === 'cicilan') renderKifayahCicilan();
+  else if (tab === 'laporanKeuangan') renderKifayahLaporanKeuangan();
+  else if (tab === 'admin') { _kfAdminView = null; renderKifayahAdmin(); }
+}
+
+/* ---------- BERPERAN SEBAGAI NASABAH (khusus Admin) ---------- */
+// Admin (yang tidak punya nasabahId sendiri) bisa memilih 1 nasabah untuk
+// "diperankan" sementara khusus di modul Kifayah, supaya bisa buka warung,
+// belanja, kelola barang, dsb atas nama nasabah itu — tanpa harus logout
+// dan login ulang. Berlaku hanya di dalam Kifayah; di menu lain, sesi tetap
+// sebagai Admin sepenuhnya.
+function _kifayahOpenActAsPicker() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var input = document.getElementById('kfActAsSearch');
+  if (input) input.value = '';
+  _kifayahRenderActAsList();
+  openModal('modalKfActAs');
+}
+function _kifayahRenderActAsList() {
+  var el = document.getElementById('kfActAsList');
+  if (!el) return;
+  var q = ((document.getElementById('kfActAsSearch')||{}).value || '').toLowerCase().trim();
+  var list = (DB.nasabah||[]).filter(function(n){
+    if (n.status === 'Tidak Aktif') return false;
+    if (q && (n.nama||'').toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  }).sort(function(a,b){ return (a.nama||'').localeCompare(b.nama||''); });
+
+  if (!list.length) {
+    el.innerHTML = '<div class="kf-empty" style="padding:24px 10px"><div style="font-size:32px">🔍</div><div>Nasabah tidak ditemukan</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(function(n){
+    var inisial = (n.nama||'?').trim().charAt(0).toUpperCase();
+    return '<div class="kf-actas-pick-item" onclick="_kifayahSelectActAs(\''+n.id+'\')">'
+      + '<div class="kf-actas-pick-avatar">'+inisial+'</div>'
+      + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12.5px">'+n.nama+'</div>'
+      + (n.noKK ? '<div style="font-size:10px;color:#9ca3af">No KK: '+n.noKK+'</div>' : '')
+      + '</div>'
+      + '<span style="font-size:11px;color:#7b2d8b;font-weight:800">Pilih ›</span>'
+      + '</div>';
+  }).join('');
+}
+function _kifayahSelectActAs(nasabahId) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var n = (DB.nasabah||[]).find(function(x){ return x.id === nasabahId; });
+  if (!n) return;
+  _kfActingAsId = nasabahId;
+  _kfActingAsNama = n.nama || '-';
+  _kfSelectedWarung = null;
+  closeModal('modalKfActAs');
+  showToast('🕵️ Kini berperan sebagai ' + _kfActingAsNama + ' di Kifayah');
+  kifayahTab('warungSaya', document.querySelector('.kf-tab[data-kf="warungSaya"]'));
+  _kifayahUpdateActAsBanner();
+}
+function _kifayahStopActingAs() {
+  _kfActingAsId = null;
+  _kfActingAsNama = '';
+  _kfSelectedWarung = null;
+  _kifayahUpdateActAsBanner();
+  showToast('👑 Kembali sebagai Admin');
+  kifayahTab('admin', document.querySelector('.kf-tab[data-kf="admin"]'));
+}
+function _kifayahUpdateActAsBanner() {
+  var banner = document.getElementById('kfActAsBanner');
+  if (!banner) return;
+  var isAdm = (typeof isAdmin === 'function') && isAdmin();
+  if (isAdm && _kfActingAsId) {
+    banner.style.display = 'flex';
+    var namaEl = document.getElementById('kfActAsNama');
+    if (namaEl) namaEl.textContent = _kfActingAsNama;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function _kfMyNasabahId() {
+  // Admin yang sedang "berperan sebagai" nasabah tertentu memakai id nasabah itu.
+  if (typeof isAdmin === 'function' && isAdmin() && _kfActingAsId) return _kfActingAsId;
+  return (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? AUTH.user.nasabahId : null;
+}
+function _kfMyWarung() {
+  var myId = _kfMyNasabahId();
+  if (!myId) return null;
+  return (DB.warung||[]).find(function(w){ return w.nasabahId === myId; }) || null;
+}
+// Saldo Kifayah = Saldo Simpanan Sukarela nasabah (satu sumber dana yang sama)
+function saldoKifayahNasabah(nasabahId) {
+  return (typeof saldoSukarelaNasabah === 'function') ? saldoSukarelaNasabah(nasabahId) : 0;
+}
+// Cicilan Kifayah hanya untuk anggota koperasi berstatus aktif (akad Qardh Koperasi Renco)
+function _kfNasabahAktif(nasabahId) {
+  var n = (DB.nasabah||[]).find(function(x){ return x.id === nasabahId; });
+  return !!n && n.status !== 'Tidak Aktif';
+}
+function _kfRenderSaldoBar() {
+  var bar = document.getElementById('kfSaldoBar');
+  if (!bar) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) { bar.style.display = 'none'; return; }
+  var saldo = saldoKifayahNasabah(myId);
+  var nilaiEl = document.getElementById('kfSaldoNilai');
+  if (nilaiEl) nilaiEl.textContent = fmt(saldo);
+  bar.classList.toggle('kf-saldo-minus', saldo < 0);
+  bar.style.display = 'flex';
+}
+
+/* ---------- BELANJA ---------- */
+function _kfKategoriList(warungId) {
+  var set = {};
+  (DB.produkWarung||[]).forEach(function(p){
+    if (warungId && p.warungId !== warungId) return;
+    if (p.kategori) set[p.kategori] = true;
+  });
+  return Object.keys(set);
+}
+
+function renderKifayahBelanja() {
+  _kfRenderSaldoBar();
+  var warungListGrid = document.getElementById('kfWarungListGrid');
+  var warungListEmpty = document.getElementById('kfWarungListEmpty');
+  var warungHeader = document.getElementById('kfWarungHeader');
+  var katScroll = document.getElementById('kfKatScroll');
+  var grid = document.getElementById('kfProdukGrid');
+  var produkEmptyEl = document.getElementById('kfBelanjaEmpty');
+  if (!grid || !warungListGrid) return;
+
+  var q = (document.getElementById('kfSearchInput')||{}).value || '';
+  q = q.toLowerCase().trim();
+
+  // Kalau warung yang tadinya dipilih ternyata sudah dihapus/nonaktif, kembali ke daftar warung.
+  if (_kfSelectedWarung) {
+    var wCek = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; });
+    if (!wCek || wCek.status !== 'aktif') _kfSelectedWarung = null;
+  }
+
+  if (!_kfSelectedWarung) {
+    // ===== TAMPILAN 1: DAFTAR WARUNG (dipilih dulu sebelum lihat produk) =====
+    warungHeader.style.display = 'none';
+    var wInfoElHide = document.getElementById('kfWarungInfo');
+    if (wInfoElHide) wInfoElHide.style.display = 'none';
+    katScroll.style.display = 'none';
+    grid.style.display = 'none';
+    if (produkEmptyEl) produkEmptyEl.style.display = 'none';
+    warungListGrid.style.display = 'block';
+
+    var produkAll = DB.produkWarung || [];
+    var warungList = (DB.warung||[]).filter(function(w){
+      if (w.status !== 'aktif') return false;
+      if (q && (w.nama||'').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+
+    if (warungListEmpty) warungListEmpty.style.display = warungList.length ? 'none' : 'block';
+
+    warungListGrid.innerHTML = warungList.map(function(w){
+      var jumlahProduk = produkAll.filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
+      var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
+      var subInfo = jumlahProduk+' produk'+(w.alamat ? ' · '+w.alamat : '');
+      return '<div class="member-item-wrap member-active">'
+        + '<div class="member-item-row" onclick="_kifayahOpenWarungBelanja(\''+w.id+'\')">'
+        +   '<div class="avatar gold">'+logo+'</div>'
+        +   '<div class="member-info">'
+        +     '<div class="member-name">'+w.nama+'</div>'
+        +     '<div class="member-sub">'+subInfo+'</div>'
+        +   '</div>'
+        +   '<span style="font-size:14px;color:var(--text-soft)">›</span>'
+        + '</div></div>';
+    }).join('');
+    return;
+  }
+
+  // ===== TAMPILAN 2: PRODUK DALAM 1 WARUNG YANG DIPILIH =====
+  warungListGrid.style.display = 'none';
+  if (warungListEmpty) warungListEmpty.style.display = 'none';
+  warungHeader.style.display = 'flex';
+  katScroll.style.display = 'flex';
+  grid.style.display = 'grid';
+
+  var w = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; }) || {};
+  var wLogo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
+  warungHeader.innerHTML =
+    '<button class="kf-warung-header-back" onclick="_kifayahBackToWarungList()">&#x2190;</button>'
+    + '<div class="kf-warung-header-logo">'+wLogo+'</div>'
+    + '<div><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">Belanja hanya dari warung ini per pesanan</div></div>';
+
+  var wInfoEl = document.getElementById('kfWarungInfo');
+  if (!wInfoEl) {
+    wInfoEl = document.createElement('div');
+    wInfoEl.id = 'kfWarungInfo';
+    warungHeader.insertAdjacentElement('afterend', wInfoEl);
+  }
+  wInfoEl.style.display = 'block';
+  var wLinks = w.kontak ? _lokerPhoneLinks(w.kontak) : null;
+  var wKontakHtml;
+  if (wLinks) {
+    wKontakHtml = '<div class="kf-wa-contact"><span>'+w.kontak+'</span>'
+      + '<a class="kf-wa-btn wa" href="'+wLinks.wa+'" target="_blank" rel="noopener" title="Chat WhatsApp" onclick="event.stopPropagation()">'
+      +   '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.24.66-1.2 1.24-1.94 1.4-.5.1-1.16.18-3.4-.73-2.86-1.16-4.7-4.05-4.84-4.24-.14-.19-1.15-1.53-1.15-2.92s.72-2.07 1-2.35c.24-.24.55-.32.73-.32h.53c.17 0 .4-.03.62.48.24.55.8 1.9.87 2.04.07.14.12.3.02.49-.1.19-.15.3-.3.46-.15.16-.31.36-.44.48-.15.14-.3.3-.13.6.17.3.75 1.26 1.62 2.05 1.12 1.02 2.05 1.34 2.35 1.5.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.77.85 2.07 1.01.3.15.5.23.57.36.08.13.08.72-.16 1.38z"/></svg>'
+      + '</a>'
+      + '<a class="kf-wa-btn call" href="'+wLinks.tel+'" title="Telepon Langsung" onclick="event.stopPropagation()">'
+      +   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+      + '</a></div>';
+  } else {
+    wKontakHtml = '-';
+  }
+  wInfoEl.innerHTML =
+      '<div class="info-row"><span class="info-icon">🏠</span><div class="info-text"><div class="info-label">Alamat Warung</div><div class="info-val">'+(w.alamat||'-')+'</div></div></div>'
+    + '<div class="info-row"><span class="info-icon">📱</span><div class="info-text"><div class="info-label">No. HP / WhatsApp</div><div class="info-val">'+wKontakHtml+'</div></div></div>';
+
+  var kats = _kfKategoriList(_kfSelectedWarung);
+  var katHtml = '<button class="kf-kat-chip'+(_kfActiveKat==='semua'?' active':'')+'" onclick="_kfSetKat(\'semua\')">Semua</button>';
+  kats.forEach(function(k){
+    katHtml += '<button class="kf-kat-chip'+(_kfActiveKat===k?' active':'')+'" onclick="_kfSetKat(\''+k.replace(/'/g,"\\'")+'\')">'+k+'</button>';
+  });
+  katScroll.innerHTML = katHtml;
+
+  var produk = (DB.produkWarung||[]).filter(function(p){
+    if (p.warungId !== _kfSelectedWarung) return false;
+    if (p.status === 'nonaktif') return false;
+    if (_kfActiveKat !== 'semua' && p.kategori !== _kfActiveKat) return false;
+    if (q && (p.nama||'').toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+
+  if (produkEmptyEl) produkEmptyEl.style.display = produk.length ? 'none' : 'block';
+
+  grid.innerHTML = produk.map(function(p){
+    var img = p.foto ? '<img src="'+p.foto+'" alt="'+p.nama+'">' : '<div class="kf-produk-noimg">🛍️</div>';
+    var habis = (Number(p.stok)||0) <= 0;
+    return '<div class="kf-produk-card" onclick="kifayahOpenProduk(\''+p.id+'\')">'
+      + '<div class="kf-produk-img">'+img+(habis?'<div class="kf-habis-badge">Stok Habis</div>':'')+'</div>'
+      + '<div class="kf-produk-info">'
+      + '<div class="kf-produk-nama">'+p.nama+'</div>'
+      + '<div class="kf-produk-harga">'+fmt(p.harga)+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function _kifayahOpenWarungBelanja(warungId) {
+  _kfSelectedWarung = warungId;
+  _kfActiveKat = 'semua';
+  var input = document.getElementById('kfSearchInput');
+  if (input) input.value = '';
+  renderKifayahBelanja();
+}
+
+function _kifayahBackToWarungList() {
+  _kfSelectedWarung = null;
+  _kfActiveKat = 'semua';
+  var input = document.getElementById('kfSearchInput');
+  if (input) input.value = '';
+  renderKifayahBelanja();
+}
+
+function _kfSetKat(k) { _kfActiveKat = k; renderKifayahBelanja(); }
+
+function kifayahOpenProduk(produkId) {
+  var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
+  if (!p) return;
+  var w = (DB.warung||[]).find(function(x){ return x.id === p.warungId; }) || {};
+  var habis = (Number(p.stok)||0) <= 0;
+  var img = p.foto ? '<img src="'+p.foto+'" style="width:100%;border-radius:14px;max-height:220px;object-fit:cover;display:block">' : '<div class="kf-produk-noimg" style="height:180px;border-radius:14px">🛍️</div>';
+  var body = document.getElementById('kfProdukDetailBody');
+  body.innerHTML =
+    img
+    + '<div style="font-size:17px;font-weight:800;margin-top:12px">'+p.nama+'</div>'
+    + '<div style="font-size:20px;font-weight:800;color:#7b2d8b;margin:4px 0">'+fmt(p.harga)+'</div>'
+    + '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">🏪 '+(w.nama||'-')+' · Stok: '+(p.stok||0)+'</div>'
+    + '<div style="font-size:13px;color:#374151;line-height:1.5;margin-bottom:14px">'+(p.deskripsi||'Tidak ada deskripsi.')+'</div>'
+    + (habis
+        ? '<button class="btn btn-block" disabled style="opacity:0.5">Stok Habis</button>'
+        : '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
+          + '<button class="kf-qty-btn" onclick="_kfQtyStep(-1)">−</button>'
+          + '<span id="kfDetailQty" style="font-weight:800;font-size:16px;min-width:28px;text-align:center">1</span>'
+          + '<button class="kf-qty-btn" onclick="_kfQtyStep(1)">+</button>'
+          + '</div>'
+          + '<button class="btn btn-primary btn-block" onclick="kifayahAddToCart(\''+p.id+'\')">+ Tambah ke Keranjang</button>');
+  body.dataset.maxStok = p.stok||0;
+  window._kfDetailQty = 1;
+  openModal('modalKfProdukDetail');
+}
+function _kfQtyStep(d) {
+  var max = Number(document.getElementById('kfProdukDetailBody').dataset.maxStok)||99;
+  window._kfDetailQty = Math.max(1, Math.min(max, (window._kfDetailQty||1) + d));
+  document.getElementById('kfDetailQty').textContent = window._kfDetailQty;
+}
+function kifayahAddToCart(produkId) {
+  var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
+  if (!p) return;
+  // 1 keranjang/checkout hanya boleh berisi produk dari 1 warung yang sama.
+  if (_kfCart.length) {
+    var pExisting = (DB.produkWarung||[]).find(function(x){ return x.id === _kfCart[0].produkId; });
+    if (pExisting && pExisting.warungId !== p.warungId) {
+      if (!confirm('Keranjang Anda masih berisi produk dari warung lain. 1 pesanan hanya bisa untuk 1 warung.\n\nKosongkan keranjang dan mulai belanja baru dari warung ini?')) return;
+      _kfCart = [];
+    }
+  }
+  var qty = window._kfDetailQty || 1;
+  var existing = _kfCart.find(function(c){ return c.produkId === produkId; });
+  if (existing) existing.qty += qty; else _kfCart.push({ produkId: produkId, qty: qty });
+  _kfUpdateCartBadge();
+  showToast('✅ Ditambahkan ke keranjang');
+  closeModal('modalKfProdukDetail');
+}
+function _kfUpdateCartBadge() {
+  var badge = document.getElementById('kfCartBadge');
+  if (badge) {
+    var total = _kfCart.reduce(function(s,c){ return s+c.qty; }, 0);
+    badge.textContent = total;
+    badge.style.display = total > 0 ? 'flex' : 'none';
+  }
+  _kfUpdatePesananBadge();
+}
+
+/* Badge notifikasi di tab header "KIFAYAH": jumlah pesanan masuk yang
+   masih berstatus "menunggu" untuk warung milik user yang sedang login.
+   Dipanggil dari mana pun cart badge di-refresh supaya selalu terkini. */
+function _kfUpdatePesananBadge() {
+  var tab = document.getElementById('modeTabKifayah');
+  if (!tab) return;
+  var existing = document.getElementById('kfModeTabBadge');
+  var w = (typeof _kfMyWarung === 'function') ? _kfMyWarung() : null;
+  var count = 0;
+  if (w) {
+    count = (DB.pesananWarung || []).filter(function(p) {
+      return p.warungId === w.id && p.status === 'menunggu';
+    }).length;
+  }
+  if (count > 0) {
+    if (!existing) {
+      existing = document.createElement('span');
+      existing.id = 'kfModeTabBadge';
+      existing.style.cssText = 'margin-left:5px;background:#dc2626;color:#fff;font-size:9px;font-weight:800;border-radius:9px;padding:1px 6px;vertical-align:middle';
+      tab.appendChild(existing);
+    }
+    existing.textContent = count;
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
+function kifayahOpenCart() {
+  var body = document.getElementById('kfCartBody');
+  if (!_kfCart.length) {
+    body.innerHTML = '<div class="kf-empty"><div style="font-size:38px">🛒</div><div>Keranjang masih kosong</div></div>';
+    document.getElementById('kfCartFooter').style.display = 'none';
+    openModal('modalKfCart');
+    return;
+  }
+  var total = 0;
+  var html = _kfCart.map(function(c){
+    var p = (DB.produkWarung||[]).find(function(x){ return x.id === c.produkId; });
+    if (!p) return '';
+    var sub = (p.harga||0) * c.qty;
+    total += sub;
+    return '<div class="kf-cart-item">'
+      + '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+p.nama+'</div>'
+      + '<div style="font-size:11.5px;color:#6b7280">'+fmt(p.harga)+' × '+c.qty+' = '+fmt(sub)+'</div></div>'
+      + '<button class="kf-cart-remove" onclick="kifayahRemoveFromCart(\''+c.produkId+'\')">🗑️</button>'
+      + '</div>';
+  }).join('');
+  body.innerHTML = html;
+  document.getElementById('kfCartFooter').style.display = 'block';
+  document.getElementById('kfCartTotal').textContent = fmt(total);
+  _kfCartTotalCache = total;
+  var metodeSel = document.getElementById('kfCartMetode');
+  var cicilanOpt = metodeSel ? metodeSel.querySelector('option[value="cicilan"]') : null;
+  var myId = _kfMyNasabahId();
+  var eligible = myId && _kfNasabahAktif(myId);
+  if (cicilanOpt) {
+    cicilanOpt.disabled = !eligible;
+    cicilanOpt.textContent = eligible ? '💳 Cicilan Qardh (angsuran 4 bulan)' : '💳 Cicilan Qardh — khusus anggota aktif';
+  }
+  if (metodeSel) { metodeSel.value = 'tunai'; _kfToggleTenorField(); }
+  openModal('modalKfCart');
+}
+function kifayahRemoveFromCart(produkId) {
+  _kfCart = _kfCart.filter(function(c){ return c.produkId !== produkId; });
+  _kfUpdateCartBadge();
+  kifayahOpenCart();
+}
+function _kfToggleTenorField() {
+  var metode = (document.getElementById('kfCartMetode')||{}).value;
+  var wrap = document.getElementById('kfCartTenorWrap');
+  if (wrap) wrap.style.display = (metode === 'cicilan') ? 'block' : 'none';
+  if (metode === 'cicilan') {
+    var myId = _kfMyNasabahId();
+    var warnEl = document.getElementById('kfCartCicilanWarning');
+    if (warnEl) {
+      if (!myId || !_kfNasabahAktif(myId)) {
+        warnEl.textContent = '⚠️ Cicilan Qardh hanya untuk anggota koperasi berstatus aktif.';
+        warnEl.style.display = 'block';
+      } else {
+        var simpPokokWajib = totalSimpananKasKK(myId);
+        var batas80 = Math.floor(simpPokokWajib * 0.8);
+        var sudahPinjam = totalPinjamanAktifKK(myId);
+        var sisaKuota = Math.max(0, batas80 - sudahPinjam);
+        if ((_kfCartTotalCache||0) > sisaKuota) {
+          warnEl.textContent = '⚠️ Melebihi batas 80% simpanan pokok+wajib. Sisa kuota Qardh: ' + fmt(sisaKuota);
+          warnEl.style.display = 'block';
+        } else {
+          warnEl.style.display = 'none';
+        }
+      }
+    }
+  }
+  var saldoWrap = document.getElementById('kfCartSaldoWrap');
+  if (saldoWrap) {
+    saldoWrap.style.display = (metode === 'saldo') ? 'block' : 'none';
+    if (metode === 'saldo') {
+      var myId2 = _kfMyNasabahId();
+      var saldo = myId2 ? saldoKifayahNasabah(myId2) : 0;
+      var angkaEl = document.getElementById('kfCartSaldoAngka');
+      if (angkaEl) angkaEl.textContent = fmt(saldo);
+      var warnEl2 = document.getElementById('kfCartSaldoWarning');
+      if (warnEl2) warnEl2.style.display = (saldo < (_kfCartTotalCache||0)) ? 'block' : 'none';
+    }
+  }
+}
+function _kfTambahBulanISO(iso, bulan) {
+  var d = new Date(iso);
+  d.setMonth(d.getMonth() + (parseInt(bulan, 10) || 0));
+  return d.toISOString();
+}
+/* Bangun jadwal angsuran cicilan: dibagi rata per bulan, sisa pembulatan
+   dibebankan ke angsuran terakhir supaya total tetap pas. */
+function _kfBuatJadwalCicilan(total, tenor, mulaiISO) {
+  tenor = Math.max(1, parseInt(tenor, 10) || 1);
+  var perBulan = Math.floor(total / tenor);
+  var jadwal = [];
+  var terkumpul = 0;
+  for (var i = 1; i <= tenor; i++) {
+    var jumlah = (i === tenor) ? (total - terkumpul) : perBulan;
+    terkumpul += jumlah;
+    jadwal.push({
+      ke: i,
+      jatuhTempo: _kfTambahBulanISO(mulaiISO, i),
+      jumlah: jumlah,
+      status: 'belum'
+    });
+  }
+  return jadwal;
+}
+function kifayahCheckout() {
+  if (!_kfCart.length) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) { showToast('⚠️ Hanya nasabah yang bisa berbelanja'); return; }
+  var myNasabah = getNasabah(myId);
+  var metode = (document.getElementById('kfCartMetode')||{}).value || 'tunai';
+  // Kelompokkan item keranjang per warung — 1 pesanan per warung
+  var byWarung = {};
+  _kfCart.forEach(function(c){
+    var p = (DB.produkWarung||[]).find(function(x){ return x.id === c.produkId; });
+    if (!p) return;
+    if (!byWarung[p.warungId]) byWarung[p.warungId] = [];
+    byWarung[p.warungId].push({ produkId: p.id, nama: p.nama, harga: p.harga, qty: c.qty, subtotal: p.harga*c.qty });
+  });
+  var totalSemua = Object.keys(byWarung).reduce(function(s,wid){
+    return s + byWarung[wid].reduce(function(ss,i){ return ss+i.subtotal; }, 0);
+  }, 0);
+  if (metode === 'saldo') {
+    var saldoTersedia = saldoKifayahNasabah(myId);
+    if (totalSemua > saldoTersedia) {
+      showToast('⚠️ Saldo Kifayah tidak mencukupi (tersedia ' + fmt(saldoTersedia) + ')');
+      return;
+    }
+  }
+  // Cicilan Kifayah = akad Qardh Koperasi Renco — hanya untuk anggota koperasi berstatus aktif
+  if (metode === 'cicilan') {
+    if (!_kfNasabahAktif(myId)) {
+      showToast('🚫 Cicilan hanya untuk anggota koperasi berstatus aktif');
+      return;
+    }
+    var simpPokokWajib = totalSimpananKasKK(myId);
+    var batas80 = Math.floor(simpPokokWajib * 0.8);
+    var sudahPinjam = totalPinjamanAktifKK(myId);
+    var sisaKuota = Math.max(0, batas80 - sudahPinjam);
+    if (totalSemua > sisaKuota) {
+      showToast('🚫 Melebihi batas 80% simpanan. Sisa kuota Qardh: ' + fmt(sisaKuota));
+      return;
+    }
+  }
+  Object.keys(byWarung).forEach(function(warungId){
+    var items = byWarung[warungId];
+    var total = items.reduce(function(s,i){ return s+i.subtotal; }, 0);
+    var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
+    var pesanan = {
+      id: 'pesanan-' + (DB.nextPesananId++),
+      warungId: warungId,
+      warungNama: w ? w.nama : '-',
+      pembeliId: myId,
+      pembeliNama: myNasabah ? myNasabah.nama : (AUTH.user.nama||'-'),
+      items: items,
+      total: total,
+      status: 'menunggu',
+      metodeBayar: metode,
+      dibuatPada: nowISO()
+    };
+    if (metode === 'cicilan') {
+      // Ajukan sebagai pinjaman Qardh sungguhan di Koperasi Renco — bebas margin,
+      // tenor terkunci 4 bulan, berstatus "pengajuan" menunggu persetujuan admin,
+      // sama seperti pengajuan Qardh biasa dari menu Pinjaman.
+      var pin = {
+        id: 'pin' + DB.nextPinId++,
+        kkId: myId, jumlah: total, bunga: 0, tenor: 4, akad: 'qardh',
+        tujuan: 'Belanja Kifayah — ' + (w ? w.nama : '-'),
+        biayaAdmin: 0, adminJenis: 'none',
+        sisaPokok: 0, status: 'pengajuan', tanggal: pesanan.dibuatPada, cicilan: []
+      };
+      DB.pinjaman.push(pin);
+      DB.transaksi.push({
+        id: 'txn' + DB.nextTxnId++,
+        kkId: myId, type: 'pinjaman', jumlah: total,
+        keterangan: 'Pengajuan pinjaman Qardh — Belanja Kifayah (' + (w ? w.nama : '-') + ')',
+        tanggal: pesanan.dibuatPada, statusTxn: 'pending', refId: pin.id
+      });
+      pesanan.pinjamanId = pin.id;
+    }
+    if (metode === 'saldo') {
+      DB.transaksi.push({
+        id: 'txn' + DB.nextTxnId++,
+        kkId: myId,
+        type: 'tarik-sukarela',
+        jenis: 'sukarela',
+        jumlah: total,
+        keterangan: 'Belanja Kifayah — ' + (w ? w.nama : '-') + (myNasabah ? ' — ' + myNasabah.nama : ''),
+        tanggal: pesanan.dibuatPada
+      });
+      pesanan.lunas = true;
+    }
+    DB.pesananWarung.push(pesanan);
+    // Kurangi stok
+    items.forEach(function(i){
+      var pr = (DB.produkWarung||[]).find(function(x){ return x.id === i.produkId; });
+      if (pr) pr.stok = Math.max(0, (Number(pr.stok)||0) - i.qty);
+    });
+  });
+  _kfCart = [];
+  _kfUpdateCartBadge();
+  saveDB();
+  closeModal('modalKfCart');
+  showToast(metode === 'cicilan' ? '📝 Pengajuan Qardh dikirim — menunggu persetujuan admin' : (metode === 'saldo' ? '✅ Pesanan dibuat — dibayar dari Saldo Kifayah' : '✅ Pesanan berhasil dibuat!'));
+  renderKifayahBelanja();
+  if (_kfActiveTab === 'pesanan') renderKifayahPesananSaya();
+  if (_kfActiveTab === 'cicilan') renderKifayahCicilan();
+}
+
+/* ---------- WARUNG SAYA (kelola toko sendiri) ---------- */
+function renderKifayahWarungSaya() {
+  var el = document.getElementById('kfWarungSayaContent');
+  if (!el) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">🏪</div><div>Hanya akun nasabah yang dapat membuka warung.</div></div>';
+    return;
+  }
+  var w = _kfMyWarung();
+  if (!w) {
+    el.innerHTML =
+      '<div class="kf-empty-cta">'
+      + '<div style="font-size:44px">🏪</div>'
+      + '<div style="font-weight:800;font-size:15px;margin:8px 0 4px;color:#1f2937">Belum Punya Warung</div>'
+      + '<div style="font-size:12.5px;color:#6b7280;margin-bottom:16px">Buka warung Anda sendiri dan mulai berjualan kepada sesama anggota koperasi.</div>'
+      + '<button class="btn btn-primary" onclick="kifayahOpenWarungForm()">🏪 Buka Warung</button>'
+      + '</div>';
+    return;
+  }
+  var produkSaya = (DB.produkWarung||[]).filter(function(p){ return p.warungId === w.id; });
+  var pesananMasuk = (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; })
+    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+  var pendingCount = pesananMasuk.filter(function(p){ return p.status === 'menunggu'; }).length;
+
+  var logo = w.logo ? '<img src="'+w.logo+'" style="width:56px;height:56px;border-radius:14px;object-fit:cover;flex-shrink:0">' : '<div class="kf-warung-logo-placeholder">🏪</div>';
+
+  var html = '<div class="kf-warung-profile">'
+    + logo
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-weight:800;font-size:15px">'+w.nama+'</div>'
+    + '<div style="font-size:11.5px;color:#6b7280">'+(w.kategori||'-')+' · '+produkSaya.length+' produk</div>'
+    + '<div style="font-size:11px;color:'+(w.status==='aktif'?'#16a34a':'#dc2626')+';font-weight:700;margin-top:2px">● '+(w.status==='aktif'?'Buka':'Tutup')+'</div>'
+    + '</div>'
+    + '<button class="kf-edit-btn" onclick="kifayahOpenWarungForm(true)">✏️</button>'
+    + '</div>'
+
+    + '<div class="kf-warung-actions">'
+    + '<button class="btn btn-primary" style="flex:1" onclick="kifayahTab(\'kelolaBarang\')">📦 Kelola Barang</button>'
+    + '<button class="btn" style="flex:1" onclick="kifayahToggleWarungStatus()">'+(w.status==='aktif'?'Tutup Warung':'Buka Warung')+'</button>'
+    + '</div>'
+
+    + '<div class="kf-section-title">📊 Ringkasan Toko</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+produkSaya.length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Produk</div></div>'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+pesananMasuk.length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Pesanan</div></div>'
+    + '</div>'
+
+    + '<div class="kf-section-title">Pesanan Masuk'+(pendingCount?' <span class="kf-pending-count">'+pendingCount+'</span>':'')+'</div>'
+    + '<div class="kf-pesanan-list">'
+    + (pesananMasuk.length ? pesananMasuk.map(function(p){ return _kfRenderPesananCard(true, p); }).join('') : '<div style="font-size:12px;color:#9ca3af;padding:12px 0">Belum ada pesanan masuk.</div>')
+    + '</div>';
+
+  el.innerHTML = html;
+}
+
+/* ---------- KELOLA BARANG (manajemen produk warung sendiri) ---------- */
+function renderKifayahKelolaBarang() {
+  var el = document.getElementById('kfKelolaBarangContent');
+  if (!el) return;
+  if (!isNasabah() && !isAdmin()) { el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">📦</div><div>Hanya akun nasabah yang dapat mengelola barang.</div></div>'; return; }
+  var w = _kfMyWarung();
+  if (!w) {
+    el.innerHTML = '<div class="kf-empty-cta">'
+      + '<div style="font-size:44px">🏪</div>'
+      + '<div style="font-weight:800;font-size:15px;margin:8px 0 4px;color:#1f2937">Belum Punya Warung</div>'
+      + '<div style="font-size:12.5px;color:#6b7280;margin-bottom:16px">Buat warung dulu di tab "Warung Saya" sebelum menambahkan barang dagangan.</div>'
+      + '<button class="btn btn-primary" onclick="kifayahOpenWarungForm()">🏪 Buka Warung Saya</button>'
+      + '</div>';
+    return;
+  }
+  var produkSaya = (DB.produkWarung||[]).filter(function(p){ return p.warungId === w.id; });
+  var totalStok = produkSaya.reduce(function(s,p){ return s+(Number(p.stok)||0); }, 0);
+  var habisCount = produkSaya.filter(function(p){ return (Number(p.stok)||0) <= 0; }).length;
+
+  var html = '<div style="display:flex;gap:8px;margin-bottom:12px">'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+produkSaya.length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Jenis Barang</div></div>'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+totalStok+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Total Stok</div></div>'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:'+(habisCount?'#dc2626':'#7b2d8b')+'">'+habisCount+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Stok Habis</div></div>'
+    + '</div>'
+    + '<button class="btn btn-primary btn-block" style="margin-bottom:12px" onclick="kifayahOpenProdukForm()">+ Tambah Barang Dagangan</button>'
+    + '<div class="kf-section-title">Daftar Barang ('+produkSaya.length+')</div>'
+    + '<div class="kf-myproduk-list">'
+    + (produkSaya.length ? produkSaya.map(function(p){
+        var img = p.foto ? '<img src="'+p.foto+'">' : '<div class="kf-produk-noimg-sm">🛍️</div>';
+        var stokHabis = (Number(p.stok)||0) <= 0;
+        return '<div class="kf-myproduk-item">'
+          + img
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-weight:700;font-size:12.5px">'+p.nama+'</div>'
+          + '<div style="font-size:11.5px;color:#7b2d8b;font-weight:700">'+fmt(p.harga)+'</div>'
+          + '<div style="font-size:10.5px;color:'+(stokHabis?'#dc2626':'#6b7280')+'">Stok: '+(p.stok||0)+' · '+(p.status==='aktif'?'Aktif':'Nonaktif')+'</div>'
+          + '</div>'
+          + '<div style="display:flex;flex-direction:column;gap:4px">'
+          + '<button class="kf-mini-btn" title="Edit" onclick="kifayahOpenProdukForm(\''+p.id+'\')">✏️</button>'
+          + '<button class="kf-mini-btn" title="'+(p.status==='aktif'?'Nonaktifkan':'Aktifkan')+'" onclick="kifayahToggleProdukStatus(\''+p.id+'\')">'+(p.status==='aktif'?'⏸️':'▶️')+'</button>'
+          + '<button class="kf-mini-btn" title="Hapus" onclick="kifayahHapusProduk(\''+p.id+'\')">🗑️</button>'
+          + '</div></div>';
+      }).join('') : '<div style="font-size:12px;color:#9ca3af;padding:12px 0">Belum ada barang dagangan. Tambahkan barang pertama Anda!</div>')
+    + '</div>';
+  el.innerHTML = html;
+}
+
+function kifayahToggleProdukStatus(produkId) {
+  var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
+  if (!p) return;
+  p.status = (p.status === 'aktif') ? 'nonaktif' : 'aktif';
+  saveDB();
+  showToast(p.status === 'aktif' ? '✅ Barang diaktifkan' : '⏸️ Barang dinonaktifkan');
+  renderKifayahKelolaBarang();
+}
+
+function kifayahToggleWarungStatus() {
+  var w = _kfMyWarung();
+  if (!w) return;
+  w.status = (w.status === 'aktif') ? 'nonaktif' : 'aktif';
+  saveDB();
+  showToast(w.status === 'aktif' ? '✅ Warung dibuka' : '⏸️ Warung ditutup sementara');
+  renderKifayahWarungSaya();
+}
+
+function kifayahOpenWarungForm(isEdit) {
+  // Jaga aturan 1 user = 1 warung: kalau dipanggil sebagai "buat baru" tapi
+  // user ternyata sudah punya warung, otomatis alihkan ke mode edit supaya
+  // tidak muncul form kosong yang ujung-ujungnya ditolak saat disimpan.
+  if (!isEdit && _kfMyWarung()) isEdit = true;
+  _kfEditWarungMode = !!isEdit;
+  var w = isEdit ? _kfMyWarung() : null;
+  _kfLogoB64 = w ? (w.logo || null) : null;
+  document.getElementById('kfWarungNama').value = w ? w.nama : '';
+  document.getElementById('kfWarungKategori').value = w ? (w.kategori||'Umum') : 'Sembako';
+  document.getElementById('kfWarungDeskripsi').value = w ? (w.deskripsi||'') : '';
+  document.getElementById('kfWarungKontak').value = w ? (w.kontak||'') : '';
+  document.getElementById('kfWarungAlamat').value = w ? (w.alamat||'') : '';
+  _kfRenderLogoPreview();
+  document.getElementById('modalKfWarungFormTitle').textContent = isEdit ? '✏️ Edit Warung' : '🏪 Buat Warung Saya';
+  openModal('modalKfWarungForm');
+}
+function _kfRenderLogoPreview() {
+  var prev = document.getElementById('kfLogoPreview');
+  var wrap = document.getElementById('kfLogoPreviewWrap');
+  prev.innerHTML = _kfLogoB64 ? '<img src="'+_kfLogoB64+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px">' : '🏪';
+  var oldBtn = wrap ? wrap.querySelector('.kf-logo-remove-btn') : null;
+  if (oldBtn) oldBtn.remove();
+  if (_kfLogoB64 && wrap) {
+    var btn = document.createElement('div');
+    btn.className = 'kf-logo-remove-btn';
+    btn.title = 'Hapus logo';
+    btn.innerHTML = '🗑️';
+    btn.onclick = function(e){ e.stopPropagation(); kifayahHapusLogo(); };
+    wrap.appendChild(btn);
+  }
+}
+function kifayahHapusLogo() {
+  if (!confirm('Hapus logo warung ini?')) return;
+  _kfLogoB64 = null;
+  _kfRenderLogoPreview();
+}
+function kifayahUploadLogo() {
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var sz = 240;
+        var canvas = document.createElement('canvas');
+        canvas.width = sz; canvas.height = sz;
+        var ctx = canvas.getContext('2d');
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side)/2, sy = (img.height - side)/2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, sz, sz);
+        _kfLogoB64 = canvas.toDataURL('image/jpeg', 0.85);
+        _kfRenderLogoPreview();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+function kifayahSubmitWarung() {
+  var nama = (document.getElementById('kfWarungNama').value||'').trim();
+  if (!nama) { showToast('⚠️ Nama warung wajib diisi'); return; }
+  var myId = _kfMyNasabahId();
+  if (!myId) { showToast('⚠️ Hanya nasabah yang bisa membuat warung'); return; }
+  var data = {
+    nama: nama,
+    kategori: document.getElementById('kfWarungKategori').value || 'Umum',
+    deskripsi: (document.getElementById('kfWarungDeskripsi').value||'').trim(),
+    kontak: (document.getElementById('kfWarungKontak').value||'').trim(),
+    alamat: (document.getElementById('kfWarungAlamat').value||'').trim(),
+    logo: _kfLogoB64
+  };
+  if (_kfEditWarungMode) {
+    var w = _kfMyWarung();
+    if (w) Object.assign(w, data);
+  } else {
+    if (_kfMyWarung()) { showToast('⚠️ Anda sudah memiliki warung'); return; }
+    DB.warung.push(Object.assign({
+      id: 'warung-' + (DB.nextWarungId++),
+      nasabahId: myId,
+      status: 'aktif',
+      dibuatPada: nowISO()
+    }, data));
+  }
+  saveDB();
+  closeModal('modalKfWarungForm');
+  showToast('✅ Warung berhasil disimpan!');
+  renderKifayahWarungSaya();
+}
+
+/* ---------- PRODUK CRUD (untuk pemilik warung) ---------- */
+function kifayahOpenProdukForm(produkId) {
+  var w = _kfMyWarung();
+  if (!w) { showToast('⚠️ Buat warung terlebih dahulu'); return; }
+  _kfEditProdukId = produkId || null;
+  var p = produkId ? (DB.produkWarung||[]).find(function(x){ return x.id === produkId; }) : null;
+  _kfFotoProdukB64 = p ? (p.foto || null) : null;
+  document.getElementById('kfProdukNama').value = p ? p.nama : '';
+  document.getElementById('kfProdukHarga').value = p ? p.harga : '';
+  document.getElementById('kfProdukStok').value = p ? p.stok : '';
+  document.getElementById('kfProdukKategori').value = p ? (p.kategori||'') : '';
+  document.getElementById('kfProdukDeskripsi').value = p ? (p.deskripsi||'') : '';
+  _kfRenderFotoProdukPreview();
+  document.getElementById('modalKfProdukFormTitle').textContent = produkId ? '✏️ Edit Produk' : '+ Tambah Produk';
+  openModal('modalKfProdukForm');
+}
+function _kfRenderFotoProdukPreview() {
+  var prev = document.getElementById('kfFotoProdukPreview');
+  prev.innerHTML = _kfFotoProdukB64 ? '<img src="'+_kfFotoProdukB64+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px">' : '🛍️';
+}
+function kifayahUploadFotoProduk() {
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var sz = 480;
+        var canvas = document.createElement('canvas');
+        canvas.width = sz; canvas.height = sz;
+        var ctx = canvas.getContext('2d');
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side)/2, sy = (img.height - side)/2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, sz, sz);
+        _kfFotoProdukB64 = canvas.toDataURL('image/jpeg', 0.82);
+        _kfRenderFotoProdukPreview();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+function kifayahSubmitProduk() {
+  var w = _kfMyWarung();
+  if (!w) return;
+  var nama = (document.getElementById('kfProdukNama').value||'').trim();
+  var harga = Number(document.getElementById('kfProdukHarga').value)||0;
+  var stok = Number(document.getElementById('kfProdukStok').value)||0;
+  if (!nama || harga <= 0) { showToast('⚠️ Nama & harga produk wajib diisi'); return; }
+  var data = {
+    nama: nama, harga: harga, stok: stok,
+    kategori: (document.getElementById('kfProdukKategori').value||'').trim() || 'Umum',
+    deskripsi: (document.getElementById('kfProdukDeskripsi').value||'').trim(),
+    foto: _kfFotoProdukB64
+  };
+  if (_kfEditProdukId) {
+    var p = (DB.produkWarung||[]).find(function(x){ return x.id === _kfEditProdukId; });
+    if (p) Object.assign(p, data);
+  } else {
+    DB.produkWarung.push(Object.assign({
+      id: 'produk-' + (DB.nextProdukId++),
+      warungId: w.id,
+      status: 'aktif',
+      dibuatPada: nowISO()
+    }, data));
+  }
+  saveDB();
+  closeModal('modalKfProdukForm');
+  showToast('✅ Produk berhasil disimpan!');
+  renderKifayahKelolaBarang();
+  if (typeof renderKifayahWarungSaya === 'function') renderKifayahWarungSaya();
+}
+function kifayahHapusProduk(produkId) {
+  if (!confirm('Hapus produk ini?')) return;
+  DB.produkWarung = (DB.produkWarung||[]).filter(function(x){ return x.id !== produkId; });
+  saveDB();
+  showToast('🗑️ Produk dihapus');
+  renderKifayahKelolaBarang();
+  if (typeof renderKifayahWarungSaya === 'function') renderKifayahWarungSaya();
+}
+
+/* ---------- PESANAN ---------- */
+function _kfStatusLabel(s) {
+  return { menunggu:'⏳ Menunggu Konfirmasi', diproses:'🔧 Diproses', dikirim:'🚚 Dikirim', selesai:'✅ Selesai', dibatalkan:'✕ Dibatalkan' }[s] || s;
+}
+function _kfRenderPesananCard(sellerView, p) {
+  var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
+  var actions = '';
+  if (sellerView) {
+    if (p.status === 'menunggu') {
+      actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'diproses\')">Terima</button>'
+        + '<button class="kf-mini-action kf-reject" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'dibatalkan\')">Tolak</button>';
+    } else if (p.status === 'diproses') {
+      actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'dikirim\')">Kirim</button>';
+    } else if (p.status === 'dikirim') {
+      actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'selesai\')">Selesai</button>';
+    }
+  }
+  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh '+(p.pinjamanId?4:(p.cicilan?p.cicilan.tenor:''))+'x</span>' : '';
+  return '<div class="kf-pesanan-card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+(sellerView ? p.pembeliNama : p.warungNama)+cicilanBadge+'</div>'
+    + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
+    + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">'+fmt(p.total)+'</div>'
+    + '</div>'
+    + '<div class="kf-status-badge kf-status-'+p.status+'">'+_kfStatusLabel(p.status)+'</div>'
+    + '</div>'
+    + (actions ? '<div style="display:flex;gap:8px;margin-top:8px">'+actions+'</div>' : '')
+    + '</div>';
+}
+function kifayahUpdatePesananStatus(pesananId, status) {
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
+  if (!p) return;
+  p.status = status;
+  saveDB();
+  showToast('✅ Status pesanan diperbarui');
+  renderKifayahWarungSaya();
+  if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
+}
+function renderKifayahPesananSaya() {
+  var el = document.getElementById('kfPesananSayaContent');
+  if (!el) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">📦</div><div>Hanya akun nasabah yang punya riwayat pesanan.</div></div>';
+    return;
+  }
+  var pesanan = (DB.pesananWarung||[]).filter(function(p){ return p.pembeliId === myId; })
+    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+  if (!pesanan.length) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">📦</div><div>Belum ada pesanan.</div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="kf-pesanan-list">' + pesanan.map(function(p){ return _kfRenderPesananCard(false, p); }).join('') + '</div>';
+}
+
+/* ---------- CICILAN (pembayaran angsuran belanja Kifayah) ---------- */
+function _kfFmtTgl(iso) {
+  try { return new Date(iso).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}); }
+  catch(e) { return '-'; }
+}
+function renderKifayahCicilan() {
+  var el = document.getElementById('kfCicilanContent');
+  if (!el) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) { el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">💳</div><div>Hanya akun nasabah yang punya cicilan.</div></div>'; return; }
+
+  var html = '';
+
+  // 1) Cicilan milik SAYA sebagai PEMBELI — kewajiban bayar (akad Qardh Koperasi Renco)
+  var cicilanSaya = (DB.pesananWarung||[]).filter(function(p){ return p.pembeliId === myId && p.metodeBayar === 'cicilan' && (p.pinjamanId || p.cicilan); })
+    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+
+  html += '<div class="kf-section-title">💳 Cicilan Belanja Saya</div>';
+  if (!cicilanSaya.length) {
+    html += '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada pembelian dengan skema cicilan.</div>';
+  } else {
+    html += cicilanSaya.map(function(p){ return p.pinjamanId ? _kfRenderCicilanCardQardh(p) : _kfRenderCicilanCard(p, true); }).join('');
+  }
+
+  el.innerHTML = html;
+}
+// Kartu cicilan LEGACY (jadwal internal Kifayah, sebelum terintegrasi ke Qardh) — tetap dipertahankan
+// agar riwayat pesanan lama masih bisa ditampilkan.
+function _kfRenderCicilanCard(p, isPembeliView) {
+  var c = p.cicilan;
+  var terbayar = c.jadwal.filter(function(j){ return j.status === 'lunas'; }).length;
+  var sisaTagihan = c.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(s,j){ return s+j.jumlah; }, 0);
+  var next = c.jadwal.find(function(j){ return j.status !== 'lunas'; });
+  var progressPct = Math.round((terbayar / c.jadwal.length) * 100);
+  var jadwalHtml = c.jadwal.map(function(j){
+    var lunas = j.status === 'lunas';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f1f7;font-size:11px">'
+      + '<span style="color:#6b7280">Angsuran ke-'+j.ke+' · jatuh tempo '+_kfFmtTgl(j.jatuhTempo)+'</span>'
+      + '<span style="font-weight:700;color:'+(lunas?'#16a34a':'#dc2626')+'">'+(lunas?'✅ Lunas':fmt(j.jumlah))+'</span>'
+      + '</div>';
+  }).join('');
+  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+(isPembeliView ? p.warungNama : p.pembeliNama)+'</div>'
+    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
+    + '</div>'
+    + '<div class="kf-status-badge" style="background:'+(c.lunas?'#dcfce7':'#f4e9f7')+';color:'+(c.lunas?'#16a34a':'#7b2d8b')+'">'+(c.lunas?'Lunas':terbayar+'/'+c.jadwal.length+' bayar')+'</div>'
+    + '</div>'
+    + '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
+    + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:8px">'
+    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa: '+fmt(sisaTagihan)+'</span>'
+    + '</div>'
+    + jadwalHtml
+    + (isPembeliView && next ? '<button class="btn btn-primary btn-block" style="margin-top:10px" onclick="kifayahBayarAngsuran(\''+p.id+'\','+next.ke+')">Bayar Angsuran ke-'+next.ke+' ('+fmt(next.jumlah)+')</button>' : '')
+    + '</div>';
+}
+// Kartu cicilan BARU — terhubung ke pinjaman Qardh Koperasi Renco sungguhan (DB.pinjaman).
+// Pembayaran angsurannya dilakukan lewat tab Pembayaran → Koperasi Renco (mekanisme Qardh biasa).
+function _kfRenderCicilanCardQardh(p) {
+  var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+  if (!pin) {
+    return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
+      + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+'</div>'
+      + '<div style="font-size:11px;color:#dc2626;margin-top:4px">⚠️ Data pinjaman Qardh tidak ditemukan.</div></div>';
+  }
+  var STATUS_LBL = { pengajuan:'⏳ Menunggu Persetujuan', aktif:'Berjalan', menunggak:'Menunggak', lunas:'✅ Lunas', ditolak:'❌ Ditolak' };
+  var STATUS_BG  = { pengajuan:'#fef3c7', aktif:'#f4e9f7', menunggak:'#fee2e2', lunas:'#dcfce7', ditolak:'#f3f4f6' };
+  var STATUS_FG  = { pengajuan:'#b45309', aktif:'#7b2d8b', menunggak:'#dc2626', lunas:'#16a34a', ditolak:'#6b7280' };
+  var terbayar = (pin.cicilan||[]).length;
+  var progressPct = pin.tenor ? Math.round((terbayar / pin.tenor) * 100) : 0;
+  var sisaPokok = (pin.status === 'pengajuan') ? pin.jumlah : (typeof pin.sisaPokok === 'number' ? pin.sisaPokok : pin.jumlah);
+  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+'</div>'
+    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
+    + '<div style="font-size:9.5px;font-weight:700;color:#4361ee;margin-top:3px">🤲 Akad Qardh · Tenor 4 bulan</div>'
+    + '</div>'
+    + '<div class="kf-status-badge" style="background:'+(STATUS_BG[pin.status]||'#f4e9f7')+';color:'+(STATUS_FG[pin.status]||'#7b2d8b')+'">'+(STATUS_LBL[pin.status]||pin.status)+'</div>'
+    + '</div>'
+    + (pin.status === 'aktif' || pin.status === 'menunggak' || pin.status === 'lunas' ? (
+        '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
+        + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
+        + '</div>'
+      ) : '')
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:8px">'
+    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa pokok: '+fmt(sisaPokok)+'</span>'
+    + '</div>'
+    + (pin.status === 'pengajuan'
+        ? '<div style="font-size:11px;color:#9ca3af">📝 Pengajuan sedang ditinjau admin koperasi.</div>'
+        : (pin.status === 'ditolak'
+            ? '<div style="font-size:11px;color:#dc2626">Pengajuan Qardh ditolak admin.</div>'
+            : (pin.status !== 'lunas'
+                ? '<button class="btn btn-primary btn-block" style="margin-top:4px" onclick="switchPembayaranSubTab(\'cicilan\')">Bayar Angsuran di Koperasi Renco</button>'
+                : '')))
+    + '</div>';
+}
+function _renderKifayahPembayaranTab() {
+  var myId = (typeof _kfMyNasabahId === 'function') ? _kfMyNasabahId() : null;
+  if (!myId) {
+    return '<div class="kf-empty" style="padding:32px 20px;text-align:center;color:#9ca3af">'
+      + '<div style="font-size:38px;margin-bottom:8px">🛍️</div>'
+      + '<div>Hanya akun nasabah yang punya cicilan belanja Kifayah.</div></div>';
+  }
+  var saldo = saldoKifayahNasabah(myId);
+  var cicilanSaya = (DB.pesananWarung||[]).filter(function(p){ return p.pembeliId === myId && p.metodeBayar === 'cicilan' && (p.pinjamanId || p.cicilan); })
+    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+
+  var html = '<div class="kf-saldo-bar' + (saldo<0?' kf-saldo-minus':'') + '" style="margin:0 4px 14px">'
+    + '<span class="kf-saldo-icon">💰</span>'
+    + '<div class="kf-saldo-info">'
+    + '<div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>'
+    + '<div class="kf-saldo-nilai">' + fmt(saldo) + '</div>'
+    + '</div></div>';
+  html += '<div class="kf-section-title" style="padding:0 4px">🛍️ Cicilan Belanja Kifayah</div>';
+  if (!cicilanSaya.length) {
+    html += '<div style="font-size:12px;color:#9ca3af;padding:8px 4px 16px">Belum ada pembelian dengan skema cicilan di warung mitra.</div>';
+  } else {
+    html += '<div style="padding:0 4px">' + cicilanSaya.map(function(p){ return p.pinjamanId ? _kfRenderCicilanCardQardh(p) : _kfRenderCicilanCard(p, true); }).join('') + '</div>';
+  }
+  return html;
+}
+function kifayahBayarAngsuran(pesananId, ke) {
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
+  if (!p || !p.cicilan) return;
+  var j = p.cicilan.jadwal.find(function(x){ return x.ke === ke; });
+  if (!j || j.status === 'lunas') return;
+  if (!confirm('Konfirmasi pembayaran angsuran ke-'+ke+' sebesar '+fmt(j.jumlah)+'?')) return;
+  j.status = 'lunas';
+  j.dibayarPada = nowISO();
+  p.cicilan.lunas = p.cicilan.jadwal.every(function(x){ return x.status === 'lunas'; });
+  saveDB();
+  showToast('✅ Angsuran ke-'+ke+' berhasil dibayar');
+  renderKifayahCicilan();
+  var scPay = document.getElementById('pembayaranSubContent');
+  if (scPay && window._rencoActivePembayaranSub === 'kifayah') scPay.innerHTML = _renderKifayahPembayaranTab();
+}
+
+/* ---------- LAPORAN KEUANGAN (rekap penjualan warung sendiri) ---------- */
+function renderKifayahLaporanKeuangan() {
+  var el = document.getElementById('kfLaporanKeuanganContent');
+  if (!el) return;
+  var w = _kfMyWarung();
+  if (!w) {
+    el.innerHTML = '<div class="kf-empty-cta">'
+      + '<div style="font-size:44px">📊</div>'
+      + '<div style="font-weight:800;font-size:15px;margin:8px 0 4px;color:#1f2937">Belum Ada Laporan</div>'
+      + '<div style="font-size:12.5px;color:#6b7280">Buat warung dan mulai berjualan untuk melihat laporan keuangan di sini.</div>'
+      + '</div>';
+    return;
+  }
+  var semuaPesanan = (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; });
+  var selesai = semuaPesanan.filter(function(p){ return p.status === 'selesai'; });
+  var pendapatan = selesai.reduce(function(s,p){ return s+(p.total||0); }, 0);
+  var piutangCicilan = semuaPesanan.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan && !p.cicilan.lunas; })
+    .reduce(function(s,p){ return s + p.cicilan.jadwal.filter(function(j){ return j.status!=='lunas'; }).reduce(function(s2,j){ return s2+j.jumlah; },0); }, 0);
+
+  // Produk terlaris (berdasarkan qty terjual di seluruh pesanan, tidak hanya selesai)
+  var qtyPerProduk = {};
+  semuaPesanan.forEach(function(p){
+    p.items.forEach(function(i){
+      qtyPerProduk[i.nama] = (qtyPerProduk[i.nama]||0) + i.qty;
+    });
+  });
+  var terlaris = Object.keys(qtyPerProduk).map(function(nama){ return {nama:nama, qty:qtyPerProduk[nama]}; })
+    .sort(function(a,b){ return b.qty - a.qty; }).slice(0, 5);
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+    + '<div style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);border-radius:14px;padding:12px;color:#fff">'
+    + '<div style="font-size:10px;opacity:0.85">💰 Total Pendapatan</div>'
+    + '<div style="font-size:16px;font-weight:800;margin-top:2px">'+fmt(pendapatan)+'</div>'
+    + '<div style="font-size:9.5px;opacity:0.75;margin-top:2px">'+selesai.length+' pesanan selesai</div>'
+    + '</div>'
+    + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:12px">'
+    + '<div style="font-size:10px;color:#6b7280">⏳ Piutang Cicilan</div>'
+    + '<div style="font-size:16px;font-weight:800;margin-top:2px;color:'+(piutangCicilan>0?'#dc2626':'#374151')+'">'+fmt(piutangCicilan)+'</div>'
+    + '<div style="font-size:9.5px;color:#9ca3af;margin-top:2px">belum tertagih</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:15px;font-weight:800;color:#7b2d8b">'+semuaPesanan.length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Total Pesanan</div></div>'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:15px;font-weight:800;color:#7b2d8b">'+semuaPesanan.filter(function(p){return p.status==='menunggu';}).length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Menunggu</div></div>'
+    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
+    + '<div style="font-size:15px;font-weight:800;color:#7b2d8b">'+semuaPesanan.filter(function(p){return p.metodeBayar==='cicilan';}).length+'</div>'
+    + '<div style="font-size:10px;color:#6b7280">Via Cicilan</div></div>'
+    + '</div>'
+    + '<div class="kf-section-title">🏆 Barang Terlaris</div>'
+    + (terlaris.length ? '<div class="kf-myproduk-list">' + terlaris.map(function(t, idx){
+        return '<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #f0eef3;border-radius:12px;padding:10px 12px">'
+          + '<div style="font-weight:800;color:#7b2d8b;font-size:13px;width:20px">#'+(idx+1)+'</div>'
+          + '<div style="flex:1;font-size:12.5px;font-weight:700">'+t.nama+'</div>'
+          + '<div style="font-size:11.5px;color:#6b7280">'+t.qty+' terjual</div>'
+          + '</div>';
+      }).join('') + '</div>'
+      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada penjualan.</div>');
+
+  el.innerHTML = html;
+}
+
+/* ---------- ADMIN KIFAYAH (oversight & moderasi lintas warung) ---------- */
+var _kfAdminView = null; // null = tampilkan menu grid; atau 'ringkasan'|'warung'|'pesanan'|'cicilan'
+
+function renderKifayahAdmin() {
+  var el = document.getElementById('kfAdminContent');
+  if (!el) return;
+  if (typeof isAdmin !== 'function' || !isAdmin()) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">🔒</div><div>Hanya akun admin yang dapat mengakses menu ini.</div></div>';
+    return;
+  }
+  // Kalau sedang membuka salah satu sub-menu, render sub-menu itu saja (bukan grid).
+  if (_kfAdminView) { _renderKifayahAdminSection(_kfAdminView); return; }
+
+  var warungList = DB.warung || [];
+  var produkList = DB.produkWarung || [];
+  var pesananList = DB.pesananWarung || [];
+  var cicilanList = pesananList.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan; });
+
+  var html = '';
+  html += '<div class="kf-adm-grid">'
+    + _kfAdminMenuCard('ringkasan', '&#x1F4CA;', 'Ringkasan', undefined, '#7b2d8b', '#9b59b6')
+    + _kfAdminMenuCard('warung', '&#x1F3EA;', 'Kelola Warung', warungList.length, '#0d9488', '#2dd4bf')
+    + _kfAdminMenuCard('pesanan', '&#x1F9FE;', 'Semua Pesanan', pesananList.length, '#2563eb', '#60a5fa')
+    + _kfAdminMenuCard('cicilan', '&#x1F4B3;', 'Semua Cicilan', cicilanList.length, '#b45309', '#f59e0b')
+    + '<button class="kf-adm-card" style="--ac1:#be185d;--ac2:#ec4899;--acs:rgba(190,24,93,0.35)" onclick="_kifayahOpenActAsPicker()"><div class="kf-adm-icon">&#x1F575;&#xFE0F;</div><span class="kf-adm-label">Berperan sebagai Nasabah</span></button>'
+    + '</div>';
+  el.innerHTML = html;
+}
+
+function _kfAdminMenuCard(key, iconHtml, label, count, c1, c2) {
+  var badge = (typeof count === 'number' && count > 0)
+    ? '<span class="kf-adm-badge">'+count+'</span>'
+    : '';
+  return '<button class="kf-adm-card" style="--ac1:'+c1+';--ac2:'+c2+';--acs:'+c1+'59" onclick="_kifayahAdminOpenSection(\''+key+'\')">'
+    + badge
+    + '<div class="kf-adm-icon">'+iconHtml+'</div>'
+    + '<span class="kf-adm-label">'+label+'</span>'
+    + '</button>';
+}
+
+function _kifayahAdminOpenSection(key) {
+  _kfAdminView = key;
+  renderKifayahAdmin();
+}
+
+function _kifayahAdminBackToMenu() {
+  _kfAdminView = null;
+  renderKifayahAdmin();
+}
+
+function _renderKifayahAdminSection(key) {
+  var el = document.getElementById('kfAdminContent');
+  if (!el) return;
+
+  var warungList = (DB.warung||[]).slice().sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+  var produkList = DB.produkWarung || [];
+  var pesananList = (DB.pesananWarung||[]).slice().sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+  var cicilanList = pesananList.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan; });
+  var totalOmzet = pesananList.filter(function(p){ return p.status === 'selesai'; }).reduce(function(s,p){ return s+(p.total||0); }, 0);
+  var cicilanOutstanding = cicilanList.reduce(function(s,p){
+    var sisa = p.cicilan.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(ss,j){ return ss+j.jumlah; }, 0);
+    return s + sisa;
+  }, 0);
+
+  var titles = {
+    ringkasan: '&#x1F4CA; Ringkasan Kifayah',
+    warung: '&#x1F3EA; Semua Warung ('+warungList.length+')',
+    pesanan: '&#x1F9FE; Semua Pesanan ('+pesananList.length+')',
+    cicilan: '&#x1F4B3; Semua Cicilan ('+cicilanList.length+')'
+  };
+
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+    + '<button onclick="_kifayahAdminBackToMenu()" style="width:32px;height:32px;border-radius:10px;border:1.5px solid #f0eef3;background:#fff;font-size:14px;cursor:pointer;flex-shrink:0;font-family:inherit">&#x2190;</button>'
+    + '<div class="kf-section-title" style="margin:0">'+(titles[key]||'')+'</div>'
+    + '</div>';
+
+  if (key === 'ringkasan') {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      + _kfAdminStatCard(warungList.length, 'Warung')
+      + _kfAdminStatCard(produkList.length, 'Produk')
+      + _kfAdminStatCard(pesananList.length, 'Total Pesanan')
+      + _kfAdminStatCard(fmt(totalOmzet), 'Omzet (Selesai)')
+      + '</div>';
+    html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">'
+      + '<span style="font-size:11.5px;color:#6b7280">⏳ Sisa Tagihan Cicilan (semua warung)</span>'
+      + '<span style="font-size:13px;font-weight:800;color:'+(cicilanOutstanding>0?'#dc2626':'#374151')+'">'+fmt(cicilanOutstanding)+'</span>'
+      + '</div>';
+    html += '<div style="margin-top:16px;padding-top:14px;border-top:1.5px dashed #f0eef3">'
+      + '<div style="font-size:10.5px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">⚠️ Zona Berbahaya</div>'
+      + '<button onclick="kifayahAdminHapusSemuaTransaksi()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(220,38,38,0.3);background:rgba(220,38,38,0.06);color:#dc2626;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">🗑️ Hapus Semua Transaksi Kifayah</button>'
+      + '<div style="font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5">Menghapus seluruh riwayat pesanan & cicilan Kifayah. Pinjaman Qardh yang sudah disetujui/aktif tidak ikut terhapus.</div>'
+      + '</div>';
+  } else if (key === 'warung') {
+    html += warungList.length
+      ? warungList.map(function(w){ return _kfAdminRenderWarungRow(w, produkList); }).join('')
+      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada warung terdaftar.</div>';
+  } else if (key === 'pesanan') {
+    html += pesananList.length
+      ? '<div class="kf-pesanan-list">' + pesananList.map(function(p){ return _kfRenderPesananCardAdmin(p); }).join('') + '</div>'
+      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada pesanan.</div>';
+  } else if (key === 'cicilan') {
+    html += cicilanList.length
+      ? cicilanList.map(function(p){ return _kfRenderCicilanCardAdmin(p); }).join('')
+      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada transaksi cicilan.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function _kfAdminStatCard(value, label) {
+  return '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px 10px;text-align:center">'
+    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+value+'</div>'
+    + '<div style="font-size:10px;color:#6b7280;margin-top:2px">'+label+'</div>'
+    + '</div>';
+}
+
+function _kfAdminRenderWarungRow(w, produkList) {
+  var jumlahProduk = produkList.filter(function(p){ return p.warungId === w.id; }).length;
+  var nb = (typeof getNasabah === 'function') ? getNasabah(w.nasabahId) : null;
+  var logo = w.logo ? '<img src="'+w.logo+'" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0">' : '<div style="width:40px;height:40px;border-radius:10px;background:#f4f1f7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>';
+  return '<div style="background:#fff;border:1.5px solid #f0eef3;border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">'
+    + logo
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+w.nama+'</div>'
+    + '<div style="font-size:10.5px;color:#6b7280">'+(nb?nb.nama:'-')+' · '+jumlahProduk+' produk</div>'
+    + '<div style="font-size:10px;font-weight:700;color:'+(w.status==='aktif'?'#16a34a':'#dc2626')+'">● '+(w.status==='aktif'?'Aktif':'Nonaktif')+'</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
+    + '<button class="kf-mini-btn" title="'+(w.status==='aktif'?'Nonaktifkan':'Aktifkan')+'" onclick="kifayahAdminToggleWarung(\''+w.id+'\')">'+(w.status==='aktif'?'⏸️':'▶️')+'</button>'
+    + '<button class="kf-mini-btn" title="Hapus Warung" onclick="kifayahAdminHapusWarung(\''+w.id+'\')">🗑️</button>'
+    + '</div>'
+    + '</div>';
+}
+
+// Hapus semua transaksi/pesanan Kifayah (fitur admin). Pinjaman Qardh yang sudah
+// disetujui/aktif TIDAK ikut dihapus demi menjaga keutuhan data keuangan koperasi —
+// hanya pesanan, riwayat cicilan lama, dan pengajuan Qardh yang masih menunggu
+// persetujuan yang dibersihkan, beserta transaksi Saldo Kifayah (tarik-sukarela) terkait.
+function kifayahAdminHapusSemuaTransaksi() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var pesananList = DB.pesananWarung || [];
+  var total = pesananList.length;
+  if (!total) { showToast('Tidak ada transaksi Kifayah untuk dihapus'); return; }
+
+  var pinIdsPending = [];
+  pesananList.forEach(function(p){
+    if (p.pinjamanId) {
+      var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+      if (pin && pin.status === 'pengajuan') pinIdsPending.push(pin.id);
+    }
+  });
+
+  var pesan = '🗑️ Hapus SEMUA ' + total + ' transaksi/pesanan Kifayah?\n\n'
+    + 'Ini akan menghapus:\n'
+    + '• Semua riwayat pesanan & cicilan Kifayah\n'
+    + '• ' + pinIdsPending.length + ' pengajuan pinjaman Qardh Kifayah yang masih menunggu persetujuan\n'
+    + '• Transaksi Saldo Kifayah (tarik-sukarela) terkait belanja Kifayah\n\n'
+    + 'Catatan: pinjaman Qardh yang SUDAH disetujui/aktif TIDAK dihapus (demi keutuhan data keuangan koperasi) — kelola manual lewat menu Pinjaman bila diperlukan.\n\n'
+    + 'Tindakan ini tidak dapat dibatalkan.';
+  if (!confirm(pesan)) return;
+
+  // Hapus transaksi Saldo Kifayah (tarik-sukarela) terkait belanja Kifayah
+  DB.transaksi = (DB.transaksi||[]).filter(function(t){
+    return !(t.type === 'tarik-sukarela' && typeof t.keterangan === 'string' && t.keterangan.indexOf('Belanja Kifayah') === 0);
+  });
+  // Hapus transaksi pengajuan (pending) yang terkait pinjaman Qardh Kifayah yang belum disetujui
+  DB.transaksi = (DB.transaksi||[]).filter(function(t){
+    return !(t.statusTxn === 'pending' && pinIdsPending.indexOf(t.refId) !== -1);
+  });
+  // Hapus pinjaman Qardh Kifayah yang masih pengajuan (belum disetujui admin)
+  DB.pinjaman = (DB.pinjaman||[]).filter(function(x){ return pinIdsPending.indexOf(x.id) === -1; });
+  // Hapus semua pesanan/transaksi Kifayah
+  DB.pesananWarung = [];
+
+  saveDB();
+  showToast('🗑️ ' + total + ' transaksi Kifayah berhasil dihapus');
+  renderKifayahAdmin();
+}
+function kifayahAdminToggleWarung(warungId) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
+  if (!w) return;
+  w.status = (w.status === 'aktif') ? 'nonaktif' : 'aktif';
+  saveDB();
+  showToast(w.status === 'aktif' ? '✅ Warung diaktifkan' : '⏸️ Warung dinonaktifkan');
+  renderKifayahAdmin();
+}
+
+function kifayahAdminHapusWarung(warungId) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
+  if (!w) return;
+  if (!confirm('Hapus warung "'+w.nama+'" beserta seluruh produknya? Riwayat pesanan & cicilan yang sudah ada tetap tersimpan untuk laporan.')) return;
+  DB.warung = (DB.warung||[]).filter(function(x){ return x.id !== warungId; });
+  DB.produkWarung = (DB.produkWarung||[]).filter(function(x){ return x.warungId !== warungId; });
+  saveDB();
+  showToast('🗑️ Warung berhasil dihapus');
+  renderKifayahAdmin();
+}
+
+function _kfRenderPesananCardAdmin(p) {
+  var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
+  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh'+(p.pinjamanId?' 4x':(p.cicilan?' '+p.cicilan.tenor+'x':''))+'</span>' : '';
+  var bisaBatal = (p.status !== 'selesai' && p.status !== 'dibatalkan');
+  return '<div class="kf-pesanan-card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+cicilanBadge+'</div>'
+    + '<div style="font-size:10.5px;color:#9ca3af">Pembeli: '+p.pembeliNama+'</div>'
+    + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
+    + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">'+fmt(p.total)+'</div>'
+    + '</div>'
+    + '<div class="kf-status-badge kf-status-'+p.status+'">'+_kfStatusLabel(p.status)+'</div>'
+    + '</div>'
+    + (bisaBatal ? '<div style="display:flex;gap:8px;margin-top:8px"><button class="kf-mini-action kf-reject" onclick="kifayahAdminBatalkanPesanan(\''+p.id+'\')">Batalkan Pesanan</button></div>' : '')
+    + '</div>';
+}
+
+function kifayahAdminBatalkanPesanan(pesananId) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
+  if (!p) return;
+  if (!confirm('Batalkan pesanan ini? Aksi ini untuk moderasi/dispute dan tidak bisa dibatalkan kembali.')) return;
+  p.status = 'dibatalkan';
+  saveDB();
+  showToast('✅ Pesanan dibatalkan oleh admin');
+  renderKifayahAdmin();
+}
+
+function _kfRenderCicilanCardAdmin(p) {
+  var c = p.cicilan;
+  var terbayar = c.jadwal.filter(function(j){ return j.status === 'lunas'; }).length;
+  var sisaTagihan = c.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(s,j){ return s+j.jumlah; }, 0);
+  var progressPct = Math.round((terbayar / c.jadwal.length) * 100);
+  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+p.pembeliNama+' → '+p.warungNama+'</div>'
+    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
+    + '</div>'
+    + '<div class="kf-status-badge" style="background:'+(c.lunas?'#dcfce7':'#f4e9f7')+';color:'+(c.lunas?'#16a34a':'#7b2d8b')+'">'+(c.lunas?'Lunas':terbayar+'/'+c.jadwal.length+' bayar')+'</div>'
+    + '</div>'
+    + '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
+    + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280">'
+    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa: '+fmt(sisaTagihan)+'</span>'
+    + '</div>'
+    + '</div>';
 }
 
 // ========== RENCO PAY MODULE ==========
@@ -23854,45 +25896,22 @@ function keuPanelOpen(tab, cardEl) {
   iconWrap.innerHTML = item.emoji || item.svg || '';
   titleEl.textContent = item.label;
 
-  // Ambil posisi card sumber
-  var rect = cardEl.getBoundingClientRect();
-  var vw = window.innerWidth, vh = window.innerHeight;
-
-  // Set posisi awal = posisi card
+  // Langsung tampil penuh layar, tanpa animasi membesar
+  panel.classList.remove('expanding');
   panel.style.transition = 'none';
-  panel.style.top    = rect.top + 'px';
-  panel.style.left   = rect.left + 'px';
-  panel.style.width  = rect.width + 'px';
-  panel.style.height = rect.height + 'px';
-  panel.style.borderRadius = '18px';
-  content.innerHTML  = '';
-  content.style.display = 'none';
+  panel.style.top    = '0px';
+  panel.style.left   = '0px';
+  panel.style.width  = window.innerWidth + 'px';
+  panel.style.height = window.innerHeight + 'px';
+  panel.style.borderRadius = '0px';
 
   overlay.style.display = 'block';
   overlay.classList.add('open');
   _keuPanelPushState();
 
-  // Trigger reflow lalu animasi expand ke fullscreen
-  panel.getBoundingClientRect();
-  panel.classList.add('expanding');
-  panel.style.transition =
-    'top .38s cubic-bezier(.4,0,.2,1),'
-   +'left .38s cubic-bezier(.4,0,.2,1),'
-   +'width .38s cubic-bezier(.4,0,.2,1),'
-   +'height .38s cubic-bezier(.4,0,.2,1),'
-   +'border-radius .38s cubic-bezier(.4,0,.2,1)';
-  panel.style.top    = '0px';
-  panel.style.left   = '0px';
-  panel.style.width  = vw + 'px';
-  panel.style.height = vh + 'px';
-  panel.style.borderRadius = '0px';
-
-  // Isi konten setelah animasi
-  setTimeout(function(){
-    content.style.display = '';
-    keuanganTab(tab, null);
-    _keuPanelActiveTab = tab;
-  }, 300);
+  content.style.display = '';
+  keuanganTab(tab, null);
+  _keuPanelActiveTab = tab;
 }
 
 function keuPanelClose() {
@@ -23900,32 +25919,15 @@ function keuPanelClose() {
   var panel   = document.getElementById('keuPanelCard');
   var content = document.getElementById('keuanganContent');
 
-  // Cari card asal
-  var tab = _keuPanelActiveTab;
-  var cardEl = tab ? document.getElementById('keu-card-'+tab) : null;
-
+  // Langsung tertutup, tanpa animasi mengecil
   content.style.display = 'none';
   content.innerHTML = '';
-
-  if (cardEl) {
-    var rect = cardEl.getBoundingClientRect();
-    panel.style.top    = rect.top + 'px';
-    panel.style.left   = rect.left + 'px';
-    panel.style.width  = rect.width + 'px';
-    panel.style.height = rect.height + 'px';
-    panel.style.borderRadius = '18px';
-  } else {
-    panel.style.opacity = '0';
-  }
-
-  setTimeout(function(){
-    overlay.style.display = 'none';
-    overlay.classList.remove('open');
-    panel.classList.remove('expanding');
-    panel.style.transition = 'none';
-    panel.style.opacity = '';
-    _keuPanelActiveTab = null;
-  }, 380);
+  overlay.style.display = 'none';
+  overlay.classList.remove('open');
+  panel.classList.remove('expanding');
+  panel.style.transition = 'none';
+  panel.style.opacity = '';
+  _keuPanelActiveTab = null;
 }
 
 function keuanganTab(tab, el) {
@@ -23956,6 +25958,11 @@ function keuanganTab(tab, el) {
           '<span class="psub-icon">🏦</span>' +
           '<span class="psub-label">Renco Capital</span>' +
           '<span class="psub-sub">Tagihan Pinjaman</span>' +
+        '</button>' +
+        '<button id="psub-kifayah" class="pembayaran-subtab" data-psub="kifayah" onclick="switchPembayaranSubTab(\'kifayah\')">' +
+          '<span class="psub-icon">🛍️</span>' +
+          '<span class="psub-label">Kifayah</span>' +
+          '<span class="psub-sub">Cicilan Belanja</span>' +
         '</button>' +
       '</div>' +
       '<div id="pembayaranSubContent"></div>';
@@ -32015,6 +34022,63 @@ function semetonTab(kat, btn) {
   renderSemetonPlus();
 }
 
+/* ── Panel Semeton+ (kartu grid "membuka" jadi fullscreen, sama seperti menu Keuangan) ── */
+var _semPanelActiveKat = null;
+
+window.addEventListener('popstate', function(e) {
+  if (_semPanelActiveKat) { semPanelClose(); history.pushState(null,'',''); }
+});
+function _semPanelPushState() { history.pushState(null,'',''); }
+
+function semPanelOpen(kat, cardEl) {
+  var overlay = document.getElementById('semPanelOverlay');
+  var panel   = document.getElementById('semPanelCard');
+  var iconWrap= document.getElementById('semPanelIconWrap');
+  var titleEl = document.getElementById('semPanelTitle');
+  var content = document.getElementById('semPanelContent');
+  if (!overlay || !panel || !cardEl) return;
+
+  var iconEl  = cardEl.querySelector('.fgb-icon');
+  var labelEl = cardEl.querySelector('.fgb-label');
+  iconWrap.innerHTML  = iconEl ? iconEl.innerHTML : '';
+  titleEl.textContent = labelEl ? labelEl.textContent : 'Semeton+';
+
+  // Langsung tampil penuh layar, tanpa animasi membesar
+  panel.classList.remove('expanding');
+  panel.style.transition = 'none';
+  panel.style.top    = '0px';
+  panel.style.left   = '0px';
+  panel.style.width  = window.innerWidth + 'px';
+  panel.style.height = window.innerHeight + 'px';
+  panel.style.borderRadius = '0px';
+
+  overlay.style.display = 'block';
+  overlay.classList.add('open');
+  _semPanelPushState();
+
+  content.style.display = '';
+  content.innerHTML = '<div id="lokerList"></div>';
+  semetonTab(kat, cardEl);
+  _semPanelActiveKat = kat;
+}
+
+function semPanelClose() {
+  var overlay = document.getElementById('semPanelOverlay');
+  var panel   = document.getElementById('semPanelCard');
+  var content = document.getElementById('semPanelContent');
+  if (!overlay || !panel) return;
+
+  // Langsung tertutup, tanpa animasi mengecil
+  content.style.display = 'none';
+  content.innerHTML = '';
+  overlay.style.display = 'none';
+  overlay.classList.remove('open');
+  panel.classList.remove('expanding');
+  panel.style.transition = 'none';
+  panel.style.opacity = '';
+  _semPanelActiveKat = null;
+}
+
 /* ── Notifikasi persetujuan Semeton+ untuk admin (nav bawah + tab Verifikasi) ── */
 function _lokerUpdateAdminNotif() {
   var adm = (typeof isAdmin === 'function' && isAdmin()) || (typeof AUTH !== 'undefined' && AUTH && AUTH.user && AUTH.user.role === 'admin');
@@ -32103,7 +34167,7 @@ function renderSemetonPlus() {
       +   (l.usaha ? '<span>🏷️ ' + escLoker(l.usaha) + '</span>' : '')
       +   (l.lokasi ? '<span>📍 ' + escLoker(l.lokasi) + '</span>' : '')
       +   '<span>🗓️ ' + fmtDate(l.tanggal) + '</span>'
-      +   '<span class="loker-expand-hint">Detail ▾</span>'
+      +   '<span class="loker-expand-hint">Detail <span class="loker-expand-arrow">▾</span></span>'
       + '</div>'
       + '<div class="loker-card-detail" id="lokerDetail_' + l.id + '">'
       +   '<div class="loker-card-detail-block">' + deskripsiFull + '</div>'
@@ -41874,9 +43938,9 @@ renderAsetHTML = function() {
     </div>
   </div>
 
-  <div class="keu-action-bar">
+  ${(typeof isAdmin==='function'&&isAdmin()) ? `<div class="keu-action-bar">
     <button class="keu-action-btn keu-action-primary" onclick="openAsetModal()">+ Tambah Aset</button>
-  </div>
+  </div>` : ''}
 
   ${totalPend > 0 ? `
   <div style="margin:8px 16px 0;background:white;border-radius:16px;box-shadow:0 2px 12px rgba(26,71,42,0.08);overflow:hidden;animation:cicilanSlideUp 0.45s ease 0.12s both">
@@ -43685,8 +45749,10 @@ window.switchPembayaranSubTab = function switchPembayaranSubTab(sub) {
   function _updateBtns() {
     var btnC = document.getElementById('psub-cicilan');
     var btnK = document.getElementById('psub-capital');
+    var btnF = document.getElementById('psub-kifayah');
     if (btnC) btnC.className = 'pembayaran-subtab' + (sub === 'cicilan'  ? ' aktif-cicilan' : '');
     if (btnK) btnK.className = 'pembayaran-subtab' + (sub === 'capital'  ? ' aktif-capital' : '');
+    if (btnF) btnF.className = 'pembayaran-subtab' + (sub === 'kifayah'  ? ' aktif-kifayah' : '');
   }
   _updateBtns();
 
@@ -43727,6 +45793,9 @@ window.switchPembayaranSubTab = function switchPembayaranSubTab(sub) {
         rerenderAngsuranMemberTab&&rerenderAngsuranMemberTab();
         _updateBtns();
       }, 100);
+    } else if (sub === 'kifayah') {
+      /* ── Kifayah — cicilan belanja warung mitra, sumber: DB.pesananWarung ── */
+      sc.innerHTML = _renderKifayahPembayaranTab();
     } else if (sub === 'rencopay') {
       renderRencoPayInline(sc);
     } else {
