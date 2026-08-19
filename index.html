@@ -1959,7 +1959,45 @@ body {
   display: flex; flex-direction: column; gap: 8px;
   flex-shrink: 0; position: relative; z-index: 10;
   box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+  transition: background 0.35s ease;
 }
+
+/* ── Tema Kifayah: saat mode Kifayah aktif, gradient ungu→putih
+   mendominasi seluruh app shell (headbar, background halaman, menu bawah) ── */
+#app.theme-kifayah {
+  background: linear-gradient(180deg, #f5f1fa 0%, #ffffff 100%);
+}
+#app.theme-kifayah .app-header {
+  background: linear-gradient(135deg, #4a1458 0%, #7b2d8b 55%, #a86bc2 100%) !important;
+}
+#app.theme-kifayah .mode-switcher {
+  background: rgba(0,0,0,0.22);
+}
+#app.theme-kifayah .app-header .logo-icon {
+  background: linear-gradient(135deg, #7b2d8b, #ffffff);
+}
+#app.theme-kifayah .icon-btn {
+  background: rgba(74,17,82,0.45);
+  border-color: rgba(255,255,255,0.26);
+}
+#app.theme-kifayah .icon-btn:active { background: rgba(74,17,82,0.65); }
+/* ── Nav menu Kifayah: samakan latar dengan nav Koperasi (frosted glass putih),
+   aksen warna aktif tetap ungu ── */
+#app.theme-kifayah .bottom-nav {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-top: 0.5px solid rgba(0,0,0,0.12);
+  box-shadow: 0 -1px 0 rgba(0,0,0,0.05), 0 -6px 32px rgba(0,0,0,0.08);
+}
+#app.theme-kifayah .bottom-nav .nav-item .nav-icon { color: #a0a0a8; }
+#app.theme-kifayah .bottom-nav .nav-item .nav-label { color: #b8b8bc; }
+#app.theme-kifayah .bottom-nav .nav-item.active .nav-icon { color: #7b2d8b; }
+#app.theme-kifayah .bottom-nav .nav-item.active .nav-label { color: #7b2d8b; }
+#app.theme-kifayah .bottom-nav .nav-indicator { background: linear-gradient(135deg,#7b2d8b,#c9a3d8); }
+/* ── Strip di bawah nav (safe-area / home-indicator iOS): pastikan tidak
+   menampakkan hijau body — ikut ungu selama mode Kifayah aktif ── */
+body:has(#app.theme-kifayah) { background: #f5f1fa; }
 .app-header-top {
   display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 6px;
 }
@@ -1997,9 +2035,9 @@ body {
   box-shadow: 0 2px 10px rgba(244,169,34,0.35);
 }
 #modeTabKifayah.active {
-  background: linear-gradient(135deg, #7b2d8b, #9b59b6);
-  color: #ffffff;
-  box-shadow: 0 2px 10px rgba(123,45,139,0.40);
+  background: linear-gradient(135deg, #f0e3f7, #ffffff);
+  color: #6a1f78;
+  box-shadow: 0 2px 10px rgba(123,45,139,0.35);
 }
 #modeTabSemeton.active {
   background: linear-gradient(135deg, #1e5b8a, #4361ee);
@@ -7220,10 +7258,10 @@ function updateHeaderUserInfo() {
     var profileBtn = document.getElementById('headerProfileBtn');
     if (bellBtn) bellBtn.style.display = adm ? '' : 'none'; // bell hanya untuk admin
     if (profileBtn) profileBtn.style.display = 'none'; // selalu tersembunyi, headerUserBtn digunakan
-    // Tampilkan headerUserBtn untuk admin (👑) maupun nasabah (👤)
-    var userBtnAdm = document.getElementById('headerUserBtn');
-    if (userBtnAdm) userBtnAdm.style.display = '';
   }
+
+  // Tampilkan/refresh banner "Login Sebagai" jika sedang impersonate
+  if (typeof renderImpersonateBanner === 'function') renderImpersonateBanner();
 
   // ── Tambahkan tombol Hard Refresh & Snapshot DB untuk anggota ──
   if (!adm) {
@@ -7403,6 +7441,53 @@ window.submitAdminChangePassword = function() {
   document.getElementById('adminChangePwPanel').style.display = 'none';
   if (typeof showToast === 'function') showToast('✅ Password admin berhasil diubah');
 };
+
+// ── Ganti Password Nasabah (self-service) ──
+window.showNasabahChangePassword = function() {
+  var panel = document.getElementById('nasabahChangePwPanel');
+  if (!panel) return;
+  var vis = panel.style.display !== 'none';
+  panel.style.display = vis ? 'none' : 'block';
+  if (!vis) {
+    ['nasabahPwCurrent','nasabahPwNew','nasabahPwConfirm'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+    var errEl = document.getElementById('nasabahPwError');
+    if (errEl) errEl.style.display = 'none';
+    setTimeout(function(){ var el = document.getElementById('nasabahPwCurrent'); if (el) el.focus(); }, 100);
+  }
+};
+window.submitNasabahChangePassword = function() {
+  if (typeof isNasabah !== 'function' || !isNasabah()) {
+    if (typeof showToast === 'function') showToast('⚠️ Fitur ini hanya untuk akun nasabah');
+    return;
+  }
+  var cur  = document.getElementById('nasabahPwCurrent').value;
+  var nw   = document.getElementById('nasabahPwNew').value;
+  var conf = document.getElementById('nasabahPwConfirm').value;
+  var err  = document.getElementById('nasabahPwError');
+  function showErr(m){ err.textContent=m; err.style.display='block'; }
+  err.style.display = 'none';
+  if (!cur||!nw||!conf){ showErr('⚠️ Semua kolom wajib diisi'); return; }
+  if (nw.length < 6){ showErr('⚠️ Password baru minimal 6 karakter'); return; }
+  if (nw !== conf){ showErr('⚠️ Konfirmasi password tidak cocok'); return; }
+
+  var users = usersLoad();
+  var me = users.find(function(x){ return x.id === AUTH.user.id; });
+  if (!me) { showErr('⚠️ Data akun tidak ditemukan'); return; }
+  if (cur !== me.password){ showErr('❌ Password saat ini salah'); return; }
+  if (nw === me.password){ showErr('⚠️ Password baru tidak boleh sama dengan yang lama'); return; }
+
+  me.password = nw;
+  usersSave(users);
+
+  var panel = document.getElementById('nasabahChangePwPanel');
+  if (panel) panel.style.display = 'none';
+
+  if (typeof auditLog === 'function') {
+    auditLog('Ganti Password', (me.nama || me.username) + ' mengubah password akunnya sendiri', 'akun');
+  }
+  if (typeof showToast === 'function') showToast('✅ Password berhasil diubah');
+};
+
 // Patch authLogin agar pakai password yang disimpan
 (function() {
   var _orig = window.authLogin;
@@ -7472,7 +7557,8 @@ function renderUserProfile() {
     (nb ? '<div style="background:#f8faf9;border-radius:14px;padding:14px;margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Data Nasabah</div><div style="font-size:13px;font-weight:700;color:#1c3025">' + nb.nama + '</div>' + (nb.noKK ? '<div style="font-size:11px;color:#6b7280;margin-top:2px">No KK: ' + nb.noKK + '</div>' : '') + '</div>' : '') +
     (!adm ?
       '<button id="nasabahLoadSnapBtn" onclick="nasabahLoadAdminSnapshot()" style="width:100%;padding:13px;border-radius:13px;background:rgba(45,106,79,0.08);color:#2d6a4f;border:1.5px solid rgba(45,106,79,0.22);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:6px">&#x2601;&#xFE0F; Muat Data Terbaru dari Admin</button>' +
-      '<div style="font-size:10.5px;color:#9ca3af;text-align:center;margin-bottom:14px;line-height:1.4">Gunakan jika data di perangkat ini tidak sesuai dengan data admin. Data lokal akan digantikan dengan snapshot terbaru dari server.</div>'
+      '<div style="font-size:10.5px;color:#9ca3af;text-align:center;margin-bottom:14px;line-height:1.4">Gunakan jika data di perangkat ini tidak sesuai dengan data admin. Data lokal akan digantikan dengan snapshot terbaru dari server.</div>' +
+      '<button onclick="showNasabahChangePassword()" style="width:100%;padding:13px;border-radius:13px;background:rgba(67,97,238,0.08);color:#4361ee;border:1.5px solid rgba(67,97,238,0.22);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px">&#x1F510; Ganti Password</button>'
     : '') +
     (adm ?
       ('<div class="adminp-grid">' +
@@ -7499,6 +7585,16 @@ function renderUserProfile() {
         '<div style="margin-bottom:9px"><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Password Baru <span style="color:#dc2626">*</span> <span style="font-weight:400;color:#9ca3af">(min. 6 karakter)</span></label><input type="password" id="adminPwNew" placeholder="Masukkan password baru" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none" onfocus="this.style.borderColor=' + q + '#4361ee' + q + '" onblur="this.style.borderColor=' + q + '#e5e7eb' + q + '"></div>' +
         '<div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Konfirmasi Password Baru</label><input type="password" id="adminPwConfirm" placeholder="Ulangi password baru" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none" onfocus="this.style.borderColor=' + q + '#4361ee' + q + '" onblur="this.style.borderColor=' + q + '#e5e7eb' + q + '" onkeydown="if(event.key==' + q + 'Enter' + q + ')submitAdminChangePassword()"></div>' +
         '<div style="display:flex;gap:8px"><button onclick="showAdminChangePassword()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Batal</button><button onclick="submitAdminChangePassword()" style="flex:2;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#4361ee,#3a0ca3);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#x2705; Simpan Password</button></div>' +
+      '</div>'
+    : '') +
+    (!adm ?
+      '<div id="nasabahChangePwPanel" style="display:none;background:#f8faf9;border-radius:14px;padding:16px;margin-bottom:10px;border:1.5px solid rgba(67,97,238,0.15)">' +
+        '<div style="font-size:11px;font-weight:800;color:#4361ee;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px">&#x1F510; Ubah Password Saya</div>' +
+        '<div id="nasabahPwError" style="display:none;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:10px"></div>' +
+        '<div style="margin-bottom:9px"><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Password Saat Ini</label><input type="password" id="nasabahPwCurrent" placeholder="Masukkan password lama" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none" onfocus="this.style.borderColor=' + q + '#4361ee' + q + '" onblur="this.style.borderColor=' + q + '#e5e7eb' + q + '"></div>' +
+        '<div style="margin-bottom:9px"><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Password Baru <span style="color:#dc2626">*</span> <span style="font-weight:400;color:#9ca3af">(min. 6 karakter)</span></label><input type="password" id="nasabahPwNew" placeholder="Masukkan password baru" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none" onfocus="this.style.borderColor=' + q + '#4361ee' + q + '" onblur="this.style.borderColor=' + q + '#e5e7eb' + q + '"></div>' +
+        '<div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">Konfirmasi Password Baru</label><input type="password" id="nasabahPwConfirm" placeholder="Ulangi password baru" style="width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:13px;font-family:inherit;background:white;color:#1c3025;outline:none" onfocus="this.style.borderColor=' + q + '#4361ee' + q + '" onblur="this.style.borderColor=' + q + '#e5e7eb' + q + '" onkeydown="if(event.key==' + q + 'Enter' + q + ')submitNasabahChangePassword()"></div>' +
+        '<div style="display:flex;gap:8px"><button onclick="showNasabahChangePassword()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Batal</button><button onclick="submitNasabahChangePassword()" style="flex:2;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#4361ee,#3a0ca3);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">&#x2705; Simpan Password</button></div>' +
       '</div>'
     : '') +
     (!adm ? '<button onclick="authLogout()" style="width:100%;padding:13px;border-radius:13px;background:rgba(220,38,38,0.07);color:#dc2626;border:1.5px solid rgba(220,38,38,0.18);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">&#x1F6AA; Keluar / Logout</button>' : '');
@@ -7593,6 +7689,7 @@ function renderUserManagement() {
             '<div style="font-size:9.5px;color:#9ca3af;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (nb ? nb.nama : '<em style="color:#e63946">tidak ditautkan</em>') + ' &middot; ' + menuCount + ' menu</div>' +
           '</div>' +
           '<div style="display:flex;gap:4px;flex-shrink:0">' +
+            (u.aktif ? '<button onclick="loginAsUser(\'' + u.id + '\')" title="Login sebagai user ini" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.08);color:#4f46e5;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">&#x1F575;&#xFE0F;</button>' : '') +
             '<button onclick="editUser(\'' + u.id + '\')" title="Edit" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(45,106,79,0.3);background:rgba(45,106,79,0.07);color:#2d6a4f;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">&#x270F;&#xFE0F;</button>' +
             '<button onclick="toggleUserAktif(\'' + u.id + '\')" title="' + (u.aktif ? 'Nonaktifkan' : 'Aktifkan') + '" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(244,169,34,0.4);background:rgba(244,169,34,0.1);color:#b07a00;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">' + (u.aktif ? '&#x1F512;' : '&#x1F513;') + '</button>' +
             '<button onclick="deleteUser(\'' + u.id + '\')" title="Hapus" style="width:26px;height:26px;border-radius:7px;border:1.5px solid rgba(220,38,38,0.25);background:rgba(220,38,38,0.07);color:#dc2626;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center">&#x1F5D1;</button>' +
@@ -7674,6 +7771,79 @@ window.deleteUser = function(userId) {
   renderUserManagement();
   showToast('🗑️ User dihapus');
 };
+
+// ── Login Sebagai (Impersonate) — Admin masuk sebagai akun Nasabah ──
+// Menyimpan identitas admin saat ini ke sessionStorage, lalu mengganti AUTH
+// aktif dengan identitas nasabah target TANPA memerlukan password nasabah.
+// Admin bisa kembali kapan saja lewat banner "Kembali ke Admin".
+var IMPERSONATE_KEY = 'renco_impersonator_snapshot';
+
+window.loginAsUser = function(userId) {
+  if (!isAdmin()) { showToast('⚠️ Hanya admin yang bisa memakai fitur ini'); return; }
+  var users = usersLoad();
+  var target = users.find(function(x){ return x.id === userId; });
+  if (!target) { showToast('⚠️ User tidak ditemukan'); return; }
+  if (!target.aktif) { showToast('⚠️ User nonaktif — aktifkan dulu sebelum login sebagai user ini'); return; }
+  if (!confirm('Login sebagai "' + (target.nama || target.username) + '"?\n\nAnda akan melihat aplikasi persis seperti yang dilihat user ini. Anda bisa kembali ke akun Admin kapan saja.')) return;
+
+  // Simpan identitas admin saat ini (bukan menimpa snapshot lama jika sudah ada,
+  // supaya nested impersonation tidak kehilangan jejak admin asli)
+  if (!sessionStorage.getItem(IMPERSONATE_KEY)) {
+    try { sessionStorage.setItem(IMPERSONATE_KEY, JSON.stringify(AUTH.user)); } catch(e) {}
+  }
+
+  var role = target.role || 'nasabah';
+  AUTH = { loggedIn: true, user: { id: target.id, username: target.username, nama: target.nama, role: role, nasabahId: target.nasabahId, aksesMenu: target.aksesMenu } };
+  authSave();
+
+  if (typeof auditLog === 'function') {
+    auditLog('Login Sebagai (Impersonate)', 'Admin login sebagai ' + (target.nama || target.username) + ' (' + role + ')', 'login');
+  }
+
+  showToast('🕵️ Masuk sebagai ' + (target.nama || target.username) + '...');
+  setTimeout(function(){ location.reload(); }, 400);
+};
+
+window.kembaliKeAdmin = function() {
+  var snap;
+  try { snap = JSON.parse(sessionStorage.getItem(IMPERSONATE_KEY) || 'null'); } catch(e) { snap = null; }
+  if (!snap) { showToast('⚠️ Tidak ada sesi Admin yang tersimpan'); return; }
+
+  AUTH = { loggedIn: true, user: snap };
+  authSave();
+  try { sessionStorage.removeItem(IMPERSONATE_KEY); } catch(e) {}
+
+  if (typeof auditLog === 'function') {
+    auditLog('Kembali ke Admin', (snap.nama || snap.username) + ' kembali ke sesi Admin', 'login');
+  }
+
+  showToast('🔙 Kembali ke Admin...');
+  setTimeout(function(){ location.reload(); }, 300);
+};
+
+// Banner mengambang saat admin sedang "Login Sebagai" user lain
+function renderImpersonateBanner() {
+  var existing = document.getElementById('impersonateBanner');
+  var snap = null;
+  try { snap = JSON.parse(sessionStorage.getItem(IMPERSONATE_KEY) || 'null'); } catch(e) {}
+
+  if (!snap || !AUTH || !AUTH.loggedIn) {
+    if (existing) existing.remove();
+    document.body.classList.remove('has-impersonate-banner');
+    return;
+  }
+
+  var nama = (AUTH.user && (AUTH.user.nama || AUTH.user.username)) || '';
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'impersonateBanner';
+    existing.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#b07a00,#e6a817);color:#fff;font-size:12px;font-weight:700;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-family:inherit;text-align:center;flex-wrap:wrap';
+    var appEl = document.getElementById('app');
+    if (appEl) { appEl.insertBefore(existing, appEl.firstChild); } else { document.body.insertBefore(existing, document.body.firstChild); }
+  }
+  existing.innerHTML = '<span>🕵️ Login sebagai <b>' + nama + '</b> (mode Admin)</span>' +
+    '<button onclick="kembaliKeAdmin()" style="background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.6);color:#fff;font-weight:800;font-size:11px;padding:4px 10px;border-radius:99px;cursor:pointer;font-family:inherit">&#x1F519; Kembali ke Admin</button>';
+}
 
 window.saveUserForm = function() {
   var id = document.getElementById('userFormId').value;
@@ -8810,6 +8980,9 @@ window.deletePengurus = function(id) {
       tab.classList.toggle('dimmed', !active);
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    // Tema Kifayah (gradient ungu→pink) mendominasi app shell hanya saat mode ini aktif.
+    var appShellEl = document.getElementById('app');
+    if (appShellEl) appShellEl.classList.toggle('theme-kifayah', mode === 'kifayah');
     try { localStorage.setItem('rencoAppMode', mode); } catch (e) {}
     // Bottom nav Koperasi hanya tampil di mode "koperasi" — Semeton+ (dan mode
     // lain nantinya) punya bottom nav sendiri, jadi nav Koperasi disembunyikan.
@@ -9100,7 +9273,7 @@ window.deletePengurus = function(id) {
           <span class="q-label">Tagihan</span>
         </button>
         <button class="quick-btn" id="qaKifayahBtn" onclick="switchAppMode('kifayah')">
-          <span class="q-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="qaKf" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#9b59b6"/><stop offset="1" stop-color="#7b2d8b"/></linearGradient></defs><path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5A2 2 0 0 1 5.5 19L4 8Z" fill="url(#qaKf)" opacity="0.15" stroke="url(#qaKf)" stroke-width="1.8"/><path d="M8 8V6a4 4 0 0 1 8 0v2" stroke="url(#qaKf)" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <span class="q-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="qaKf" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#7b2d8b"/><stop offset="1" stop-color="#c9a3d8"/></linearGradient></defs><rect x="3" y="4" width="18" height="18" rx="6" fill="url(#qaKf)" opacity="0.14"/><path d="M8 12.5l2.5 2.5L16.5 9" stroke="url(#qaKf)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="8.4" stroke="url(#qaKf)" stroke-width="1.6" opacity="0.55"/></svg></span>
           <span class="q-label">Kifayah</span>
         </button>
       </div>
@@ -10274,10 +10447,20 @@ window.deletePengurus = function(id) {
     <style>
     /* .kf-tab kini hanya dipakai sebagai selector JS (lihat kifayahTab()) —
        tampilan visualnya memakai .nav-item (bottom nav), disamakan dengan Koperasi.
-       Aksen warna ungu Kifayah tetap dipertahankan lewat override di bawah. */
+       Latar nav disamakan persis dengan nav Koperasi (frosted glass putih);
+       hanya aksen warna aktif yang tetap ungu, khas Kifayah. */
+    #bottomNavKifayah {
+      background: rgba(255,255,255,0.92) !important;
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border-top: 0.5px solid rgba(0,0,0,0.12) !important;
+      box-shadow: 0 -1px 0 rgba(0,0,0,0.05), 0 -6px 32px rgba(0,0,0,0.08) !important;
+    }
+    #bottomNavKifayah .nav-item .nav-icon { color: #a0a0a8 !important; }
+    #bottomNavKifayah .nav-item .nav-label { color: #b8b8bc !important; }
     #bottomNavKifayah .nav-item.active .nav-icon,
-    #bottomNavKifayah .nav-item.active .nav-label { color: #7b2d8b; }
-    #bottomNavKifayah .nav-item.active .nav-indicator { background: linear-gradient(135deg,#7b2d8b,#9b59b6); }
+    #bottomNavKifayah .nav-item.active .nav-label { color: #7b2d8b !important; }
+    #bottomNavKifayah .nav-item.active .nav-indicator { background: linear-gradient(135deg,#7b2d8b,#c9a3d8) !important; }
     .kf-panel { display:none; padding:14px; }
     .kf-panel.active { display:block; }
     .kf-search-row { display:flex; gap:8px; margin-bottom:10px; }
@@ -10362,16 +10545,18 @@ window.deletePengurus = function(id) {
     .kf-adm-label { font-size:10.5px; font-weight:800; color:#374151; letter-spacing:0.1px; line-height:1.25; }
     .kf-adm-badge { position:absolute; top:8px; right:10px; background:#dc2626; color:#fff; font-size:9px; font-weight:800; border-radius:99px; min-width:17px; text-align:center; padding:1.5px 5px; line-height:1.4; box-shadow:0 2px 6px rgba(220,38,38,0.35); }
     /* Bar Saldo Kifayah (terhubung dengan Simpanan Sukarela) */
-    .kf-saldo-bar { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#1a472a,#2d6a4f); color:#e8c97e; border-radius:14px; padding:12px 14px; margin-bottom:12px; box-shadow:0 4px 14px rgba(26,71,42,0.22); }
+    .kf-saldo-bar { display:flex; align-items:center; gap:10px; background:#ffffff; color:#4a1458; border-radius:14px; padding:12px 14px; margin-bottom:12px; border:1.5px solid #f0e3f7; box-shadow:0 4px 14px rgba(123,45,139,0.10); }
     .kf-saldo-bar .kf-saldo-icon { font-size:22px; flex-shrink:0; }
     .kf-saldo-bar .kf-saldo-info { flex:1; min-width:0; }
-    .kf-saldo-bar .kf-saldo-label { font-size:9.5px; font-weight:700; opacity:0.8; letter-spacing:0.3px; text-transform:uppercase; }
-    .kf-saldo-bar .kf-saldo-nilai { font-size:16px; font-weight:800; margin-top:1px; }
-    .kf-saldo-bar.kf-saldo-minus { background:linear-gradient(135deg,#7f1d1d,#b91c1c); color:#fecaca; }
+    .kf-saldo-bar .kf-saldo-label { font-size:9.5px; font-weight:700; opacity:0.65; letter-spacing:0.3px; text-transform:uppercase; }
+    .kf-saldo-bar .kf-saldo-nilai { font-size:16px; font-weight:800; margin-top:1px; color:#7b2d8b; }
+    .kf-saldo-bar.kf-saldo-minus { background:#fff5f5; border-color:#fecaca; color:#b91c1c; }
+    .kf-saldo-bar.kf-saldo-minus .kf-saldo-nilai { color:#dc2626; }
     /* Bar Saldo Warung (jenis saldo Kifayah kedua — hasil penjualan warung) */
-    .kf-saldo-bar.kf-saldo-warung { background:linear-gradient(135deg,#7b2d8b,#b07a00); color:#fbe9c8; }
-    .kf-saldo-transfer-btn { flex-shrink:0; width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.55); background:rgba(255,255,255,0.14); color:inherit; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-    .kf-saldo-transfer-btn:active { background:rgba(255,255,255,0.28); }
+    .kf-saldo-bar.kf-saldo-warung { background:#ffffff; border-color:#f0e3f7; color:#4a1458; }
+    .kf-saldo-bar.kf-saldo-warung .kf-saldo-nilai { color:#7b2d8b; }
+    .kf-saldo-transfer-btn { flex-shrink:0; width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(123,45,139,0.3); background:rgba(123,45,139,0.08); color:#7b2d8b; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .kf-saldo-transfer-btn:active { background:rgba(123,45,139,0.18); }
     </style>
     <div class="page" id="page-kifayah">
       <!-- Banner: aktif saat admin sedang berperan sebagai nasabah tertentu -->
@@ -10383,14 +10568,12 @@ window.deletePengurus = function(id) {
       <!-- BELANJA -->
       <div class="kf-panel active" id="kfPanel-belanja">
         <div class="kf-saldo-bar" id="kfSaldoBar" style="display:none">
-          <span class="kf-saldo-icon">💰</span>
           <div class="kf-saldo-info">
             <div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>
             <div class="kf-saldo-nilai" id="kfSaldoNilai">Rp 0</div>
           </div>
         </div>
         <div class="kf-saldo-bar kf-saldo-warung" id="kfSaldoWarungBar" style="display:none">
-          <span class="kf-saldo-icon">🏪</span>
           <div class="kf-saldo-info">
             <div class="kf-saldo-label">Saldo Warung (Hasil Penjualan Kifayah)</div>
             <div class="kf-saldo-nilai" id="kfSaldoWarungNilai">Rp 0</div>
@@ -10420,11 +10603,6 @@ window.deletePengurus = function(id) {
       <!-- WARUNG SAYA -->
       <div class="kf-panel" id="kfPanel-warungSaya">
         <div id="kfWarungSayaContent"></div>
-      </div>
-
-      <!-- KELOLA BARANG -->
-      <div class="kf-panel" id="kfPanel-kelolaBarang">
-        <div id="kfKelolaBarangContent"></div>
       </div>
 
       <!-- PESANAN SAYA -->
@@ -10848,38 +11026,33 @@ window.deletePengurus = function(id) {
   <nav class="bottom-nav" id="bottomNavKifayah" style="display:none">
     <button class="nav-item kf-tab active" data-kf="belanja" onclick="kifayahTab('belanja', this)">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">🛒</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20.5" r="1.3" fill="currentColor"/><circle cx="17" cy="20.5" r="1.3" fill="currentColor"/></svg></span>
       <span class="nav-label">Belanja</span>
     </button>
     <button class="nav-item kf-tab" data-kf="warungSaya" onclick="kifayahTab('warungSaya', this)">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">🏪</span>
-      <span class="nav-label">Warung Saya</span>
-    </button>
-    <button class="nav-item kf-tab" data-kf="kelolaBarang" onclick="kifayahTab('kelolaBarang', this)">
-      <div class="nav-indicator"></div>
-      <span class="nav-icon">📦</span>
-      <span class="nav-label">Kelola Barang</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg></span>
+      <span class="nav-label">Warung</span>
     </button>
     <button class="nav-item kf-tab" data-kf="pesanan" onclick="kifayahTab('pesanan', this)">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">🧾</span>
-      <span class="nav-label">Pesanan Saya</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 2.5h12v18l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3v-18Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/></svg></span>
+      <span class="nav-label">Pesanan</span>
     </button>
     <button class="nav-item kf-tab" data-kf="cicilan" onclick="kifayahTab('cicilan', this)">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">💳</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9.5h19" stroke="currentColor" stroke-width="1.6"/><path d="M6 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
       <span class="nav-label">Cicilan</span>
     </button>
     <button class="nav-item kf-tab" data-kf="laporanKeuangan" onclick="kifayahTab('laporanKeuangan', this)">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">📊</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 20h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="5" y="13" width="3" height="7" rx="0.8" fill="currentColor" opacity="0.85"/><rect x="10.5" y="9" width="3" height="11" rx="0.8" fill="currentColor" opacity="0.65"/><rect x="16" y="5" width="3" height="15" rx="0.8" fill="currentColor" opacity="0.45"/></svg></span>
       <span class="nav-label">Laporan</span>
     </button>
     <!-- Admin: hanya tampil untuk akun admin (lihat renderKifayah() / applyNasabahMode()) -->
     <button class="nav-item kf-tab" id="kfNavAdmin" data-kf="admin" onclick="kifayahTab('admin', this)" style="display:none">
       <div class="nav-indicator"></div>
-      <span class="nav-icon">🛠️</span>
+      <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1h-.2a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.6v-.2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
       <span class="nav-label">Admin</span>
     </button>
   </nav>
@@ -16927,6 +17100,9 @@ function navTo(page) {
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     try { localStorage.setItem('rencoAppMode', _modeNow); } catch (e) {}
+    // Tema Kifayah (gradient ungu→pink) ikut mendominasi app shell di jalur navigasi ini juga.
+    var _appShellEl = document.getElementById('app');
+    if (_appShellEl) _appShellEl.classList.toggle('theme-kifayah', _modeNow === 'kifayah');
   }
 }
 
@@ -17088,7 +17264,6 @@ function kifayahTab(tab, btnEl) {
 
   if (tab === 'belanja') renderKifayahBelanja();
   else if (tab === 'warungSaya') renderKifayahWarungSaya();
-  else if (tab === 'kelolaBarang') renderKifayahKelolaBarang();
   else if (tab === 'pesanan') renderKifayahPesananSaya();
   else if (tab === 'cicilan') renderKifayahCicilan();
   else if (tab === 'laporanKeuangan') renderKifayahLaporanKeuangan();
@@ -17754,7 +17929,6 @@ function renderKifayahWarungSaya() {
     + '</div>'
 
     + '<div class="kf-saldo-bar kf-saldo-warung">'
-    + '<span class="kf-saldo-icon">🏪</span>'
     + '<div class="kf-saldo-info">'
     + '<div class="kf-saldo-label">Saldo Warung (Hasil Penjualan Kifayah)</div>'
     + '<div class="kf-saldo-nilai">'+fmt(saldoWarungByWarungId(w.id))+'</div>'
@@ -17763,9 +17937,11 @@ function renderKifayahWarungSaya() {
     + '</div>'
 
     + '<div class="kf-warung-actions">'
-    + '<button class="btn btn-primary" style="flex:1" onclick="kifayahTab(\'kelolaBarang\')">📦 Kelola Barang</button>'
-    + '<button class="btn" style="flex:1" onclick="kifayahToggleWarungStatus()">'+(w.status==='aktif'?'Tutup Warung':'Buka Warung')+'</button>'
+    + '<button class="btn btn-block" style="width:100%" onclick="kifayahToggleWarungStatus()">'+(w.status==='aktif'?'Tutup Warung':'Buka Warung')+'</button>'
     + '</div>'
+
+    + '<div class="kf-section-title" style="color:#7b2d8b">📦 Kelola Barang</div>'
+    + '<div id="kfKelolaBarangContent"></div>'
 
     + '<div class="kf-section-title">📊 Ringkasan Toko</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -17783,21 +17959,23 @@ function renderKifayahWarungSaya() {
     + '</div>';
 
   el.innerHTML = html;
+  renderKifayahKelolaBarang();
 }
 
-/* ---------- KELOLA BARANG (manajemen produk warung sendiri) ---------- */
+/* ---------- KELOLA BARANG (manajemen produk warung sendiri) ----------
+   Catatan: sejak revisi ini, "Kelola Barang" bukan lagi tab terpisah —
+   kontennya dirender langsung ke dalam panel "Warung Saya" (lihat
+   #kfKelolaBarangContent yang dibuat oleh renderKifayahWarungSaya). */
 function renderKifayahKelolaBarang() {
   var el = document.getElementById('kfKelolaBarangContent');
   if (!el) return;
   if (!isNasabah() && !isAdmin()) { el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">📦</div><div>Hanya akun nasabah yang dapat mengelola barang.</div></div>'; return; }
   var w = _kfMyWarung();
   if (!w) {
-    el.innerHTML = '<div class="kf-empty-cta">'
-      + '<div style="font-size:44px">🏪</div>'
-      + '<div style="font-weight:800;font-size:15px;margin:8px 0 4px;color:#1f2937">Belum Punya Warung</div>'
-      + '<div style="font-size:12.5px;color:#6b7280;margin-bottom:16px">Buat warung dulu di tab "Warung Saya" sebelum menambahkan barang dagangan.</div>'
-      + '<button class="btn btn-primary" onclick="kifayahOpenWarungForm()">🏪 Buka Warung Saya</button>'
-      + '</div>';
+    // Normalnya cabang ini tidak akan tercapai karena renderKifayahWarungSaya
+    // sudah menampilkan CTA "Belum Punya Warung" sebelum kontainer ini dibuat,
+    // tapi tetap dijaga sebagai fallback aman.
+    el.innerHTML = '';
     return;
   }
   var produkSaya = (DB.produkWarung||[]).filter(function(p){ return p.warungId === w.id; });
@@ -17815,7 +17993,7 @@ function renderKifayahKelolaBarang() {
     + '<div style="font-size:16px;font-weight:800;color:'+(habisCount?'#dc2626':'#7b2d8b')+'">'+habisCount+'</div>'
     + '<div style="font-size:10px;color:#6b7280">Stok Habis</div></div>'
     + '</div>'
-    + '<button class="btn btn-primary btn-block" style="margin-bottom:12px" onclick="kifayahOpenProdukForm()">+ Tambah Barang Dagangan</button>'
+    + '<button class="btn btn-block" style="margin-bottom:12px;background:linear-gradient(135deg,#7b2d8b,#9b59b6);color:#fff;box-shadow:0 4px 14px rgba(123,45,139,0.30)" onclick="kifayahOpenProdukForm()">+ Tambah Barang Dagangan</button>'
     + '<div class="kf-section-title">Daftar Barang ('+produkSaya.length+')</div>'
     + '<div class="kf-myproduk-list">'
     + (produkSaya.length ? produkSaya.map(function(p){
@@ -18023,16 +18201,16 @@ function kifayahSubmitProduk() {
   saveDB();
   closeModal('modalKfProdukForm');
   showToast('✅ Produk berhasil disimpan!');
-  renderKifayahKelolaBarang();
   if (typeof renderKifayahWarungSaya === 'function') renderKifayahWarungSaya();
+  else renderKifayahKelolaBarang();
 }
 function kifayahHapusProduk(produkId) {
   if (!confirm('Hapus produk ini?')) return;
   DB.produkWarung = (DB.produkWarung||[]).filter(function(x){ return x.id !== produkId; });
   saveDB();
   showToast('🗑️ Produk dihapus');
-  renderKifayahKelolaBarang();
   if (typeof renderKifayahWarungSaya === 'function') renderKifayahWarungSaya();
+  else renderKifayahKelolaBarang();
 }
 
 /* ---------- PESANAN ---------- */
@@ -18244,9 +18422,27 @@ function _kfRenderCicilanCardQardh(p) {
         : (pin.status === 'ditolak'
             ? '<div style="font-size:11px;color:#dc2626">Pengajuan Qardh ditolak admin.</div>'
             : (pin.status !== 'lunas'
-                ? '<button class="btn btn-primary btn-block" style="margin-top:4px" onclick="switchPembayaranSubTab(\'cicilan\')">Bayar Angsuran di Koperasi Renco</button>'
+                ? '<button class="btn btn-primary btn-block" style="margin-top:4px" onclick="kifayahBayarPinjamanTerkait(\''+pin.id+'\')">Bayar Angsuran di Koperasi Renco</button>'
                 : '')))
     + '</div>';
+}
+// Membuka modal "Catat/Bayar Angsuran" milik Koperasi Renco langsung untuk
+// pinjaman Qardh yang terkait dengan pembelian Kifayah ini — menggantikan
+// switchPembayaranSubTab('cicilan') yang sebelumnya tidak berfungsi saat
+// dipanggil dari dalam layar Kifayah (kontainer #pembayaranSubContent hanya
+// ada di layar menu Pembayaran, bukan di Kifayah).
+function kifayahBayarPinjamanTerkait(pinjamanId) {
+  if (typeof openCicilan !== 'function') { showToast('⚠️ Modul pembayaran koperasi tidak tersedia'); return; }
+  var pin = (DB.pinjaman||[]).find(function(x){ return x.id === pinjamanId; });
+  if (!pin) { showToast('⚠️ Data pinjaman Qardh tidak ditemukan'); return; }
+  openCicilan();
+  setTimeout(function(){
+    var sel = document.getElementById('cicilanPinjaman');
+    if (sel) {
+      sel.value = pinjamanId;
+      if (typeof onCicilanPinjamanChange === 'function') onCicilanPinjamanChange();
+    }
+  }, 120);
 }
 function _renderKifayahPembayaranTab() {
   var myId = (typeof _kfMyNasabahId === 'function') ? _kfMyNasabahId() : null;
@@ -18260,7 +18456,6 @@ function _renderKifayahPembayaranTab() {
     .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
 
   var html = '<div class="kf-saldo-bar' + (saldo<0?' kf-saldo-minus':'') + '" style="margin:0 4px 14px">'
-    + '<span class="kf-saldo-icon">💰</span>'
     + '<div class="kf-saldo-info">'
     + '<div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>'
     + '<div class="kf-saldo-nilai">' + fmt(saldo) + '</div>'
@@ -33131,7 +33326,7 @@ function updateEditBungaNolBtn() {
 
 function openCicilan() {
   const el = document.getElementById('cicilanPinjaman');
-  el.innerHTML = DB.pinjaman.filter(p=>p.status==='aktif').map(p=>{
+  el.innerHTML = DB.pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').map(p=>{
     const kk = getNasabah(p.kkId);
     return `<option value="${p.id}">${kk?kk.nama:'?'} — ${fmt(p.sisaPokok)}</option>`;
   }).join('') || '<option>Tidak ada pinjaman aktif</option>';
@@ -41768,14 +41963,39 @@ window.addEventListener('load', ()=>{
   filter: blur(2.5px);
   opacity: 0.5;
   transform: scale(0.98);
+  pointer-events: none; /* blokir tombol/tap pada kartu lain yang sedang diblur */
 }
 #cicilanListWrap.has-selected .cicilan-anggota-card.cicilan-selected {
   filter: none;
   opacity: 1;
-  transform: scale(1.01);
-  box-shadow: 0 10px 32px rgba(0,0,0,0.16);
+  transform: scale(1.03);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.22), 0 6px 16px rgba(0,0,0,0.12);
   position: relative;
   z-index: 2;
+  border: 3px solid transparent !important;
+  background-image: linear-gradient(white, white), linear-gradient(135deg, var(--gold), var(--gold-light), var(--forest-mid)) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  background-size: 100% 100%, 200% 200% !important;
+  animation: cicilanSelectedLift 0.4s cubic-bezier(.34,1.15,.64,1) both, cicilanBorderGlow 3s ease infinite;
+}
+@keyframes cicilanBorderGlow {
+  0%   { background-position: 0% 0%, 0% 50%; }
+  50%  { background-position: 0% 0%, 100% 50%; }
+  100% { background-position: 0% 0%, 0% 50%; }
+}
+@keyframes cicilanSelectedLift {
+  0%   { transform: scale(1); box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+  60%  { transform: scale(1.045); }
+  100% { transform: scale(1.03); box-shadow: 0 18px 42px rgba(0,0,0,0.22), 0 6px 16px rgba(0,0,0,0.12); }
+}
+/* Latar di luar daftar kartu (hero, ringkasan, tombol unduh, filter, dsb) —
+   ikut memblur semuanya tanpa terkecuali saat ada kartu nasabah yang dipilih. */
+.cicilan-bg-wrap { transition: filter 0.3s ease, opacity 0.3s ease; }
+.cicilan-bg-wrap.cicilan-bg-blurred {
+  filter: blur(2.5px);
+  opacity: 0.5;
+  pointer-events: none; /* blokir semua tombol pada bagian yang sedang diblur */
 }
 .cicilan-rincian-toggle {
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -41859,18 +42079,27 @@ function _toggleCicilanAnggota(id) {
     if (detail)  detail.style.maxHeight = '0';
     if (chevron) chevron.style.transform = 'rotate(0deg)';
   }
-  // Sorot kartu nasabah yang sedang dibuka, blur kartu lainnya (hanya untuk toggle tingkat nasabah, bukan sub-blok pinjaman)
+  // Sorot kartu nasabah yang sedang dibuka, blur SEMUA latar tanpa terkecuali
+  // (kartu-kartu nasabah lain + hero, ringkasan, tombol unduh, filter, dsb)
+  // — hanya untuk toggle tingkat nasabah, bukan sub-blok pinjaman.
   if (id.indexOf('pin_') !== 0) {
     const wrap = document.getElementById('cicilanListWrap');
+    const bgWrap = document.getElementById('cicilanBgWrap');
     const card = document.getElementById('cicilanCard_' + id);
     if (wrap && card) {
       if (_cicilanAnggotaOpen[id]) {
         wrap.querySelectorAll('.cicilan-anggota-card').forEach(function(c){ c.classList.remove('cicilan-selected'); });
         card.classList.add('cicilan-selected');
         wrap.classList.add('has-selected');
+        if (bgWrap) bgWrap.classList.add('cicilan-bg-blurred');
+        // Bawa kartu yang dipilih ke posisi TENGAH layar (bukan cuma naik sedikit)
+        setTimeout(function(){
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
       } else {
         card.classList.remove('cicilan-selected');
         wrap.classList.remove('has-selected');
+        if (bgWrap) bgWrap.classList.remove('cicilan-bg-blurred');
       }
     }
   }
@@ -42366,12 +42595,18 @@ function renderCicilanHTML() {
 
   const listHTML = buildNasabahList(listSource);
 
+  // Status "ada kartu nasabah yang sedang dipilih" — dipakai untuk mem-blur
+  // SEMUA elemen latar (hero, ringkasan, tombol unduh, filter, dsb) tanpa
+  // terkecuali saat salah satu kartu nasabah sedang dibuka.
+  const _cicilanHasSelected = Object.keys(_cicilanAnggotaOpen).some(function(k){ return k.indexOf('pin_') !== 0 && _cicilanAnggotaOpen[k]; });
+
   // ── Role untuk panel unduh laporan cicilan ──
   const _clIsAdmin = typeof isAdmin === 'function' && isAdmin();
   const _clMyKkId  = (typeof isNasabah === 'function' && isNasabah() && typeof AUTH !== 'undefined' && AUTH.user) ? AUTH.user.nasabahId : '';
   const _clMyNama  = _clMyKkId ? (getNasabah(_clMyKkId) || {}).nama || '' : '';
 
   return `
+  <div id="cicilanBgWrap" class="cicilan-bg-wrap${_cicilanHasSelected ? ' cicilan-bg-blurred' : ''}">
   <!-- Hero Banner (klik untuk buka/tutup ringkasan) -->
   <div class="cicilan-hero" onclick="_toggleCicilanSummary()" id="cicilanHeroBanner" style="padding:14px 16px;margin:10px 14px;">
     <!-- Baris atas: identitas + total -->
@@ -42501,7 +42736,9 @@ function renderCicilanHTML() {
   <div style="padding:4px 0 8px 16px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.4px">
     ${_cicilanFilter==='akan' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo ' + today.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) + ' ↓' : 'Tap nama nasabah untuk detail ↓'}
   </div>
-  <div id="cicilanListWrap"${Object.keys(_cicilanAnggotaOpen).some(function(k){ return k.indexOf('pin_') !== 0 && _cicilanAnggotaOpen[k]; }) ? ' class="has-selected"' : ''}>
+  </div>
+  <!-- /cicilanBgWrap: batas elemen yang akan blur -->
+  <div id="cicilanListWrap"${_cicilanHasSelected ? ' class="has-selected"' : ''}>
     ${listHTML}
   </div>
   <div style="height:16px"></div>`;
