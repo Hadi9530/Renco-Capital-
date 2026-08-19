@@ -10368,6 +10368,10 @@ window.deletePengurus = function(id) {
     .kf-saldo-bar .kf-saldo-label { font-size:9.5px; font-weight:700; opacity:0.8; letter-spacing:0.3px; text-transform:uppercase; }
     .kf-saldo-bar .kf-saldo-nilai { font-size:16px; font-weight:800; margin-top:1px; }
     .kf-saldo-bar.kf-saldo-minus { background:linear-gradient(135deg,#7f1d1d,#b91c1c); color:#fecaca; }
+    /* Bar Saldo Warung (jenis saldo Kifayah kedua — hasil penjualan warung) */
+    .kf-saldo-bar.kf-saldo-warung { background:linear-gradient(135deg,#7b2d8b,#b07a00); color:#fbe9c8; }
+    .kf-saldo-transfer-btn { flex-shrink:0; width:34px; height:34px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.55); background:rgba(255,255,255,0.14); color:inherit; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .kf-saldo-transfer-btn:active { background:rgba(255,255,255,0.28); }
     </style>
     <div class="page" id="page-kifayah">
       <!-- Banner: aktif saat admin sedang berperan sebagai nasabah tertentu -->
@@ -10384,6 +10388,14 @@ window.deletePengurus = function(id) {
             <div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>
             <div class="kf-saldo-nilai" id="kfSaldoNilai">Rp 0</div>
           </div>
+        </div>
+        <div class="kf-saldo-bar kf-saldo-warung" id="kfSaldoWarungBar" style="display:none">
+          <span class="kf-saldo-icon">🏪</span>
+          <div class="kf-saldo-info">
+            <div class="kf-saldo-label">Saldo Warung (Hasil Penjualan Kifayah)</div>
+            <div class="kf-saldo-nilai" id="kfSaldoWarungNilai">Rp 0</div>
+          </div>
+          <button type="button" class="kf-saldo-transfer-btn" onclick="kifayahOpenPindahSaldo()" title="Pindahkan ke Saldo Kifayah">↑</button>
         </div>
         <div class="kf-search-row">
           <input type="text" id="kfSearchInput" placeholder="Cari warung atau produk..." oninput="renderKifayahBelanja()">
@@ -10551,6 +10563,32 @@ window.deletePengurus = function(id) {
           <div class="field"><label>Kategori</label><input type="text" id="kfProdukKategori" placeholder="Contoh: Sembako"></div>
           <div class="field"><label>Deskripsi</label><input type="text" id="kfProdukDeskripsi" placeholder="Opsional"></div>
           <button class="btn btn-primary btn-block" onclick="kifayahSubmitProduk()">Simpan Produk</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Pindah Saldo Warung -> Saldo Kifayah -->
+    <div class="modal-overlay" id="modalKfPindahSaldo">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">🔁 Pindahkan ke Saldo Kifayah</h3>
+          <button class="modal-close" onclick="closeModal('modalKfPindahSaldo')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px 14px;margin-bottom:14px">
+            <div style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">🏪 Saldo Warung Tersedia</div>
+            <div style="font-size:20px;font-weight:800;color:#7b2d8b" id="kfPindahSaldoWarungAngka">Rp 0</div>
+          </div>
+          <div class="field">
+            <label>Jumlah yang Dipindahkan (Rp)</label>
+            <input type="number" id="kfPindahSaldoJumlah" placeholder="0">
+          </div>
+          <button class="btn" style="margin-bottom:12px" onclick="kifayahSetSemuaPindahSaldo()">Pindahkan Semua</button>
+          <div style="font-size:11.5px;color:#6b7280;margin-bottom:14px">
+            Dana akan berpindah dari Saldo Warung menjadi Saldo Kifayah (Simpanan Sukarela) atas nama Anda, dan bisa langsung digunakan untuk belanja Kifayah atau ditarik tunai.
+          </div>
+          <button class="btn btn-primary btn-block" onclick="kifayahSubmitPindahSaldo()">✅ Pindahkan Sekarang</button>
         </div>
       </div>
     </div>
@@ -17142,6 +17180,66 @@ function _kfMyWarung() {
 function saldoKifayahNasabah(nasabahId) {
   return (typeof saldoSukarelaNasabah === 'function') ? saldoSukarelaNasabah(nasabahId) : 0;
 }
+// Saldo Warung = jenis Saldo Kifayah kedua — akumulasi hasil penjualan warung
+// milik nasabah (total pesanan berstatus "selesai" di warung tersebut).
+function saldoWarungNasabah(nasabahId) {
+  var w = (DB.warung||[]).find(function(x){ return x.nasabahId === nasabahId; });
+  if (!w) return 0;
+  return saldoWarungByWarungId(w.id);
+}
+function saldoWarungByWarungId(warungId) {
+  if (!warungId) return 0;
+  var gross = (DB.pesananWarung||[])
+    .filter(function(p){ return p.warungId === warungId && p.status === 'selesai'; })
+    .reduce(function(s,p){ return s + (p.total||0); }, 0);
+  var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
+  var dicairkan = (w && w.saldoDicairkan) || 0;
+  return Math.max(0, gross - dicairkan);
+}
+/* ---------- PINDAH SALDO WARUNG -> SALDO KIFAYAH (Simpanan Sukarela) ---------- */
+function kifayahOpenPindahSaldo() {
+  var w = _kfMyWarung();
+  if (!w) { showToast('⚠️ Anda belum memiliki warung'); return; }
+  var tersedia = saldoWarungByWarungId(w.id);
+  if (tersedia <= 0) { showToast('⚠️ Saldo Warung tidak mencukupi untuk dipindahkan'); return; }
+  var angkaEl = document.getElementById('kfPindahSaldoWarungAngka');
+  if (angkaEl) angkaEl.textContent = fmt(tersedia);
+  var inp = document.getElementById('kfPindahSaldoJumlah');
+  if (inp) inp.value = '';
+  openModal('modalKfPindahSaldo');
+}
+function kifayahSetSemuaPindahSaldo() {
+  var w = _kfMyWarung();
+  if (!w) return;
+  var tersedia = saldoWarungByWarungId(w.id);
+  var inp = document.getElementById('kfPindahSaldoJumlah');
+  if (inp) inp.value = tersedia;
+}
+function kifayahSubmitPindahSaldo() {
+  var w = _kfMyWarung();
+  if (!w) { showToast('⚠️ Anda belum memiliki warung'); return; }
+  var myId = _kfMyNasabahId();
+  if (!myId) return;
+  var tersedia = saldoWarungByWarungId(w.id);
+  var jumlah = parseFloat((document.getElementById('kfPindahSaldoJumlah')||{}).value) || 0;
+  if (jumlah <= 0) { showToast('⚠️ Masukkan jumlah yang valid'); return; }
+  if (jumlah > tersedia) { showToast('⚠️ Jumlah melebihi Saldo Warung yang tersedia ('+fmt(tersedia)+')'); return; }
+  DB.transaksi.push({
+    id: 'txn' + DB.nextTxnId++,
+    kkId: myId,
+    type: 'simpanan',
+    jenis: 'sukarela',
+    jumlah: jumlah,
+    keterangan: 'Pemindahan Saldo Warung ke Saldo Kifayah — ' + w.nama,
+    tanggal: nowISO()
+  });
+  w.saldoDicairkan = (w.saldoDicairkan || 0) + jumlah;
+  saveDB();
+  closeModal('modalKfPindahSaldo');
+  showToast('✅ ' + fmt(jumlah) + ' berhasil dipindahkan ke Saldo Kifayah');
+  renderKifayahWarungSaya();
+  if (typeof _kfRenderSaldoBar === 'function') _kfRenderSaldoBar();
+}
 // Cicilan Kifayah hanya untuk anggota koperasi berstatus aktif (akad Qardh Koperasi Renco)
 function _kfNasabahAktif(nasabahId) {
   var n = (DB.nasabah||[]).find(function(x){ return x.id === nasabahId; });
@@ -17149,14 +17247,32 @@ function _kfNasabahAktif(nasabahId) {
 }
 function _kfRenderSaldoBar() {
   var bar = document.getElementById('kfSaldoBar');
-  if (!bar) return;
+  var warungBar = document.getElementById('kfSaldoWarungBar');
   var myId = _kfMyNasabahId();
-  if (!myId) { bar.style.display = 'none'; return; }
-  var saldo = saldoKifayahNasabah(myId);
-  var nilaiEl = document.getElementById('kfSaldoNilai');
-  if (nilaiEl) nilaiEl.textContent = fmt(saldo);
-  bar.classList.toggle('kf-saldo-minus', saldo < 0);
-  bar.style.display = 'flex';
+  if (!myId) {
+    if (bar) bar.style.display = 'none';
+    if (warungBar) warungBar.style.display = 'none';
+    return;
+  }
+  if (bar) {
+    var saldo = saldoKifayahNasabah(myId);
+    var nilaiEl = document.getElementById('kfSaldoNilai');
+    if (nilaiEl) nilaiEl.textContent = fmt(saldo);
+    bar.classList.toggle('kf-saldo-minus', saldo < 0);
+    bar.style.display = 'flex';
+  }
+  // Saldo Warung hanya tampil untuk nasabah yang punya warung sendiri
+  if (warungBar) {
+    var myW = _kfMyWarung();
+    if (myW) {
+      var saldoW = saldoWarungByWarungId(myW.id);
+      var nilaiWEl = document.getElementById('kfSaldoWarungNilai');
+      if (nilaiWEl) nilaiWEl.textContent = fmt(saldoW);
+      warungBar.style.display = 'flex';
+    } else {
+      warungBar.style.display = 'none';
+    }
+  }
 }
 
 /* ---------- BELANJA ---------- */
@@ -17637,6 +17753,15 @@ function renderKifayahWarungSaya() {
     + '<button class="kf-edit-btn" onclick="kifayahOpenWarungForm(true)">✏️</button>'
     + '</div>'
 
+    + '<div class="kf-saldo-bar kf-saldo-warung">'
+    + '<span class="kf-saldo-icon">🏪</span>'
+    + '<div class="kf-saldo-info">'
+    + '<div class="kf-saldo-label">Saldo Warung (Hasil Penjualan Kifayah)</div>'
+    + '<div class="kf-saldo-nilai">'+fmt(saldoWarungByWarungId(w.id))+'</div>'
+    + '</div>'
+    + '<button type="button" class="kf-saldo-transfer-btn" onclick="kifayahOpenPindahSaldo()" title="Pindahkan ke Saldo Kifayah">↑</button>'
+    + '</div>'
+
     + '<div class="kf-warung-actions">'
     + '<button class="btn btn-primary" style="flex:1" onclick="kifayahTab(\'kelolaBarang\')">📦 Kelola Barang</button>'
     + '<button class="btn" style="flex:1" onclick="kifayahToggleWarungStatus()">'+(w.status==='aktif'?'Tutup Warung':'Buka Warung')+'</button>'
@@ -17928,10 +18053,11 @@ function _kfRenderPesananCard(sellerView, p) {
     }
   }
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh '+(p.pinjamanId?4:(p.cicilan?p.cicilan.tenor:''))+'x</span>' : '';
+  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Koperasi</span>' : '';
   return '<div class="kf-pesanan-card">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
     + '<div style="min-width:0">'
-    + '<div style="font-weight:700;font-size:12.5px">'+(sellerView ? p.pembeliNama : p.warungNama)+cicilanBadge+'</div>'
+    + '<div style="font-weight:700;font-size:12.5px">'+(sellerView ? p.pembeliNama : p.warungNama)+cicilanBadge+lunasKoperasiBadge+'</div>'
     + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
     + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">'+fmt(p.total)+'</div>'
     + '</div>'
@@ -17943,10 +18069,66 @@ function _kfRenderPesananCard(sellerView, p) {
 function kifayahUpdatePesananStatus(pesananId, status) {
   var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
   if (!p) return;
+
+  // Pembayaran Kifayah: saat pesanan yang dibeli via cicilan (Qardh) ditandai "Selesai",
+  // Koperasi otomatis melunasi ke Warung Nasabah memakai Kas yang tersedia.
+  // Kalau Kas tidak mencukupi, pesanan (dan pengajuan Qardh-nya) dibatalkan otomatis.
+  if (status === 'selesai' && p.metodeBayar === 'cicilan' && p.pinjamanId) {
+    var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+    if (!pin) {
+      showToast('⚠️ Data pinjaman Qardh untuk pesanan ini tidak ditemukan');
+      return;
+    }
+    if (pin.status === 'pengajuan') {
+      var kasErrors = typeof checkKasLimit === 'function' ? checkKasLimit(pin.kkId, pin.jumlah) : [];
+      if (kasErrors.length > 0) {
+        // Kas tidak cukup -> tolak pengajuan Qardh & batalkan pesanan otomatis
+        pin.status = 'ditolak';
+        pin.alasanTolak = 'Dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung (' + kasErrors[0] + ')';
+        pin.tanggalDitolak = nowISO();
+        if (Array.isArray(DB.transaksi)) {
+          var txnPendingTolak = DB.transaksi.find(function(t){ return t.refId === pin.id && t.statusTxn === 'pending'; });
+          if (txnPendingTolak) txnPendingTolak.statusTxn = 'gagal';
+        }
+        p.status = 'dibatalkan';
+        p.catatanBatal = 'Dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung';
+        saveDB();
+        showToast('❌ Pesanan dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung');
+        renderKifayahWarungSaya();
+        if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
+        return;
+      }
+      // Kas mencukupi -> setujui & cairkan pinjaman otomatis (Koperasi melunasi ke Warung)
+      pin.status = 'aktif';
+      pin.sisaPokok = pin.jumlah;
+      pin.tanggalDisetujui = nowISO();
+      if (!DB.transaksi) DB.transaksi = [];
+      var txnPendingOk = DB.transaksi.find(function(t){ return t.refId === pin.id && t.statusTxn === 'pending'; });
+      if (txnPendingOk) {
+        txnPendingOk.statusTxn = 'aktif';
+        txnPendingOk.keterangan = 'Pencairan pinjaman Qardh — Pembayaran Kifayah otomatis ke Warung';
+        txnPendingOk.tanggalDisetujui = nowISO();
+      } else {
+        DB.transaksi.push({
+          id: 'txn' + (DB.nextTxnId++),
+          kkId: pin.kkId, type: 'pinjaman', jumlah: pin.jumlah,
+          keterangan: 'Pencairan pinjaman Qardh — Pembayaran Kifayah otomatis ke Warung',
+          tanggal: nowISO(), refId: pin.id
+        });
+      }
+      p.dibayarKoperasi = true;
+      p.tanggalDibayarKoperasi = nowISO();
+    }
+    // Kalau pin.status sudah 'aktif' (sudah disetujui admin sebelumnya), Kas sudah
+    // diperhitungkan sejak persetujuan itu — tinggal lanjut menandai pesanan selesai.
+  }
+
   p.status = status;
   saveDB();
-  showToast('✅ Status pesanan diperbarui');
+  showToast(status === 'selesai' ? '✅ Pesanan selesai — Saldo Warung diperbarui' : '✅ Status pesanan diperbarui');
   renderKifayahWarungSaya();
+  if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
+  if (typeof rerenderPinjaman === 'function') rerenderPinjaman();
   if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
 }
 function renderKifayahPesananSaya() {
@@ -18298,6 +18480,7 @@ function _kfAdminRenderWarungRow(w, produkList) {
     + '<div style="font-weight:700;font-size:12.5px">'+w.nama+'</div>'
     + '<div style="font-size:10.5px;color:#6b7280">'+(nb?nb.nama:'-')+' · '+jumlahProduk+' produk</div>'
     + '<div style="font-size:10px;font-weight:700;color:'+(w.status==='aktif'?'#16a34a':'#dc2626')+'">● '+(w.status==='aktif'?'Aktif':'Nonaktif')+'</div>'
+    + '<div style="font-size:10px;font-weight:700;color:#7b2d8b;margin-top:2px">🏪 Saldo Warung: '+fmt(saldoWarungByWarungId(w.id))+'</div>'
     + '</div>'
     + '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
     + '<button class="kf-mini-btn" title="'+(w.status==='aktif'?'Nonaktifkan':'Aktifkan')+'" onclick="kifayahAdminToggleWarung(\''+w.id+'\')">'+(w.status==='aktif'?'⏸️':'▶️')+'</button>'
@@ -18375,11 +18558,12 @@ function kifayahAdminHapusWarung(warungId) {
 function _kfRenderPesananCardAdmin(p) {
   var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh'+(p.pinjamanId?' 4x':(p.cicilan?' '+p.cicilan.tenor+'x':''))+'</span>' : '';
+  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Koperasi</span>' : '';
   var bisaBatal = (p.status !== 'selesai' && p.status !== 'dibatalkan');
   return '<div class="kf-pesanan-card">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
     + '<div style="min-width:0">'
-    + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+cicilanBadge+'</div>'
+    + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+cicilanBadge+lunasKoperasiBadge+'</div>'
     + '<div style="font-size:10.5px;color:#9ca3af">Pembeli: '+p.pembeliNama+'</div>'
     + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
     + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">'+fmt(p.total)+'</div>'
@@ -33232,6 +33416,10 @@ function saveCicilan() {
    Membatalkan HANYA catatan pembayaran (cicilan) yang paling
    terakhir dicatat untuk pinjaman ini. */
 function batalCicilanTerakhir(pinId) {
+  if (typeof isAdmin !== 'function' || !isAdmin()) {
+    showToast('⚠️ Hanya admin yang dapat membatalkan pembayaran cicilan');
+    return;
+  }
   const pin = DB.pinjaman.find(p => p.id === pinId);
   if (!pin || !Array.isArray(pin.cicilan) || pin.cicilan.length === 0) {
     showToast('ℹ️ Belum ada cicilan yang dicatat untuk pinjaman ini');
@@ -41574,12 +41762,38 @@ window.addEventListener('load', ()=>{
 #rcDlPanel .cicilan-dl-nasabah-hint { background: rgba(107,33,168,0.07) !important; border-color: rgba(107,33,168,0.25) !important; color: #6b21a8 !important; }
 #rcDlPanel .cicilan-dl-select:focus { border-color: #6b21a8 !important; }
 
+/* Sorot nasabah/pinjaman yang sedang dipilih, blur yang lain */
+.cicilan-anggota-card { transition: filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease; }
+#cicilanListWrap.has-selected .cicilan-anggota-card:not(.cicilan-selected) {
+  filter: blur(2.5px);
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+#cicilanListWrap.has-selected .cicilan-anggota-card.cicilan-selected {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.01);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.16);
+  position: relative;
+  z-index: 2;
+}
+.cicilan-rincian-toggle {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 9px 0; margin: 2px 0 0;
+  font-size: 11px; font-weight: 700; color: var(--text-soft);
+  background: rgba(0,0,0,0.02); border: none; border-top: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer; font-family: inherit;
+}
+.cicilan-rincian-toggle .chev { transition: transform 0.25s ease; display:inline-block; }
+.cicilan-rincian-toggle.open .chev { transform: rotate(180deg); }
+
 </style>
 
 <script>
 // ========== CICILAN MODULE ==========
 let _cicilanFilter = 'semua'; // semua | anggota | sudah | akan | terlambat
 let _cicilanAnggotaOpen = {}; // track which member rows are expanded
+let _cicilanRincianOpen = {}; // track which pinjaman's daftar rincian angsuran sedang dibuka
 let _cicilanSummaryOpen = false; // toggle ringkasan tiles
 
 function _toggleCicilanSummary() {
@@ -41645,8 +41859,32 @@ function _toggleCicilanAnggota(id) {
     if (detail)  detail.style.maxHeight = '0';
     if (chevron) chevron.style.transform = 'rotate(0deg)';
   }
+  // Sorot kartu nasabah yang sedang dibuka, blur kartu lainnya (hanya untuk toggle tingkat nasabah, bukan sub-blok pinjaman)
+  if (id.indexOf('pin_') !== 0) {
+    const wrap = document.getElementById('cicilanListWrap');
+    const card = document.getElementById('cicilanCard_' + id);
+    if (wrap && card) {
+      if (_cicilanAnggotaOpen[id]) {
+        wrap.querySelectorAll('.cicilan-anggota-card').forEach(function(c){ c.classList.remove('cicilan-selected'); });
+        card.classList.add('cicilan-selected');
+        wrap.classList.add('has-selected');
+      } else {
+        card.classList.remove('cicilan-selected');
+        wrap.classList.remove('has-selected');
+      }
+    }
+  }
 }
 // legacy compat
+function _toggleCicilanRincian(pinId) {
+  _cicilanRincianOpen[pinId] = !_cicilanRincianOpen[pinId];
+  const list = document.getElementById('rincianList_' + pinId);
+  const btn  = list && list.previousElementSibling;
+  if (list) list.style.maxHeight = _cicilanRincianOpen[pinId] ? '3000px' : '0';
+  if (btn && btn.classList.contains('cicilan-rincian-toggle')) {
+    btn.classList.toggle('open', !!_cicilanRincianOpen[pinId]);
+  }
+}
 function _toggleCicilanAnggota_unused(id) {
   const panelDetail  = document.getElementById('panelDetail_' + id);
   const detailDirect = document.getElementById('cicilanAnggotaDetail_' + id);
@@ -41923,6 +42161,7 @@ function renderCicilanHTML() {
 
       const safePin  = pinjaman.id.toString().replace(/'/g, "\\'");
       const isBlockOpen = !!_cicilanAnggotaOpen['pin_' + pinjaman.id];
+      const isRincianOpen = !!_cicilanRincianOpen[pinjaman.id];
       const tujuanLabel = pinjaman.tujuan || 'Pinjaman';
       const pinLabelPrefix = 'Pinjaman';
       const pinLabel = totalPinjaman > 1 ? `${pinLabelPrefix} ${pinIdx + 1} \u2014 ${tujuanLabel}` : `\uD83D\uDCCB ${tujuanLabel}`;
@@ -42012,7 +42251,7 @@ function renderCicilanHTML() {
                     : `<button onclick="event.stopPropagation();(function(){var pinId='${pinjaman.id}';openCicilan();setTimeout(function(){var sel=document.getElementById('cicilanPinjaman');if(sel){sel.value=pinId;onCicilanPinjamanChange();}},100);})()" style="flex:1;padding:9px 0;font-size:11px;font-weight:700;color:white;background:linear-gradient(135deg,#2d6a4f,#40916c);border:none;border-radius:10px;cursor:pointer;font-family:inherit">💳 Bayar Cicilan</button>`)
               }
               <button onclick="event.stopPropagation();(function(){var el=document.getElementById('perpanjangPanel_pin_${pinjaman.id}');var isNone=!el.style.display||el.style.display==='none';el.style.display=isNone?'block':'none';this.textContent=isNone?'\u2715 Tutup':'\uD83D\uDD04 Perpanjang';})(this)" style="flex:1;padding:9px 0;font-size:11px;font-weight:700;color:#4361ee;background:rgba(67,97,238,0.10);border:1.5px solid rgba(67,97,238,0.25);border-radius:10px;cursor:pointer;font-family:inherit">🔄 Perpanjang</button>
-              ${paid.length > 0 ? `<button onclick="event.stopPropagation();batalCicilanTerakhir('${safePin}')" title="Batalkan pembayaran cicilan terakhir (mis. salah bayar/kelebihan)" style="padding:9px 12px;font-size:12px;font-weight:700;color:#e63946;background:rgba(230,57,70,0.10);border:1.5px solid rgba(230,57,70,0.25);border-radius:10px;cursor:pointer;font-family:inherit">↩</button>` : ''}
+              ${(paid.length > 0 && typeof isAdmin === 'function' && isAdmin()) ? `<button onclick="event.stopPropagation();batalCicilanTerakhir('${safePin}')" title="Batalkan pembayaran cicilan terakhir (mis. salah bayar/kelebihan)" style="padding:9px 12px;font-size:12px;font-weight:700;color:#e63946;background:rgba(230,57,70,0.10);border:1.5px solid rgba(230,57,70,0.25);border-radius:10px;cursor:pointer;font-family:inherit">↩</button>` : ''}
             </div>
             <div id="perpanjangPanel_pin_${pinjaman.id}" style="display:none;padding:12px 14px;border-top:1px dashed rgba(67,97,238,0.18);background:rgba(67,97,238,0.03)">
               <div style="font-size:10px;font-weight:800;color:#4361ee;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">\uD83D\uDD04 Pilih Durasi Perpanjangan</div>
@@ -42045,12 +42284,14 @@ function renderCicilanHTML() {
               <div style="flex:1;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(64,145,108,0.08);border:1.5px solid rgba(64,145,108,0.2);border-radius:10px;font-size:11px;font-weight:700;color:#40916c">
                 🏆 Semua Angsuran Lunas
               </div>
-              <button onclick="event.stopPropagation();batalCicilanTerakhir('${safePin}')" title="Batalkan pembayaran cicilan terakhir (mis. salah bayar/kelebihan sehingga pinjaman keliru jadi lunas)" style="padding:9px 12px;font-size:12px;font-weight:700;color:#e63946;background:rgba(230,57,70,0.10);border:1.5px solid rgba(230,57,70,0.25);border-radius:10px;cursor:pointer;font-family:inherit">↩</button>
+              ${(typeof isAdmin === 'function' && isAdmin()) ? `<button onclick="event.stopPropagation();batalCicilanTerakhir('${safePin}')" title="Batalkan pembayaran cicilan terakhir (mis. salah bayar/kelebihan sehingga pinjaman keliru jadi lunas)" style="padding:9px 12px;font-size:12px;font-weight:700;color:#e63946;background:rgba(230,57,70,0.10);border:1.5px solid rgba(230,57,70,0.25);border-radius:10px;cursor:pointer;font-family:inherit">↩</button>` : ''}
             </div>` : ''}
 
-            <!-- Rincian angsuran -->
-            <div style="border-top:1px solid rgba(0,0,0,0.06)">
-              <div style="padding:8px 18px 4px;font-size:9px;font-weight:800;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px">\uD83D\uDCCB Rincian Angsuran</div>
+            <!-- Rincian angsuran (collapsible, tersembunyi secara default agar tidak terlalu padat teks) -->
+            <button type="button" class="cicilan-rincian-toggle${isRincianOpen ? ' open' : ''}" onclick="event.stopPropagation();_toggleCicilanRincian('${safePin}')">
+              <span>\uD83D\uDCCB Rincian ${items.length} Angsuran</span><span class="chev">\u25BC</span>
+            </button>
+            <div id="rincianList_${safePin}" style="max-height:${isRincianOpen ? '3000px' : '0'};overflow:hidden;transition:max-height 0.35s ease">
               ${detailRows}
             </div>
 
@@ -42087,7 +42328,7 @@ function renderCicilanHTML() {
       ).join('');
 
       return `
-      <div style="margin:0 16px 12px;background:white;border-radius:18px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,0.08);animation:cicilanSlideUp 0.3s ease both">
+      <div id="cicilanCard_${mid}" class="cicilan-anggota-card${isOpen ? ' cicilan-selected' : ''}" style="margin:0 16px 12px;background:white;border-radius:18px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,0.08);animation:cicilanSlideUp 0.3s ease both">
         <!-- HEADER: Nama Nasabah -->
         <div onclick="_toggleCicilanAnggota('${mid}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent">
           <div style="width:46px;height:46px;border-radius:14px;background:${avatarGrad};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:white;flex-shrink:0">${(nasabah.nama||'?')[0].toUpperCase()}</div>
@@ -42260,7 +42501,7 @@ function renderCicilanHTML() {
   <div style="padding:4px 0 8px 16px;font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.4px">
     ${_cicilanFilter==='akan' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:-0.15em;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="15" r="1.3" fill="currentColor" opacity="0.8"/><circle cx="12" cy="15" r="1.3" fill="currentColor"/><circle cx="16" cy="15" r="1.3" fill="currentColor" opacity="0.6"/></svg> Jatuh Tempo ' + today.toLocaleDateString('id-ID',{month:'long',year:'numeric'}) + ' ↓' : 'Tap nama nasabah untuk detail ↓'}
   </div>
-  <div id="cicilanListWrap">
+  <div id="cicilanListWrap"${Object.keys(_cicilanAnggotaOpen).some(function(k){ return k.indexOf('pin_') !== 0 && _cicilanAnggotaOpen[k]; }) ? ' class="has-selected"' : ''}>
     ${listHTML}
   </div>
   <div style="height:16px"></div>`;
