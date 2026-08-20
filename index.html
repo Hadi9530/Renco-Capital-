@@ -3486,6 +3486,29 @@ body:has(#app.theme-kifayah) { background: #f5f1fa; }
   100% { transform: scale(1); }
 }
 
+/* ── Menu utama Semeton+ (Pegawean / Belajar / Aren Community) ── */
+.sem-main-grid { display: flex; flex-direction: column; gap: 10px; }
+.sem-main-card {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  background: white; border: none; border-radius: 16px;
+  box-shadow: var(--card-shadow); padding: 14px 16px;
+  text-align: left; cursor: pointer; font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sem-main-card:active { transform: scale(0.98); box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+.sem-main-icon {
+  width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sem-main-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.sem-main-label { display: block; font-size: 14.5px; font-weight: 800; color: var(--text); }
+.sem-main-sub { display: block; font-size: 11.5px; color: var(--text-soft); margin-top: 2px; }
+
+/* ── Header sub-halaman di dalam panel fullscreen Semeton+ ── */
+.sem-sub-tabbar { padding: 12px 14px 4px; }
+
 /* ========== ASET & USAHA ========== */
 .asset-card {
   display: flex; align-items: center; gap: 14px;
@@ -10248,145 +10271,45 @@ window.deletePengurus = function(id) {
         <img src="assets/banner-semeton-plus.png" alt="Semeton+ — Berbagi informasi, membuka peluang untuk Semeton" loading="lazy">
       </div>
 
-      <div style="background:transparent;padding:14px 14px 10px;border-bottom:1.5px solid #eef0f3">
-        <div class="loker-tab-grid" id="lokerTabBar">
+      <div style="background:transparent;padding:14px 14px 10px">
+        <div class="sem-main-grid">
 
-          <button class="forum-grid-btn loker-grid-btn active" id="sem-card-semua" data-kat="semua" onclick="semPanelOpen('semua',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
-                <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
-                <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
-                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8" stroke="#2d6a4f" stroke-width="1.7"/>
+          <button class="sem-main-card" id="sem-main-pegawean" onclick="semMainOpen('pegawean',this)">
+            <div class="sem-main-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path d="M3 9.5l1.4-4.2A1.5 1.5 0 0 1 5.8 4.3h12.4a1.5 1.5 0 0 1 1.4 1l1.4 4.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 9.5h16v9.2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M9.5 13v2.2a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V13" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </div>
-            <span class="fgb-label">Semua</span>
+            <span class="sem-main-text"><span class="sem-main-label">Pegawean</span><span class="sem-main-sub">Kerja, lowongan, mitra usaha & jasa</span></span>
+            <span class="nav-badge-count" id="lokerTabNotif" style="display:none;top:10px;left:auto;right:10px">0</span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-cariKerja" data-kat="cariKerja" onclick="semPanelOpen('cariKerja',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="10.5" cy="10.5" r="6.5" stroke="#2563eb" stroke-width="1.8"/>
-                <path d="M20 20l-4.8-4.8" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
+          <button class="sem-main-card" id="sem-main-belajar" onclick="semMainOpen('belajar',this)">
+            <div class="sem-main-icon" style="background:linear-gradient(135deg,#b07a00,#f4a922)">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path d="M4 6.5a2 2 0 0 1 2-2h11.5v15H6a2 2 0 0 0-2 2V6.5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M6 4.5v15" stroke="#fff" stroke-width="1.6"/>
+                <path d="M8.5 8h6M8.5 11h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </div>
-            <span class="fgb-label">Cari Kerja</span>
+            <span class="sem-main-text"><span class="sem-main-label">Belajar</span><span class="sem-main-sub">Ilmu & skill, buku, beasiswa</span></span>
           </button>
 
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-pasangLowongan" data-kat="pasangLowongan" onclick="semPanelOpen('pasangLowongan',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M3 11l14-6v14L3 13v-2z" stroke="#d97706" stroke-width="1.7" stroke-linejoin="round"/>
-                <path d="M7 15v3a2 2 0 0 0 2 2h1" stroke="#d97706" stroke-width="1.7" stroke-linecap="round"/>
-                <path d="M19 8.5a4 4 0 0 1 0 7" stroke="#d97706" stroke-width="1.7" stroke-linecap="round"/>
+          <button class="sem-main-card" id="sem-main-aren" onclick="semMainOpen('aren',this)">
+            <div class="sem-main-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc)">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <circle cx="8" cy="7.5" r="2.6" stroke="#fff" stroke-width="1.6"/>
+                <circle cx="16" cy="7.5" r="2.6" stroke="#fff" stroke-width="1.6"/>
+                <path d="M2.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M10.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </div>
-            <span class="fgb-label">Lowongan</span>
-          </button>
-
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-cariMitra" data-kat="cariMitra" onclick="semPanelOpen('cariMitra',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="8" cy="7.5" r="2.6" stroke="#9333ea" stroke-width="1.6"/>
-                <circle cx="16" cy="7.5" r="2.6" stroke="#9333ea" stroke-width="1.6"/>
-                <path d="M2.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#9333ea" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M10.8 18c.6-2.8 2.7-4.5 5.2-4.5s4.6 1.7 5.2 4.5" stroke="#9333ea" stroke-width="1.6" stroke-linecap="round"/>
-                <path d="M11 10.5l1 1 2-2" stroke="#9333ea" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <span class="fgb-label">Mitra Usaha</span>
-          </button>
-
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-butuhKaryawan" data-kat="butuhKaryawan" onclick="semPanelOpen('butuhKaryawan',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9.5l1.4-4.2A1.5 1.5 0 0 1 5.8 4.3h12.4a1.5 1.5 0 0 1 1.4 1l1.4 4.2" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M4 9.5h16v9.2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" stroke="#0891b2" stroke-width="1.6" stroke-linejoin="round"/>
-                <path d="M9.5 13v2.2a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V13" stroke="#0891b2" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <span class="fgb-label">Butuh Karyawan</span>
-          </button>
-
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-tawarkanJasa" data-kat="tawarkanJasa" onclick="semPanelOpen('tawarkanJasa',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M14.5 6.5a3.5 3.5 0 0 1-4.6 4.6L4 17v3h3l6-6a3.5 3.5 0 0 1 4.6-4.6l-2.4 2.4-1.7-1.7 2.4-2.4z" stroke="#ec4899" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <span class="fgb-label">Jasa/Keahlian</span>
-          </button>
-
-          <button class="forum-grid-btn loker-grid-btn" id="sem-card-punyaSaya" data-kat="punyaSaya" onclick="semPanelOpen('punyaSaya',this)">
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="3.6" stroke="#6b7280" stroke-width="1.7"/>
-                <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="#6b7280" stroke-width="1.7" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <span class="fgb-label">Punya Saya</span>
-          </button>
-
-          <button class="forum-grid-btn loker-grid-btn" id="lokerTabVerifikasi" data-kat="verifikasi" style="display:none;position:relative" onclick="semPanelOpen('verifikasi',this)">
-            <span class="nav-badge-count" id="lokerTabNotif" style="display:none;top:-3px;left:auto;right:6px">0</span>
-            <div class="fgb-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 3l7 3v5.5c0 4.6-3 8.3-7 9.5-4-1.2-7-4.9-7-9.5V6l7-3z" stroke="#e63946" stroke-width="1.7" stroke-linejoin="round"/>
-                <path d="M9 12l2 2 4-4.3" stroke="#e63946" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <span class="fgb-label">Verifikasi</span>
+            <span class="sem-main-text"><span class="sem-main-label">Aren Community</span><span class="sem-main-sub">Kegiatan, bantuan & informasi</span></span>
           </button>
 
         </div>
-      </div>
-
-      <!-- ══ Statistik & Aturan — dipindah ke bawah grid, tampilan modern ══ -->
-      <div class="sem-bottom-section">
-        <details class="sem-card-modern" id="lokerStatsPanel" style="display:none">
-          <summary class="sem-card-summary">
-            <span class="sem-card-icon" style="background:linear-gradient(135deg,#1a472a,#40916c)">📊</span>
-            <span class="sem-card-summary-text">
-              <span class="sem-card-title">Statistik Kinerja Semeton+</span>
-              <span class="sem-card-sub">Ringkasan performa fitur loker</span>
-            </span>
-            <svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </summary>
-          <div class="sem-card-body" id="lokerStatsBody"></div>
-        </details>
-
-        <details class="sem-card-modern">
-          <summary class="sem-card-summary">
-            <span class="sem-card-icon" style="background:linear-gradient(135deg,#b07a00,#f4a922)">📋</span>
-            <span class="sem-card-summary-text">
-              <span class="sem-card-title">Aturan Sederhana</span>
-              <span class="sem-card-sub">Panduan penggunaan Semeton+</span>
-            </span>
-            <svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </summary>
-          <div class="sem-card-body">
-            <div class="sem-rule-item">
-              <span class="sem-rule-num">1</span>
-              <div class="sem-rule-text"><b>Khusus Anggota</b><span>Info loker berasal dari anggota, untuk anggota.</span></div>
-            </div>
-            <div class="sem-rule-item">
-              <span class="sem-rule-num">2</span>
-              <div class="sem-rule-text"><b>Gratis</b><span>Tidak ada biaya untuk membagikan informasi lowongan.</span></div>
-            </div>
-            <div class="sem-rule-item">
-              <span class="sem-rule-num">3</span>
-              <div class="sem-rule-text"><b>Verifikasi</b><span>Setiap lowongan diperiksa admin sebelum dipublikasikan.</span></div>
-            </div>
-            <div class="sem-rule-item">
-              <span class="sem-rule-num">4</span>
-              <div class="sem-rule-text"><b>Transparan</b><span>Cantumkan nama usaha, posisi, lokasi, persyaratan & kontak dengan jelas.</span></div>
-            </div>
-            <div class="sem-rule-item">
-              <span class="sem-rule-num">5</span>
-              <div class="sem-rule-text"><b>Koperasi Sebagai Penghubung</b><span>Koperasi tidak menjadi pihak dalam hubungan kerja antara pemberi kerja & pencari kerja.</span></div>
-            </div>
-          </div>
-        </details>
       </div>
 
     </div>
@@ -11874,6 +11797,28 @@ window.deletePengurus = function(id) {
   </div>
 </div>
 
+<!-- MODAL: Belajar / Aren Community — Tambah/Edit Info -->
+<div class="modal-overlay" id="modalInfoPost">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title" id="infoModalTitle">Tambah Info</h3>
+      <button class="modal-close" onclick="closeModal('modalInfoPost')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="infoModuleKey">
+      <input type="hidden" id="infoEditId">
+      <div class="field"><label>Kategori</label>
+        <select id="infoKategori" onchange="_infoFormAdapt(document.getElementById('infoModuleKey').value, this.value)"></select>
+      </div>
+      <div class="field"><label>Judul</label><input type="text" id="infoJudul" placeholder=""></div>
+      <div class="field"><label>Deskripsi</label><textarea id="infoDeskripsi" placeholder="" style="min-height:90px"></textarea></div>
+      <div class="field"><label id="infoLabelKontak">Kontak</label><input type="text" id="infoKontak" placeholder=""></div>
+      <button class="btn btn-primary btn-block" id="infoSubmitBtn" onclick="saveInfoPost()">📤 Posting</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Tambah Berita -->
 <div class="modal-overlay" id="modalTambahBerita">
   <div class="modal-sheet">
@@ -13234,6 +13179,8 @@ let DB = {
   },
   rencoPay: null,
   loker: [],
+  belajar: [],
+  arenCommunity: [],
   // ── Kifayah Marketplace: warung anggota, produk, & pesanan ──
   warung: [],
   produkWarung: [],
@@ -16621,16 +16568,39 @@ function getKasSettings() {
   return { rasioMaks:80, limitPerNasabah:0, multiplierSimpanan:0, ...(DB.kasSettings||{}) };
 }
 
+// Kas koperasi yang berkurang akibat Kifayah cicilan = SISA POKOK pinjaman Qardh
+// asal-Kifayah yang masih aktif (otomatis mengecil/pulih tiap kali nasabah mencicil —
+// sama seperti pinjaman biasa, hanya dihitung terpisah dari totalPinjaman umum).
+// Buku DB.pembayaranKifayah sendiri adalah CATATAN/AUDIT setiap pembayaran ke warung
+// (untuk ditampilkan sebagai riwayat "buku Pembayaran Kifayah"), bukan sumber hitung kas.
+function totalPembayaranKifayah() {
+  return (DB.pinjaman || []).filter(function(p){ return p.status === 'aktif' && p.asalKifayah; })
+    .reduce(function(a, b) { return a + (b.sisaPokok || 0); }, 0);
+}
+// Deteksi apakah sebuah baris DB.transaksi berasal dari Kifayah — dipakai untuk
+// membedakan warna teks di catatan transaksi koperasi (Beranda) supaya mudah dikenali.
+function _isTxnKifayah(t) {
+  if (!t) return false;
+  if (t.keterangan && /kifayah/i.test(t.keterangan)) return true;
+  if (t.refId && Array.isArray(DB.pinjaman)) {
+    var pin = DB.pinjaman.find(function(p){ return p.id === t.refId; });
+    if (pin && pin.asalKifayah) return true;
+  }
+  return false;
+}
 function calcKas() {
   // Hanya simpanan pokok + wajib yang jadi basis kas (sukarela TIDAK termasuk)
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan' && t.jenis!=='sukarela').reduce((a,b)=>a+b.jumlah,0);
-  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+  // Pinjaman umum (BUKAN pinjaman asal Kifayah — itu dihitung lewat totalPembayaranKifayah
+  // di bawah supaya kas tidak terpotong dua kali untuk transaksi cicilan Kifayah yang sama).
+  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif' && !p.asalKifayah).reduce((a,b)=>a+(b.sisaPokok||0),0);
+  const totalKifayah = totalPembayaranKifayah();
   const ks = getKasSettings();
   const kasMaks = Math.floor(totalSimpanan * ks.rasioMaks / 100);
-  const kasAvailable = Math.max(0, kasMaks - totalPinjaman);
-  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, (totalPinjaman / totalSimpanan) * 100) : 0;
-  const limitMaks = Math.max(0, kasMaks - totalPinjaman);
-  return { totalSimpanan, totalPinjaman, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
+  const kasAvailable = Math.max(0, kasMaks - totalPinjaman - totalKifayah);
+  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, ((totalPinjaman + totalKifayah) / totalSimpanan) * 100) : 0;
+  const limitMaks = Math.max(0, kasMaks - totalPinjaman - totalKifayah);
+  return { totalSimpanan, totalPinjaman, totalKifayah, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
 }
 
 function renderKasHealth() {
@@ -17071,7 +17041,7 @@ function navTo(page) {
     fabNs.classList.remove('show'); // selalu mulai tersembunyi di pinggir saat pindah halaman
   }
   var lokerFab = document.getElementById('lokerFab');
-  if (lokerFab) lokerFab.style.display = (page === 'semetonPlus') ? 'flex' : 'none';
+  if (lokerFab && page !== 'semetonPlus') lokerFab.style.display = 'none';
   // Bottom nav Kifayah (menggantikan kf-tabbar lama) hanya tampil di halaman Kifayah.
   var bottomNavKifayahEl = document.getElementById('bottomNavKifayah');
   if (bottomNavKifayahEl) bottomNavKifayahEl.style.display = (page === 'kifayah') ? 'flex' : 'none';
@@ -17364,12 +17334,24 @@ function saldoWarungNasabah(nasabahId) {
 }
 function saldoWarungByWarungId(warungId) {
   if (!warungId) return 0;
-  var gross = (DB.pesananWarung||[])
-    .filter(function(p){ return p.warungId === warungId && p.status === 'selesai'; })
-    .reduce(function(s,p){ return s + (p.total||0); }, 0);
   var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
-  var dicairkan = (w && w.saldoDicairkan) || 0;
-  return Math.max(0, gross - dicairkan);
+  if (!w) return 0;
+  // MIGRASI OTOMATIS (sekali jalan): warung lama belum punya field saldoWarung
+  // tersimpan — dulu saldo selalu dihitung ulang dari total pesanan "selesai"
+  // dikurangi saldoDicairkan. Supaya saldo warung yang sudah ada tidak hilang
+  // saat update ini pertama kali dimuat, hitung nilainya SEKALI lalu simpan
+  // permanen ke w.saldoWarung. Setelah itu, saldo tidak dihitung ulang lagi —
+  // hanya bertambah saat pesanan "selesai" (lihat kifayahUpdatePesananStatus)
+  // dan berkurang saat dipindahkan (lihat kifayahSubmitPindahSaldo).
+  if (w.saldoWarung === undefined) {
+    var gross = (DB.pesananWarung||[])
+      .filter(function(p){ return p.warungId === warungId && p.status === 'selesai'; })
+      .reduce(function(s,p){ return s + (p.total||0); }, 0);
+    var dicairkanLama = w.saldoDicairkan || 0;
+    w.saldoWarung = Math.max(0, gross - dicairkanLama);
+    saveDB();
+  }
+  return Math.max(0, w.saldoWarung || 0);
 }
 /* ---------- PINDAH SALDO WARUNG -> SALDO KIFAYAH (Simpanan Sukarela) ---------- */
 function kifayahOpenPindahSaldo() {
@@ -17408,7 +17390,7 @@ function kifayahSubmitPindahSaldo() {
     keterangan: 'Pemindahan Saldo Warung ke Saldo Kifayah — ' + w.nama,
     tanggal: nowISO()
   });
-  w.saldoDicairkan = (w.saldoDicairkan || 0) + jumlah;
+  w.saldoWarung = Math.max(0, (w.saldoWarung || 0) - jumlah);
   saveDB();
   closeModal('modalKfPindahSaldo');
   showToast('✅ ' + fmt(jumlah) + ' berhasil dipindahkan ke Saldo Kifayah');
@@ -17851,7 +17833,14 @@ function kifayahCheckout() {
         kkId: myId, jumlah: total, bunga: 0, tenor: 4, akad: 'qardh',
         tujuan: 'Belanja Kifayah — ' + (w ? w.nama : '-'),
         biayaAdmin: 0, adminJenis: 'none',
-        sisaPokok: 0, status: 'pengajuan', tanggal: pesanan.dibuatPada, cicilan: []
+        sisaPokok: 0, status: 'pengajuan', tanggal: pesanan.dibuatPada, cicilan: [],
+        // Penanda: pinjaman ini lahir dari transaksi Kifayah cicilan. Dipakai calcKas()
+        // untuk MENGECUALIKAN pinjaman ini dari totalPinjaman umum, karena pengurangan
+        // kas untuk Kifayah cicilan sudah dicatat lewat buku Pembayaran Kifayah
+        // (DB.pembayaranKifayah) — supaya kas koperasi tidak terpotong dua kali.
+        // Kuota pinjaman pribadi nasabah (totalPinjamanAktifKK) TETAP menghitung
+        // pinjaman ini seperti biasa — hanya kas koperasi yang dikecualikan.
+        asalKifayah: true
       };
       DB.pinjaman.push(pin);
       DB.transaksi.push({
@@ -18119,7 +18108,8 @@ function kifayahSubmitWarung() {
       id: 'warung-' + (DB.nextWarungId++),
       nasabahId: myId,
       status: 'aktif',
-      dibuatPada: nowISO()
+      dibuatPada: nowISO(),
+      saldoWarung: 0
     }, data));
   }
   saveDB();
@@ -18247,6 +18237,7 @@ function _kfRenderPesananCard(sellerView, p) {
 function kifayahUpdatePesananStatus(pesananId, status) {
   var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
   if (!p) return;
+  var sudahSelesaiSebelumnya = (p.status === 'selesai');
 
   // Pembayaran Kifayah: saat pesanan yang dibeli via cicilan (Qardh) ditandai "Selesai",
   // Koperasi otomatis melunasi ke Warung Nasabah memakai Kas yang tersedia.
@@ -18302,6 +18293,38 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   }
 
   p.status = status;
+  // Koperasi melunasi lunas ke Warung: begitu pesanan berstatus "selesai" (untuk
+  // pertama kalinya), nilai pesanan langsung DITAMBAHKAN ke saldo tersimpan warung
+  // (w.saldoWarung) — bukan dihitung ulang dari riwayat pesanan setiap kali dibuka.
+  // Nilai yang sama JUGA dicatat ke buku "Pembayaran Kifayah" tersendiri (DB.pembayaranKifayah,
+  // BUKAN buku PHU) — HANYA untuk metode cicilan (Qardh). Kas koperasi yang tersedia
+  // sudah dikurangi lewat sisa pokok pinjaman Qardh terkait (lihat totalPembayaranKifayah()
+  // & calcKas()), jadi buku ini murni catatan riwayat, bukan sumber hitung kas kedua.
+  if (status === 'selesai' && !sudahSelesaiSebelumnya) {
+    var wTujuan = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
+    if (wTujuan) {
+      // Pastikan sudah lewat migrasi (kalau warung ini masih pakai model lama).
+      saldoWarungByWarungId(wTujuan.id);
+      wTujuan.saldoWarung = (wTujuan.saldoWarung || 0) + (p.total || 0);
+
+      if (p.metodeBayar === 'cicilan') {
+        if (!DB.pembayaranKifayah) DB.pembayaranKifayah = [];
+        DB.pembayaranKifayah.push({
+          id: uid(),
+          jumlah: p.total || 0,
+          keterangan: 'Pembayaran Kifayah — ' + wTujuan.nama + (p.pembeliNama ? ' (pembeli: ' + p.pembeliNama + ')' : ''),
+          warungId: wTujuan.id,
+          warungNama: wTujuan.nama,
+          pembeliId: p.pembeliId,
+          pembeliNama: p.pembeliNama,
+          pesananId: p.id,
+          pinjamanId: p.pinjamanId,
+          tanggal: nowISO().slice(0, 10),
+          createdAt: nowISO()
+        });
+      }
+    }
+  }
   saveDB();
   showToast(status === 'selesai' ? '✅ Pesanan selesai — Saldo Warung diperbarui' : '✅ Status pesanan diperbarui');
   renderKifayahWarungSaya();
@@ -24877,10 +24900,12 @@ window._renderHomeTxnItem = function(t) {
     : stTxn === 'gagal'
     ? `<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(230,57,70,0.12);color:#e63946;border:1px solid rgba(230,57,70,0.35);white-space:nowrap">❌ GAGAL</span>`
     : '';
+  // Transaksi Kifayah ditandai teks warna ungu, supaya beda dari transaksi koperasi lainnya.
+  const isKifayah = (typeof _isTxnKifayah === 'function') && _isTxnKifayah(t);
   return `<div class="txn-item">
     <div class="txn-icon ${colors[t.type]||'green'}">${icons[t.type]||'💰'}</div>
     <div class="txn-info">
-      <div class="txn-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">${kk?kk.nama:'?'} — ${t.keterangan||t.jenis||t.type} ${statusBadge}</div>
+      <div class="txn-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;${isKifayah?'color:#7b2d8b':''}">${kk?kk.nama:'?'} — ${t.keterangan||t.jenis||t.type} ${statusBadge}</div>
       <div class="txn-date">${fmtDate(t.tanggal)}</div>
     </div>
     <div class="txn-amount ${isMasukAdmin?'plus':isKeluarAdmin?'minus':''}" style="margin-right:6px">${isMasukAdmin?'+':isKeluarAdmin?'−':''}${fmt(t.jumlah)}</div>
@@ -34378,7 +34403,7 @@ function likePost(id) {
   if (p) { p.likes=(p.likes||0)+1; saveDB(); renderForum(); }
 }
 
-// ========== SEMETON+ (LOKER ANGGOTA) ==========
+// ========== SEMETON+ (PEGAWEAN / BELAJAR / AREN COMMUNITY) ==========
 var LOKER_KATEGORI = {
   cariKerja:      { label: '🔎 Cari Pekerjaan',        short: '🔎 Cari Kerja' },
   pasangLowongan: { label: '📢 Pasang Lowongan',        short: '📢 Lowongan' },
@@ -34387,6 +34412,36 @@ var LOKER_KATEGORI = {
   tawarkanJasa:   { label: '🛠️ Tawarkan Keahlian/Jasa', short: '🛠️ Jasa/Keahlian' }
 };
 var _lokerActiveTab = 'semua';
+
+/* ── Modul info sederhana: Belajar & Aren Community (tanpa verifikasi admin, tayang langsung) ── */
+var INFO_MODULES = {
+  belajar: {
+    dbKey: 'belajar',
+    title: 'Belajar',
+    fabLabel: '＋ Tambah Konten',
+    modalTitle: '📚 Tambah Konten Belajar',
+    emptyMsg: '📭 Belum ada konten di kategori ini',
+    kategori: {
+      ilmuSkill: { short: '📚 Ilmu & Skill', judulPh: 'Contoh: Tips Dasar Pembukuan Warung', deskripsiPh: 'Jelaskan ilmu/skill yang dibagikan...', kontakLabel: 'Link / Sumber (opsional)', kontakPh: 'https:// atau nama narasumber' },
+      buku:      { short: '📖 Buku',         judulPh: 'Contoh: Rekomendasi Buku Wirausaha', deskripsiPh: 'Judul buku, ringkasan, kenapa direkomendasikan...', kontakLabel: 'Link / Lokasi Pinjam (opsional)', kontakPh: 'https:// atau lokasi buku bisa dipinjam' },
+      beasiswa:  { short: '🎓 Beasiswa',     judulPh: 'Contoh: Beasiswa Kuliah S1 2026', deskripsiPh: 'Jelaskan syarat, jenjang, batas waktu pendaftaran...', kontakLabel: 'Link Pendaftaran / Kontak', kontakPh: 'https:// atau nomor WA panitia' }
+    }
+  },
+  aren: {
+    dbKey: 'arenCommunity',
+    title: 'Aren Community',
+    fabLabel: '＋ Tambah Info',
+    modalTitle: '🌴 Tambah Info Aren Community',
+    emptyMsg: '📭 Belum ada info di kategori ini',
+    kategori: {
+      kegiatan:  { short: '🎉 Kegiatan',  judulPh: 'Contoh: Gotong Royong Bersih Dusun', deskripsiPh: 'Jelaskan kegiatan, waktu, dan tempat...', kontakLabel: 'Kontak Penanggung Jawab', kontakPh: 'Nomor WA / Telepon' },
+      bantuan:   { short: '🤝 Bantuan',   judulPh: 'Contoh: Bantuan Sembako untuk Lansia', deskripsiPh: 'Jelaskan jenis bantuan, syarat penerima...', kontakLabel: 'Kontak (opsional)', kontakPh: 'Nomor WA / Telepon' },
+      informasi: { short: '📢 Informasi', judulPh: 'Contoh: Pengumuman Jadwal Posyandu', deskripsiPh: 'Jelaskan informasi yang ingin dibagikan...', kontakLabel: 'Kontak (opsional)', kontakPh: 'Nomor WA / Telepon' }
+    }
+  }
+};
+var _infoActiveModule = null;
+var _infoActiveTab = 'semua';
 
 function _lokerCurrentUser() {
   var nama = (typeof AUTH !== 'undefined' && AUTH && AUTH.user) ? (AUTH.user.nama || AUTH.user.username) : 'Anonim';
@@ -34405,7 +34460,7 @@ function semetonTab(kat, btn) {
   renderSemetonPlus();
 }
 
-/* ── Panel Semeton+ (kartu grid "membuka" jadi fullscreen, sama seperti menu Keuangan) ── */
+/* ── Panel Semeton+ (kartu menu utama "membuka" jadi fullscreen, sama seperti menu Keuangan) ── */
 var _semPanelActiveKat = null;
 
 window.addEventListener('popstate', function(e) {
@@ -34413,16 +34468,17 @@ window.addEventListener('popstate', function(e) {
 });
 function _semPanelPushState() { history.pushState(null,'',''); }
 
-function semPanelOpen(kat, cardEl) {
+/* Bagian yang sama dipakai oleh semua modul (Pegawean/Belajar/Aren Community): buka overlay fullscreen */
+function _semPanelOpenChrome(moduleKey, cardEl) {
   var overlay = document.getElementById('semPanelOverlay');
   var panel   = document.getElementById('semPanelCard');
   var iconWrap= document.getElementById('semPanelIconWrap');
   var titleEl = document.getElementById('semPanelTitle');
   var content = document.getElementById('semPanelContent');
-  if (!overlay || !panel || !cardEl) return;
+  if (!overlay || !panel) return null;
 
-  var iconEl  = cardEl.querySelector('.fgb-icon');
-  var labelEl = cardEl.querySelector('.fgb-label');
+  var iconEl  = cardEl ? cardEl.querySelector('.sem-main-icon') : null;
+  var labelEl = cardEl ? cardEl.querySelector('.sem-main-label') : null;
   iconWrap.innerHTML  = iconEl ? iconEl.innerHTML : '';
   titleEl.textContent = labelEl ? labelEl.textContent : 'Semeton+';
 
@@ -34440,15 +34496,84 @@ function semPanelOpen(kat, cardEl) {
   _semPanelPushState();
 
   content.style.display = '';
-  content.innerHTML = '<div id="lokerList"></div>';
-  semetonTab(kat, cardEl);
-  _semPanelActiveKat = kat;
+  _semPanelActiveKat = moduleKey;
+  return content;
+}
+
+/* Buka modul Pegawean (loker anggota, semua kategori digabung jadi satu daftar) */
+function semMainOpen(moduleKey, cardEl) {
+  if (moduleKey === 'pegawean') { _semMainOpenPegawean(cardEl); return; }
+  _semMainOpenInfo(moduleKey, cardEl);
+}
+
+function _semMainOpenPegawean(cardEl) {
+  var content = _semPanelOpenChrome('pegawean', cardEl);
+  if (!content) return;
+  content.innerHTML =
+      '<div class="sem-sub-tabbar"><div class="loker-tab-grid" id="lokerTabBar">'
+    +   '<button class="forum-grid-btn loker-grid-btn active" data-kat="semua" onclick="semetonTab(\'semua\',this)"><span class="fgb-label">Semua</span></button>'
+    +   '<button class="forum-grid-btn loker-grid-btn" data-kat="punyaSaya" onclick="semetonTab(\'punyaSaya\',this)"><span class="fgb-label">Punya Saya</span></button>'
+    +   '<button class="forum-grid-btn loker-grid-btn" id="lokerTabVerifikasi" data-kat="verifikasi" style="display:none;position:relative" onclick="semetonTab(\'verifikasi\',this)"><span class="nav-badge-count" id="lokerTabNotifPanel" style="display:none;top:-3px;left:auto;right:6px">0</span><span class="fgb-label">Verifikasi</span></button>'
+    + '</div></div>'
+    + '<div class="sem-bottom-section" style="margin-top:8px">'
+    +   '<details class="sem-card-modern" id="lokerStatsPanel" style="display:none">'
+    +     '<summary class="sem-card-summary">'
+    +       '<span class="sem-card-icon" style="background:linear-gradient(135deg,#1a472a,#40916c)">📊</span>'
+    +       '<span class="sem-card-summary-text"><span class="sem-card-title">Statistik Kinerja Pegawean</span><span class="sem-card-sub">Ringkasan performa fitur loker</span></span>'
+    +       '<svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +     '</summary>'
+    +     '<div class="sem-card-body" id="lokerStatsBody"></div>'
+    +   '</details>'
+    +   '<details class="sem-card-modern">'
+    +     '<summary class="sem-card-summary">'
+    +       '<span class="sem-card-icon" style="background:linear-gradient(135deg,#b07a00,#f4a922)">📋</span>'
+    +       '<span class="sem-card-summary-text"><span class="sem-card-title">Aturan Sederhana</span><span class="sem-card-sub">Panduan penggunaan Pegawean</span></span>'
+    +       '<svg class="sem-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +     '</summary>'
+    +     '<div class="sem-card-body">'
+    +       '<div class="sem-rule-item"><span class="sem-rule-num">1</span><div class="sem-rule-text"><b>Khusus Anggota</b><span>Info loker berasal dari anggota, untuk anggota.</span></div></div>'
+    +       '<div class="sem-rule-item"><span class="sem-rule-num">2</span><div class="sem-rule-text"><b>Gratis</b><span>Tidak ada biaya untuk membagikan informasi lowongan.</span></div></div>'
+    +       '<div class="sem-rule-item"><span class="sem-rule-num">3</span><div class="sem-rule-text"><b>Verifikasi</b><span>Setiap lowongan diperiksa admin sebelum dipublikasikan.</span></div></div>'
+    +       '<div class="sem-rule-item"><span class="sem-rule-num">4</span><div class="sem-rule-text"><b>Transparan</b><span>Cantumkan nama usaha, posisi, lokasi, persyaratan & kontak dengan jelas.</span></div></div>'
+    +       '<div class="sem-rule-item"><span class="sem-rule-num">5</span><div class="sem-rule-text"><b>Koperasi Sebagai Penghubung</b><span>Koperasi tidak menjadi pihak dalam hubungan kerja antara pemberi kerja & pencari kerja.</span></div></div>'
+    +     '</div>'
+    +   '</details>'
+    + '</div>'
+    + '<div id="lokerList"></div>';
+  semetonTab('semua');
+  var fab = document.getElementById('lokerFab');
+  if (fab) { fab.style.display = 'flex'; fab.innerHTML = '<span style="font-size:15px">＋</span> Pasang Info'; fab.onclick = openLokerModal; }
+}
+
+/* Buka modul Belajar / Aren Community */
+function _semMainOpenInfo(moduleKey, cardEl) {
+  var mod = INFO_MODULES[moduleKey];
+  if (!mod) return;
+  var content = _semPanelOpenChrome(moduleKey, cardEl);
+  if (!content) return;
+  _infoActiveModule = moduleKey;
+
+  var tabsHtml = '<button class="forum-grid-btn loker-grid-btn active" data-kat="semua" onclick="infoTab(\'semua\',this)"><span class="fgb-label">Semua</span></button>';
+  Object.keys(mod.kategori).forEach(function(k) {
+    tabsHtml += '<button class="forum-grid-btn loker-grid-btn" data-kat="' + k + '" onclick="infoTab(\'' + k + '\',this)"><span class="fgb-label">' + mod.kategori[k].short + '</span></button>';
+  });
+
+  content.innerHTML =
+      '<div class="sem-sub-tabbar"><div class="loker-tab-grid" id="infoTabBar" style="grid-template-columns:repeat(' + (Object.keys(mod.kategori).length + 1) + ',1fr)">' + tabsHtml + '</div></div>'
+    + '<div id="infoList"></div>';
+
+  _infoActiveTab = 'semua';
+  renderInfoList();
+  var fab = document.getElementById('lokerFab');
+  if (fab) { fab.style.display = 'flex'; fab.innerHTML = '<span style="font-size:15px">＋</span> ' + mod.fabLabel.replace(/^＋\s*/,''); fab.onclick = infoOpenAddModal; }
 }
 
 function semPanelClose() {
   var overlay = document.getElementById('semPanelOverlay');
   var panel   = document.getElementById('semPanelCard');
   var content = document.getElementById('semPanelContent');
+  var fab = document.getElementById('lokerFab');
+  if (fab) fab.style.display = 'none';
   if (!overlay || !panel) return;
 
   // Langsung tertutup, tanpa animasi mengecil
@@ -34460,6 +34585,7 @@ function semPanelClose() {
   panel.style.transition = 'none';
   panel.style.opacity = '';
   _semPanelActiveKat = null;
+  _infoActiveModule = null;
 }
 
 /* ── Notifikasi persetujuan Semeton+ untuk admin (nav bawah + tab Verifikasi) ── */
@@ -34475,6 +34601,11 @@ function _lokerUpdateAdminNotif() {
   if (tabB) {
     if (adm && count > 0) { tabB.textContent = count > 99 ? '99+' : count; tabB.style.display = 'flex'; }
     else tabB.style.display = 'none';
+  }
+  var panelB = document.getElementById('lokerTabNotifPanel');
+  if (panelB) {
+    if (adm && count > 0) { panelB.textContent = count > 99 ? '99+' : count; panelB.style.display = 'flex'; }
+    else panelB.style.display = 'none';
   }
 }
 
@@ -34873,6 +35004,201 @@ function lokerHapus(id) {
   saveDB();
   renderSemetonPlus();
   showToast('🗑️ Info loker dihapus');
+}
+
+// ========== BELAJAR & AREN COMMUNITY (modul info sederhana, tayang langsung) ==========
+function infoTab(kat, btn) {
+  _infoActiveTab = kat;
+  document.querySelectorAll('#infoTabBar .loker-grid-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  else {
+    var el = document.querySelector('#infoTabBar .loker-grid-btn[data-kat="'+kat+'"]');
+    if (el) el.classList.add('active');
+  }
+  renderInfoList();
+}
+
+function renderInfoList() {
+  var moduleKey = _infoActiveModule;
+  var mod = INFO_MODULES[moduleKey];
+  var listEl = document.getElementById('infoList');
+  if (!mod || !listEl) return;
+  if (!Array.isArray(DB[mod.dbKey])) DB[mod.dbKey] = [];
+
+  var user = _lokerCurrentUser();
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var list = DB[mod.dbKey].slice().sort(function(a,b){ return new Date(b.tanggal) - new Date(a.tanggal); });
+  var filtered = (_infoActiveTab === 'semua') ? list : list.filter(function(x){ return x.kategori === _infoActiveTab; });
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="loker-empty">' + mod.emptyMsg + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(function(x) {
+    var katDef = mod.kategori[x.kategori] || { short: x.kategori };
+    var isOwner = (x.penulisId === user.id || x.penulis === user.nama);
+    var canManage = isOwner || adm;
+    var deskripsiFull = escLoker(x.deskripsi || '').replace(/\n/g,'<br>');
+    var kontakHtml = x.kontak ? _lokerContactHtml(x.kontak) : '';
+
+    var actions = canManage
+      ? '<div class="loker-card-actions">'
+        + '<button class="btn btn-sm btn-outline" style="flex:0 0 auto;padding:0 12px" onclick="event.stopPropagation();infoEdit(\'' + x.id + '\')">✏️ Edit</button>'
+        + '<button class="btn btn-sm btn-outline" style="flex:0 0 auto;padding:0 12px;color:#e63946;border-color:rgba(230,57,70,0.35)" onclick="event.stopPropagation();infoHapus(\'' + x.id + '\')">🗑️</button>'
+        + '</div>'
+      : '';
+
+    return '<div class="loker-card" onclick="infoCardToggle(\'' + x.id + '\')">'
+      + '<div class="loker-card-top"><span class="loker-cat-tag">' + katDef.short + '</span></div>'
+      + '<div class="loker-card-title">' + escLoker(x.judul) + '</div>'
+      + '<div class="loker-card-meta-compact">'
+      +   '<span>🗓️ ' + fmtDate(x.tanggal) + '</span>'
+      +   '<span class="loker-expand-hint">Detail <span class="loker-expand-arrow">▾</span></span>'
+      + '</div>'
+      + '<div class="loker-card-detail" id="lokerDetail_' + x.id + '">'
+      +   '<div class="loker-card-detail-block">' + deskripsiFull + '</div>'
+      +   '<div class="loker-card-meta-compact" style="margin:6px 0 0"><span>👤 ' + escLoker(x.penulis) + '</span></div>'
+      +   kontakHtml
+      +   actions
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function _infoFormAdapt(moduleKey, kategori) {
+  var mod = INFO_MODULES[moduleKey];
+  var c = mod.kategori[kategori] || mod.kategori[Object.keys(mod.kategori)[0]];
+  var iJudul = document.getElementById('infoJudul');
+  var iDeskripsi = document.getElementById('infoDeskripsi');
+  var iKontak = document.getElementById('infoKontak');
+  var lKontak = document.getElementById('infoLabelKontak');
+  if (iJudul) iJudul.placeholder = c.judulPh;
+  if (iDeskripsi) iDeskripsi.placeholder = c.deskripsiPh;
+  if (iKontak) iKontak.placeholder = c.kontakPh;
+  if (lKontak) lKontak.textContent = c.kontakLabel;
+}
+
+function infoOpenAddModal() {
+  var moduleKey = _infoActiveModule;
+  var mod = INFO_MODULES[moduleKey];
+  if (!mod) return;
+  var katKeys = Object.keys(mod.kategori);
+  var kategoriAwal = (katKeys.indexOf(_infoActiveTab) !== -1) ? _infoActiveTab : katKeys[0];
+
+  var sel = document.getElementById('infoKategori');
+  sel.innerHTML = katKeys.map(function(k) { return '<option value="' + k + '">' + mod.kategori[k].short + '</option>'; }).join('');
+  sel.value = kategoriAwal;
+
+  document.getElementById('infoModuleKey').value = moduleKey;
+  document.getElementById('infoEditId').value = '';
+  document.getElementById('infoJudul').value = '';
+  document.getElementById('infoDeskripsi').value = '';
+  document.getElementById('infoKontak').value = '';
+  _infoFormAdapt(moduleKey, kategoriAwal);
+
+  document.getElementById('infoModalTitle').textContent = mod.modalTitle;
+  document.getElementById('infoSubmitBtn').textContent = '📤 Posting';
+  openModal('modalInfoPost');
+}
+
+function infoEdit(id) {
+  var moduleKey = _infoActiveModule;
+  var mod = INFO_MODULES[moduleKey];
+  if (!mod) return;
+  var x = DB[mod.dbKey].find(function(i){ return i.id === id; });
+  if (!x) return;
+  var user = _lokerCurrentUser();
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var isOwner = (x.penulisId === user.id || x.penulis === user.nama);
+  if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+
+  var katKeys = Object.keys(mod.kategori);
+  var sel = document.getElementById('infoKategori');
+  sel.innerHTML = katKeys.map(function(k) { return '<option value="' + k + '">' + mod.kategori[k].short + '</option>'; }).join('');
+  sel.value = x.kategori;
+
+  document.getElementById('infoModuleKey').value = moduleKey;
+  document.getElementById('infoEditId').value = x.id;
+  document.getElementById('infoJudul').value = x.judul || '';
+  document.getElementById('infoDeskripsi').value = x.deskripsi || '';
+  document.getElementById('infoKontak').value = x.kontak || '';
+  _infoFormAdapt(moduleKey, x.kategori);
+
+  document.getElementById('infoModalTitle').textContent = '✏️ Edit ' + mod.title;
+  document.getElementById('infoSubmitBtn').textContent = '💾 Simpan Perubahan';
+  openModal('modalInfoPost');
+}
+
+function saveInfoPost() {
+  var moduleKey = document.getElementById('infoModuleKey').value;
+  var mod = INFO_MODULES[moduleKey];
+  if (!mod) return;
+  var judul = document.getElementById('infoJudul').value.trim();
+  var deskripsi = document.getElementById('infoDeskripsi').value.trim();
+  if (!judul) { showToast('⚠️ Judul wajib diisi'); return; }
+  if (!deskripsi) { showToast('⚠️ Deskripsi wajib diisi'); return; }
+
+  var user = _lokerCurrentUser();
+  var editId = document.getElementById('infoEditId').value;
+  if (!Array.isArray(DB[mod.dbKey])) DB[mod.dbKey] = [];
+
+  if (editId) {
+    var x = DB[mod.dbKey].find(function(i){ return i.id === editId; });
+    if (!x) { showToast('⚠️ Data tidak ditemukan'); closeModal('modalInfoPost'); return; }
+    var adm = (typeof isAdmin === 'function') && isAdmin();
+    var isOwner = (x.penulisId === user.id || x.penulis === user.nama);
+    if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+    x.kategori = document.getElementById('infoKategori').value;
+    x.judul = judul;
+    x.deskripsi = deskripsi;
+    x.kontak = document.getElementById('infoKontak').value.trim();
+    saveDB();
+    closeModal('modalInfoPost');
+    showToast('✅ Perubahan disimpan');
+    renderInfoList();
+    return;
+  }
+
+  DB[mod.dbKey].push({
+    id: uid(),
+    kategori: document.getElementById('infoKategori').value,
+    judul: judul,
+    deskripsi: deskripsi,
+    kontak: document.getElementById('infoKontak').value.trim(),
+    penulis: user.nama,
+    penulisId: user.id,
+    tanggal: nowISO()
+  });
+  saveDB();
+  closeModal('modalInfoPost');
+  showToast('✅ ' + mod.title + ' diposting');
+  renderInfoList();
+}
+
+function infoCardToggle(id) {
+  var el = document.getElementById('lokerDetail_' + id);
+  if (!el) return;
+  var card = el.closest('.loker-card');
+  el.classList.toggle('open');
+  if (card) card.classList.toggle('loker-card-expanded');
+}
+
+function infoHapus(id) {
+  var moduleKey = _infoActiveModule;
+  var mod = INFO_MODULES[moduleKey];
+  if (!mod) return;
+  var user = _lokerCurrentUser();
+  var x = DB[mod.dbKey].find(function(i){ return i.id === id; });
+  if (!x) return;
+  var adm = (typeof isAdmin === 'function') && isAdmin();
+  var isOwner = (x.penulisId === user.id || x.penulis === user.nama);
+  if (!adm && !isOwner) { showToast('⚠️ Anda tidak punya akses'); return; }
+  if (!confirm('Hapus info ini?')) return;
+  DB[mod.dbKey] = DB[mod.dbKey].filter(function(i){ return i.id !== id; });
+  saveDB();
+  renderInfoList();
+  showToast('🗑️ Dihapus');
 }
 
 // ========== FORUM TABS ==========
