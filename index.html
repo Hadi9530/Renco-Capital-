@@ -3873,9 +3873,10 @@ body:has(#app.theme-kifayah) { background: #f5f1fa; }
 /* ========== TOAST ========== */
 .toast {
   position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--dark); color: white; padding: 12px 24px; border-radius: 99px;
-  font-size: 13px; font-weight: 600; z-index: 999; opacity: 0;
-  transition: all 0.35s ease; white-space: nowrap; pointer-events: none;
+  background: var(--dark); color: white; padding: 12px 24px; border-radius: 18px;
+  font-size: 13px; font-weight: 600; z-index: 100010; opacity: 0;
+  transition: all 0.35s ease; white-space: normal; max-width: 86vw; text-align: center;
+  line-height: 1.5; pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -18084,10 +18085,12 @@ function renderKifayahBelanja() {
   var q = (document.getElementById('kfSearchInput')||{}).value || '';
   q = q.toLowerCase().trim();
 
-  // Kalau warung yang tadinya dipilih ternyata sudah dihapus/nonaktif, kembali ke daftar warung.
+  // Kalau warung yang tadinya dipilih ternyata sudah dihapus, kembali ke daftar warung.
+  // Warung yang sekadar tutup tetap boleh dibuka untuk dilihat-lihat produknya,
+  // hanya saja pemesanan diblok (lihat kifayahOpenProduk/kifayahAddToCart/kifayahCheckout).
   if (_kfSelectedWarung) {
     var wCek = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; });
-    if (!wCek || wCek.status !== 'aktif') _kfSelectedWarung = null;
+    if (!wCek) _kfSelectedWarung = null;
   }
 
   if (!_kfSelectedWarung) {
@@ -18102,27 +18105,35 @@ function renderKifayahBelanja() {
 
     var produkAll = DB.produkWarung || [];
     var warungList = (DB.warung||[]).filter(function(w){
-      if (w.status !== 'aktif') return false;
       if (q && (w.nama||'').toLowerCase().indexOf(q) === -1) return false;
       return true;
-    }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+    }).sort(function(a,b){
+      // Warung buka tampil lebih dulu, baru yang tutup, masing-masing terbaru dulu.
+      var aBuka = a.status === 'aktif' ? 1 : 0;
+      var bBuka = b.status === 'aktif' ? 1 : 0;
+      if (aBuka !== bBuka) return bBuka - aBuka;
+      return (b.dibuatPada||'').localeCompare(a.dibuatPada||'');
+    });
 
     if (warungListEmpty) warungListEmpty.style.display = warungList.length ? 'none' : 'block';
 
     warungListGrid.className = 'kf-warung-grid';
     warungListGrid.innerHTML = warungList.map(function(w){
+      var buka = w.status === 'aktif';
       var jumlahProduk = produkAll.filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
       var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
+      var statusBadge = '<div style="font-size:10.5px;font-weight:700;color:'+(buka?'#16a34a':'#dc2626')+'">● '+(buka?'Buka':'Tutup')+'</div>';
       var subInfo = jumlahProduk+' produk'+(w.alamat ? ' · '+w.alamat : '');
       var ratingCount = Number(w.ratingCount) || 0;
       var detailTabHtml = ratingCount > 0
         ? '<button type="button" class="kf-warung-detail-btn" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">★'+(Number(w.ratingAvg)||0).toFixed(1)+'</button>'
         : '<button type="button" class="kf-warung-detail-btn kf-no-rating" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">ⓘ</button>';
-      return '<div class="member-item-wrap member-active">'
+      return '<div class="member-item-wrap member-active"'+(buka?'':' style="opacity:0.75"')+'>'
         + '<div class="member-item-row" onclick="_kifayahOpenWarungBelanja(\''+w.id+'\')">'
         +   '<div class="avatar gold">'+logo+'</div>'
         +   '<div class="member-info">'
         +     '<div class="member-name">'+w.nama+'</div>'
+        +     statusBadge
         +     '<div class="member-sub">'+subInfo+'</div>'
         +   '</div>'
         +   detailTabHtml
@@ -18140,11 +18151,12 @@ function renderKifayahBelanja() {
   grid.style.display = 'grid';
 
   var w = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; }) || {};
+  var wBuka = w.status === 'aktif';
   var wLogo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
   warungHeader.innerHTML =
     '<button class="kf-warung-header-back" onclick="_kifayahBackToWarungList()">&#x2190;</button>'
     + '<div class="kf-warung-header-logo">'+wLogo+'</div>'
-    + '<div style="flex:1;min-width:0"><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">Belanja hanya dari warung ini per pesanan</div></div>'
+    + '<div style="flex:1;min-width:0"><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">'+(wBuka ? 'Belanja hanya dari warung ini per pesanan' : '<span style="color:#dc2626;font-weight:700">● Tutup — belum bisa pesan</span>')+'</div></div>'
     + '<button class="kf-view-toggle-btn" id="kfProdukViewToggleBtn" onclick="_kfToggleProdukViewMode()" title="Ganti tampilan"></button>';
 
   var wInfoEl = document.getElementById('kfWarungInfo');
@@ -18274,6 +18286,7 @@ function kifayahOpenProduk(produkId) {
   var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
   if (!p) return;
   var w = (DB.warung||[]).find(function(x){ return x.id === p.warungId; }) || {};
+  var wTutup = w.status !== 'aktif';
   var habis = (Number(p.stok)||0) <= 0;
   var img = p.foto ? '<img src="'+p.foto+'" style="width:100%;border-radius:14px;max-height:220px;object-fit:cover;display:block">' : '<div class="kf-produk-noimg" style="height:180px;border-radius:14px">🛍️</div>';
   var body = document.getElementById('kfProdukDetailBody');
@@ -18283,7 +18296,9 @@ function kifayahOpenProduk(produkId) {
     + '<div style="font-size:20px;font-weight:800;color:#7b2d8b;margin:4px 0">'+fmt(p.harga)+'</div>'
     + '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">🏪 '+(w.nama||'-')+' · Stok: '+(p.stok||0)+'</div>'
     + '<div style="font-size:13px;color:#374151;line-height:1.5;margin-bottom:14px">'+(p.deskripsi||'Tidak ada deskripsi.')+'</div>'
-    + (habis
+    + (wTutup
+        ? '<button class="btn btn-block" disabled style="opacity:0.5">🔴 Warung Sedang Tutup</button>'
+        : habis
         ? '<button class="btn btn-block" disabled style="opacity:0.5">Stok Habis</button>'
         : '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
           + '<button class="kf-qty-btn" onclick="_kfQtyStep(-1)">−</button>'
@@ -18303,6 +18318,8 @@ function _kfQtyStep(d) {
 function kifayahAddToCart(produkId) {
   var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
   if (!p) return;
+  var wCart = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
+  if (!wCart || wCart.status !== 'aktif') { showToast('🔴 Warung sedang tutup, tidak bisa melakukan pesanan'); return; }
   // 1 keranjang/checkout hanya boleh berisi produk dari 1 warung yang sama.
   if (_kfCart.length) {
     var pExisting = (DB.produkWarung||[]).find(function(x){ return x.id === _kfCart[0].produkId; });
@@ -18461,6 +18478,13 @@ function kifayahCheckout() {
   if (!_kfCart.length) return;
   var myId = _kfMyNasabahId();
   if (!myId) { showToast('⚠️ Hanya nasabah yang bisa berbelanja'); return; }
+  // Jaga-jaga: pastikan warung dari isi keranjang belum tutup sejak terakhir ditambahkan.
+  var adaWarungTutup = _kfCart.some(function(c){
+    var p = (DB.produkWarung||[]).find(function(x){ return x.id === c.produkId; });
+    var wc = p ? (DB.warung||[]).find(function(x){ return x.id === p.warungId; }) : null;
+    return !wc || wc.status !== 'aktif';
+  });
+  if (adaWarungTutup) { showToast('🔴 Warung sedang tutup, tidak bisa melakukan pesanan'); return; }
   var myNasabah = getNasabah(myId);
   var metode = (document.getElementById('kfCartMetode')||{}).value || 'tunai';
   // Kelompokkan item keranjang per warung — 1 pesanan per warung
@@ -42306,6 +42330,24 @@ window.openModal = function(id) {
 };
 
 // SPLASH -> APP
+// ── FIX RACE CONDITION "data lama menimpa data terbaru" ──────────────────
+// loadDB() bisa berupa fungsi SINKRON (versi asli, baca localStorage) ATAU
+// ASINKRON (di-override oleh bridge Supabase di atas — menunggu fetch
+// cloud sebelum window.DB terisi). Kode startup sebelumnya memanggil
+// loadDB() lalu LANGSUNG lanjut (termasuk baris "window.DB = DB;" yang
+// menimpa window.DB dengan variabel DB versi skeleton/lama, karena proses
+// cloud belum selesai) — dan loadDB() dipanggil dari DUA tempat berbeda
+// (window 'load' handler & fallback _forceSplashHide) tanpa saling tahu.
+// Ini yang menyebabkan device/user melihat data lama menggantikan data
+// terbaru, bahkan sebelum login. _rencoEnsureDBLoaded() memastikan
+// loadDB() hanya benar-benar dijalankan SATU KALI, dan semua pemanggil
+// menunggu (await/then) hasilnya sebelum membaca/menampilkan window.DB.
+window._rencoEnsureDBLoaded = window._rencoEnsureDBLoaded || function() {
+  if (!window._rencoLoadDBPromise) {
+    window._rencoLoadDBPromise = Promise.resolve(typeof loadDB === 'function' ? loadDB() : null);
+  }
+  return window._rencoLoadDBPromise;
+};
 /* ── Fallback: paksa hide splash jika window.load tidak terpicu (misal script CDN gagal load di APK) ── */
 (function() {
   function _forceSplashHide() {
@@ -42318,29 +42360,33 @@ window.openModal = function(id) {
     setTimeout(function() {
       splash.style.display = 'none';
       splash.style.visibility = 'hidden';
-      if (typeof loadDB === 'function') loadDB();
-      if (window.DB == null) window.DB = {};
-      if (typeof applyDarkModePreference === 'function') applyDarkModePreference();
-      if (typeof renderLoginWatermark === 'function') renderLoginWatermark();
-      setTimeout(function() {
-        if (typeof initSelects === 'function') initSelects();
-        var isLoggedIn = (typeof AUTH !== 'undefined') && AUTH.loggedIn;
-        if (!isLoggedIn && typeof authLoad === 'function') { authLoad(); isLoggedIn = AUTH.loggedIn; }
-        if (isLoggedIn) {
-          if (loginScreen) { loginScreen.style.display = 'none'; loginScreen.classList.remove('active'); }
-          if (appEl) { appEl.style.display = ''; appEl.classList.add('visible'); }
-          if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
-          if (typeof updateHeaderUserInfo  === 'function') updateHeaderUserInfo();
-          if (typeof renderHome === 'function') renderHome();
-        } else {
-          if (appEl) { appEl.style.display = 'none'; }
-          if (loginScreen) {
-            loginScreen.style.cssText = 'display:flex !important; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; z-index:99999;';
-            loginScreen.classList.add('active');
+      // Tunggu loadDB() (sync ATAU async/cloud) selesai dulu — lihat catatan
+      // _rencoEnsureDBLoaded di atas. Jangan render apa pun yang bergantung
+      // pada window.DB sebelum ini selesai.
+      _rencoEnsureDBLoaded().then(function() {
+        if (window.DB == null) window.DB = {};
+        if (typeof applyDarkModePreference === 'function') applyDarkModePreference();
+        if (typeof renderLoginWatermark === 'function') renderLoginWatermark();
+        setTimeout(function() {
+          if (typeof initSelects === 'function') initSelects();
+          var isLoggedIn = (typeof AUTH !== 'undefined') && AUTH.loggedIn;
+          if (!isLoggedIn && typeof authLoad === 'function') { authLoad(); isLoggedIn = AUTH.loggedIn; }
+          if (isLoggedIn) {
+            if (loginScreen) { loginScreen.style.display = 'none'; loginScreen.classList.remove('active'); }
+            if (appEl) { appEl.style.display = ''; appEl.classList.add('visible'); }
+            if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
+            if (typeof updateHeaderUserInfo  === 'function') updateHeaderUserInfo();
+            if (typeof renderHome === 'function') renderHome();
+          } else {
+            if (appEl) { appEl.style.display = 'none'; }
+            if (loginScreen) {
+              loginScreen.style.cssText = 'display:flex !important; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; z-index:99999;';
+              loginScreen.classList.add('active');
+            }
+            setTimeout(function() { var el = document.getElementById('loginUsername'); if (el) el.focus(); }, 300);
           }
-          setTimeout(function() { var el = document.getElementById('loginUsername'); if (el) el.focus(); }, 300);
-        }
-      }, 450);
+        }, 450);
+      });
     }, 400);
   }
   // Trigger 5 detik setelah DOMContentLoaded sebagai fallback
@@ -42381,10 +42427,14 @@ window.addEventListener('load', ()=>{
       if (e.target === this) closeHapusPinjamanModal();
     });
   }
-  loadDB();
-  window.DB = DB;
-  applyDarkModePreference();
-  renderLoginWatermark();
+  // Mulai muat DB sedini mungkin (paralel dengan animasi splash 3 detik).
+  // TIDAK ada lagi "window.DB = DB;" manual di sini — itu penyebab bug
+  // "data lama menimpa data terbaru" (lihat catatan _rencoEnsureDBLoaded
+  // di atas): baris itu dulu jalan SEBELUM proses cloud selesai dan
+  // menimpa balik window.DB dengan data skeleton/lama. loadDB() (baik versi
+  // sync maupun async/cloud) sudah mengisi window.DB sendiri di titik yang
+  // benar — tidak perlu (dan berbahaya) untuk dilakukan manual di sini lagi.
+  _rencoEnsureDBLoaded();
   if (typeof _ensureAnggotaCSS === 'function') _ensureAnggotaCSS();
   if (typeof _ensureRpNotifModal === 'function') _ensureRpNotifModal();
   const heroDate = document.getElementById('heroDate');
@@ -42406,29 +42456,35 @@ window.addEventListener('load', ()=>{
       }, 400);
     }
 
-    setTimeout(function() {
-      if (typeof initSelects === 'function') initSelects();
+    // Tunggu loadDB() selesai (bisa masih proses fetch cloud) sebelum
+    // menampilkan/merender apa pun yang bergantung pada window.DB.
+    _rencoEnsureDBLoaded().then(function() {
+      applyDarkModePreference();
+      renderLoginWatermark();
+      setTimeout(function() {
+        if (typeof initSelects === 'function') initSelects();
 
-      if (window._authReady && window._authReady()) {
-        // User sudah login sebelumnya
-        if (loginScreen) { loginScreen.style.display = 'none'; loginScreen.classList.remove('active'); }
-        if (appEl) { appEl.style.display = ''; appEl.classList.add('visible'); }
-        if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
-        if (typeof updateHeaderUserInfo  === 'function') updateHeaderUserInfo();
-        if (typeof renderHome === 'function') renderHome();
-      } else {
-        // Tampilkan login screen
-        if (appEl) { appEl.style.display = 'none'; appEl.classList.remove('visible'); }
-        if (loginScreen) {
-          loginScreen.style.cssText = 'display:flex !important; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; z-index:99999;';
-          loginScreen.classList.add('active');
+        if (window._authReady && window._authReady()) {
+          // User sudah login sebelumnya
+          if (loginScreen) { loginScreen.style.display = 'none'; loginScreen.classList.remove('active'); }
+          if (appEl) { appEl.style.display = ''; appEl.classList.add('visible'); }
+          if (typeof applyRoleRestrictions === 'function') applyRoleRestrictions();
+          if (typeof updateHeaderUserInfo  === 'function') updateHeaderUserInfo();
+          if (typeof renderHome === 'function') renderHome();
+        } else {
+          // Tampilkan login screen
+          if (appEl) { appEl.style.display = 'none'; appEl.classList.remove('visible'); }
+          if (loginScreen) {
+            loginScreen.style.cssText = 'display:flex !important; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; z-index:99999;';
+            loginScreen.classList.add('active');
+          }
+          setTimeout(function() {
+            var el = document.getElementById('loginUsername');
+            if (el) el.focus();
+          }, 300);
         }
-        setTimeout(function() {
-          var el = document.getElementById('loginUsername');
-          if (el) el.focus();
-        }, 300);
-      }
-    }, 450);
+      }, 450);
+    });
   }
 
   setTimeout(_doShowAfterSplash, 3000);
