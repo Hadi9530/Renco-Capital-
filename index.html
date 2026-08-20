@@ -2330,6 +2330,16 @@ body:has(#app.theme-kifayah) { background: #f5f1fa; }
 .field textarea { resize: vertical; min-height: 80px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* ── Penanda field wajib diperbaiki (duplikat/kosong) — border & label merah ── */
+.field.field-invalid input, .field.field-invalid select, .field.field-invalid textarea {
+  border-color: #dc2626 !important; background: #fef2f2 !important;
+}
+.field.field-invalid label { color: #dc2626; }
+.field-hint-error {
+  display: none; font-size: 11px; color: #dc2626; font-weight: 700; margin-top: 5px; line-height: 1.5;
+}
+.field.field-invalid .field-hint-error { display: block; }
+
 /* ========== TABS ========== */
 .tab-bar {
   display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto;
@@ -5266,6 +5276,16 @@ body:has(#app.theme-kifayah) { background: #f5f1fa; }
 .login-btn:hover { background-position: 100% 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
 .login-btn:active { transform: scale(0.97); opacity: 0.9; }
 .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.login-btn-secondary {
+  width: 100%; padding: 12px; border-radius: 13px;
+  background: transparent; border: 1.5px solid rgba(244,249,241,0.35);
+  color: rgba(244,249,241,0.85); font-family: inherit;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  margin-top: 10px; transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  letter-spacing: 0.3px;
+}
+.login-btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(244,249,241,0.55); }
+.login-btn-secondary:active { transform: scale(0.97); }
 .login-error {
   background: rgba(220,38,38,0.14); border: 1px solid rgba(220,38,38,0.4);
   border-radius: 10px; padding: 10px 14px; font-size: 12px;
@@ -5798,6 +5818,248 @@ function handleLogin() {
     }
   }
   _tryLogin();
+}
+
+/* ── Pendaftaran Akun Baru (dari halaman login) ──
+   Menyimpan permintaan pendaftaran calon anggota ke DB.pendaftaranAnggota
+   sebagai status "baru" agar Admin bisa menindaklanjuti secara manual
+   (buat data Nasabah + akun login lewat Kelola User Nasabah), karena
+   pembuatan akun aktif memerlukan verifikasi identitas oleh koperasi. */
+function _openDaftarAkunLogin() {
+  window._pendaftaranReviewData = null;
+  ['daftarAkunNama','daftarAkunNoHp','daftarAkunAlamat','daftarAkunUsername','daftarAkunPassword','daftarAkunPasswordUlang','daftarAkunCatatan'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var err = document.getElementById('daftarAkunError');
+  if (err) { err.style.display = 'none'; err.textContent = ''; }
+  var btn = document.getElementById('daftarAkunSubmitBtn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Kirim Pendaftaran'; }
+  _daftarAkunClearFieldErrors();
+  if (typeof openModal === 'function') openModal('modalDaftarAkunLogin');
+}
+
+/* ── Normalisasi untuk cek duplikat Nama & No. HP saat pendaftaran ── */
+function _pendaftaranNormNama(s) { return String(s || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+function _pendaftaranNormHp(s) {
+  var d = String(s || '').replace(/[^\d]/g, '');
+  if (!d) return '';
+  if (d.charAt(0) === '0') d = '62' + d.slice(1);
+  else if (d.slice(0,2) !== '62') d = '62' + d;
+  return d;
+}
+
+/* ── Penanda visual (merah) pada field Nama / No. HP / Username saat pendaftaran ──
+   _daftarAkunFieldIds memetakan kunci singkat ke id elemen supaya pemanggilan
+   di bawah tetap ringkas & konsisten. ── */
+var _daftarAkunFieldIds = { nama: 'daftarAkunNama', noHp: 'daftarAkunNoHp', username: 'daftarAkunUsername' };
+function _daftarAkunClearFieldErrors() {
+  Object.keys(_daftarAkunFieldIds).forEach(function(key){
+    var id = _daftarAkunFieldIds[key];
+    var wrap = document.getElementById('field_' + id);
+    if (wrap) wrap.classList.remove('field-invalid');
+    var hint = document.getElementById(id + 'ErrHint');
+    if (hint) hint.textContent = '';
+  });
+}
+function _daftarAkunMarkFieldError(key, msg) {
+  var id = _daftarAkunFieldIds[key];
+  if (!id) return;
+  var wrap = document.getElementById('field_' + id);
+  if (wrap) wrap.classList.add('field-invalid');
+  var hint = document.getElementById(id + 'ErrHint');
+  if (hint) hint.textContent = msg;
+}
+/* Hapus tanda merah pada 1 kolom begitu user mulai memperbaiki isiannya */
+function _daftarAkunClearOneFieldError(id) {
+  var wrap = document.getElementById('field_' + id);
+  if (wrap) wrap.classList.remove('field-invalid');
+  var hint = document.getElementById(id + 'ErrHint');
+  if (hint) hint.textContent = '';
+}
+document.addEventListener('DOMContentLoaded', function() {
+  ['daftarAkunNama','daftarAkunNoHp','daftarAkunUsername'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', function(){ _daftarAkunClearOneFieldError(id); });
+  });
+});
+
+function _submitDaftarAkunLogin() {
+  var nama = (document.getElementById('daftarAkunNama')||{}).value || '';
+  var noHp = (document.getElementById('daftarAkunNoHp')||{}).value || '';
+  var alamat = (document.getElementById('daftarAkunAlamat')||{}).value || '';
+  var username = (document.getElementById('daftarAkunUsername')||{}).value || '';
+  var password = (document.getElementById('daftarAkunPassword')||{}).value || '';
+  var passwordUlang = (document.getElementById('daftarAkunPasswordUlang')||{}).value || '';
+  var catatan = (document.getElementById('daftarAkunCatatan')||{}).value || '';
+  nama = nama.trim(); noHp = noHp.trim(); alamat = alamat.trim();
+  username = username.trim(); catatan = catatan.trim();
+
+  var err = document.getElementById('daftarAkunError');
+  // FIX: sebelumnya warning ini hanya muncul di ATAS form (dekat field Nama),
+  // sementara tombol "Kirim Pendaftaran" ada di PALING BAWAH. Saat keyboard HP
+  // masih terbuka (user baru saja mengetik di salah satu field), munculnya kotak
+  // warning ini mendorong seluruh isi form ke bawah — akibatnya tombol kirim
+  // bergeser ke luar area yang bisa dijangkau/terlihat (tertutup keyboard atau
+  // di luar layar), sehingga terasa seperti tombolnya "tidak berfungsi" padahal
+  // sebenarnya cuma tidak terjangkau. Perbaikan: tutup keyboard (blur input aktif)
+  // lalu scroll otomatis ke kotak warning supaya form & tombol kembali terlihat.
+  function showErr(msg) {
+    if (!err) return;
+    err.textContent = msg;
+    err.style.display = 'block';
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    setTimeout(function() {
+      err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  }
+
+  _daftarAkunClearFieldErrors();
+
+  if (!nama || !noHp || !username || !password) {
+    if (!nama) _daftarAkunMarkFieldError('nama', '⚠️ Wajib diisi');
+    if (!noHp) _daftarAkunMarkFieldError('noHp', '⚠️ Wajib diisi');
+    if (!username) _daftarAkunMarkFieldError('username', '⚠️ Wajib diisi');
+    showErr('⚠️ Nama lengkap, No. HP, username, dan password wajib diisi');
+    return;
+  }
+  if (username.length < 4) {
+    _daftarAkunMarkFieldError('username', '⚠️ Username minimal 4 karakter');
+    showErr('⚠️ Username minimal 4 karakter');
+    return;
+  }
+  if (password.length < 6) {
+    showErr('⚠️ Password minimal 6 karakter');
+    return;
+  }
+  if (password !== passwordUlang) {
+    showErr('⚠️ Ulangi password tidak sama');
+    return;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ATURAN KETAT DUPLIKAT — Nama, No. HP, dan Username masing-masing dicek
+  // terhadap: (a) anggota yang sudah aktif (DB.nasabah/DB.users), DAN
+  // (b) pendaftaran lain yang masih menunggu diproses Admin
+  // (DB.pendaftaranAnggota berstatus belum 'selesai'). Jika salah satu
+  // kolom terdeteksi sama persis, pendaftaran TIDAK BISA dilanjutkan —
+  // kolom terkait ditandai merah dan tidak ada opsi "lanjutkan saja".
+  // ══════════════════════════════════════════════════════════════════════
+  var namaNorm = _pendaftaranNormNama(nama);
+  var hpNorm = _pendaftaranNormHp(noHp);
+  var usernameLower = username.toLowerCase();
+
+  var nasabahAda = (window.DB && Array.isArray(window.DB.nasabah)) ? window.DB.nasabah : [];
+  var existingUsers = (window.DB && Array.isArray(window.DB.users)) ? window.DB.users : [];
+  var pendaftaranPending = (window.DB && Array.isArray(window.DB.pendaftaranAnggota)) ? window.DB.pendaftaranAnggota.filter(function(d){ return d.status !== 'selesai'; }) : [];
+
+  var namaBentrok = nasabahAda.some(function(n){ return _pendaftaranNormNama(n.nama) === namaNorm; })
+    || pendaftaranPending.some(function(d){ return _pendaftaranNormNama(d.nama) === namaNorm; });
+  var hpBentrok = nasabahAda.some(function(n){ return _pendaftaranNormHp(n.hp) === hpNorm; })
+    || pendaftaranPending.some(function(d){ return _pendaftaranNormHp(d.noHp) === hpNorm; });
+  var usernameBentrok = usernameLower === 'admin'
+    || existingUsers.some(function(u){ return (u.username||'').toLowerCase() === usernameLower; })
+    || pendaftaranPending.some(function(d){ return (d.username||'').toLowerCase() === usernameLower; });
+
+  if (namaBentrok || hpBentrok || usernameBentrok) {
+    var pesanBagian = [];
+    if (namaBentrok) {
+      _daftarAkunMarkFieldError('nama', '⚠️ Nama ini sudah terdaftar. Gunakan nama lengkap lain, contoh tambahkan nama orang tua: "' + nama + ' Bapak Slamet".');
+      pesanBagian.push('Nama');
+    }
+    if (hpBentrok) {
+      _daftarAkunMarkFieldError('noHp', '⚠️ No. HP ini sudah terdaftar pada akun/pendaftaran lain.');
+      pesanBagian.push('No. HP');
+    }
+    if (usernameBentrok) {
+      _daftarAkunMarkFieldError('username', '⚠️ Username ini sudah dipakai, coba username lain.');
+      pesanBagian.push('Username');
+    }
+    showErr('⚠️ ' + pesanBagian.join(', ') + ' sudah terdaftar. Perbaiki kolom bertanda merah di bawah sebelum melanjutkan pendaftaran.');
+    return;
+  }
+  if (err) err.style.display = 'none';
+
+  // ── Data BELUM disimpan ke DB di titik ini. Ditampung sementara agar
+  //    calon anggota bisa mengecek ulang isiannya di halaman review
+  //    sebelum benar-benar dikirim (lihat _confirmDaftarAkunLogin). ──
+  window._pendaftaranReviewData = {
+    nama: nama,
+    noHp: noHp,
+    alamat: alamat,
+    username: username,
+    password: password,
+    catatan: catatan
+  };
+  _renderDaftarAkunReview(window._pendaftaranReviewData);
+  if (typeof closeModal === 'function') closeModal('modalDaftarAkunLogin');
+  if (typeof openModal === 'function') openModal('modalDaftarAkunReview');
+}
+
+/* Escape sederhana agar isian pengguna tidak merusak tampilan HTML pada review */
+function _escHtmlDaftarAkun(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ── Render ringkasan data yang akan dikirim pada modal review ── */
+function _renderDaftarAkunReview(d) {
+  var wrap = document.getElementById('daftarAkunReviewList');
+  if (!wrap || !d) return;
+  function row(label, value, isEmpty) {
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.06)">' +
+      '<span style="font-size:11.5px;color:#6b7280;font-weight:600;white-space:nowrap">' + label + '</span>' +
+      '<span style="font-size:12.5px;color:' + (isEmpty ? '#9ca3af' : '#1c3025') + ';font-weight:700;text-align:right;word-break:break-word;max-width:62%">' + value + '</span>' +
+      '</div>';
+  }
+  wrap.innerHTML =
+    row('Nama Lengkap', _escHtmlDaftarAkun(d.nama)) +
+    row('No. HP / WhatsApp', _escHtmlDaftarAkun(d.noHp)) +
+    row('Alamat', d.alamat ? _escHtmlDaftarAkun(d.alamat) : '-', !d.alamat) +
+    row('Username', _escHtmlDaftarAkun(d.username)) +
+    row('Catatan', d.catatan ? _escHtmlDaftarAkun(d.catatan) : '-', !d.catatan);
+}
+
+/* ── Tombol "Kembali" di halaman review: kembali ke form, data isian tetap ada ── */
+function _kembaliDaftarAkunReview() {
+  if (typeof closeModal === 'function') closeModal('modalDaftarAkunReview');
+  if (typeof openModal === 'function') openModal('modalDaftarAkunLogin');
+}
+
+/* ── Tombol "Lanjutkan" di halaman review: baru di titik ini data benar-benar
+     disimpan ke DB.pendaftaranAnggota, lalu tampil notif di halaman login ── */
+function _confirmDaftarAkunLogin() {
+  var d = window._pendaftaranReviewData;
+  if (!d) { if (typeof closeModal === 'function') closeModal('modalDaftarAkunReview'); return; }
+
+  var reviewBtn = document.getElementById('daftarAkunReviewSubmitBtn');
+  if (reviewBtn) { reviewBtn.disabled = true; reviewBtn.textContent = 'Mengirim...'; }
+
+  if (!window.DB) window.DB = {};
+  if (!Array.isArray(window.DB.pendaftaranAnggota)) window.DB.pendaftaranAnggota = [];
+  window.DB.pendaftaranAnggota.push({
+    id: (typeof uid === 'function') ? uid() : ('pd' + Date.now()),
+    nama: d.nama,
+    noHp: d.noHp,
+    alamat: d.alamat,
+    username: d.username,
+    password: d.password,
+    catatan: d.catatan,
+    status: 'baru',
+    createdAt: (typeof nowISO === 'function') ? nowISO() : new Date().toISOString()
+  });
+
+  setTimeout(function() {
+    try { if (typeof saveDB === 'function') saveDB(); } catch(e) {}
+    window._pendaftaranReviewData = null;
+    if (reviewBtn) { reviewBtn.disabled = false; reviewBtn.textContent = 'Lanjutkan'; }
+    var formBtn = document.getElementById('daftarAkunSubmitBtn');
+    if (formBtn) { formBtn.disabled = false; formBtn.textContent = 'Kirim Pendaftaran'; }
+    if (typeof closeModal === 'function') closeModal('modalDaftarAkunReview');
+    // Notif ini muncul di halaman login (kedua modal sudah tertutup di titik ini)
+    if (typeof showToast === 'function') showToast('✅ Pendaftaran berhasil dikirim, Admin akan segera menghubungi', 3200);
+  }, 300);
 }
 
 document.addEventListener('keydown', function(e) {
@@ -7687,6 +7949,7 @@ var UM_MENUS = [
 ];
 
 function renderUserManagement() {
+  renderPendaftaranAnggotaList();
   var users = usersLoad();
   var nasabah = (window.DB && DB.nasabah) ? DB.nasabah : [];
   var nbMap = {};
@@ -7731,6 +7994,147 @@ function renderUserManagement() {
     return '<label style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;cursor:pointer;font-size:12.5px;font-weight:600;color:#1c3025;transition:all 0.15s" onmouseover="this.style.borderColor=\'#2d6a4f\'" onmouseout="this.style.borderColor=\'#e5e7eb\'">' +
       '<input type="checkbox" value="' + m.id + '" style="width:16px;height:16px;accent-color:#2d6a4f"> ' + m.label + '</label>';
   }).join('');
+}
+
+// Daftar permintaan pendaftaran akun baru yang dikirim calon anggota lewat
+// tombol "Daftar Akun Baru" di halaman login (lihat _submitDaftarAkunLogin()).
+// Calon anggota sudah membuat username & password sendiri saat mendaftar;
+// Admin tinggal menghubungi via WhatsApp untuk verifikasi No. HP + penjelasan
+// koperasi, lalu klik "Konfirmasi & Aktifkan Akun" (_pendaftaranAnggotaKonfirmasi)
+// untuk membuat data Nasabah (status "Tidak Aktif") + mengaktifkan login sekaligus.
+function renderPendaftaranAnggotaList() {
+  var wrap = document.getElementById('pendaftaranAnggotaSection');
+  var listEl = document.getElementById('pendaftaranAnggotaList');
+  if (!wrap || !listEl) return;
+  var list = (window.DB && Array.isArray(DB.pendaftaranAnggota)) ? DB.pendaftaranAnggota.filter(function(d){ return d.status !== 'selesai'; }) : [];
+  if (!list.length) { wrap.style.display = 'none'; listEl.innerHTML = ''; return; }
+  wrap.style.display = 'block';
+  list.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+  listEl.innerHTML = list.map(function(d){
+    var tgl = '-';
+    try { tgl = new Date(d.createdAt).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}); } catch(e) {}
+    var punyaAkunSendiri = !!(d.username && d.password);
+    return '<div style="background:#fffbea;border:1px solid rgba(244,169,34,0.3);border-radius:10px;padding:9px 11px;margin-bottom:6px">' +
+      '<div style="font-size:12px;font-weight:800;color:#1c3025">' + d.nama + '</div>' +
+      '<div style="font-size:10.5px;color:#6b7280;margin-top:2px">' + d.noHp + (d.alamat ? ' &middot; ' + d.alamat : '') + '</div>' +
+      (punyaAkunSendiri ? (
+        '<div style="font-size:10.5px;color:#2d6a4f;margin-top:4px;font-weight:700">&#x1F464; ' + d.username + '</div>' +
+        '<div style="font-size:10px;color:#6b7280;margin-top:1px;display:flex;align-items:center;gap:5px">' +
+          '<span>Password: </span><span id="pdPass_' + d.id + '" style="font-family:monospace">&bull;&bull;&bull;&bull;&bull;&bull;</span>' +
+          '<button type="button" onclick="_pendaftaranTogglePass(\'' + d.id + '\')" style="border:none;background:none;color:#2d6a4f;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;padding:0">lihat</button>' +
+        '</div>'
+      ) : '') +
+      (d.catatan ? '<div style="font-size:10.5px;color:#9ca3af;margin-top:2px;font-style:italic">"' + d.catatan + '"</div>' : '') +
+      '<div style="font-size:9.5px;color:#b07a00;margin-top:4px">Dikirim ' + tgl + '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:8px">' +
+        '<button onclick="_pendaftaranAnggotaWA(\'' + d.id + '\')" style="width:34px;border-radius:8px;border:1.5px solid rgba(37,211,102,0.4);background:rgba(37,211,102,0.1);color:#128c4a;font-size:13px;cursor:pointer;font-family:inherit" title="Pesan WhatsApp calon anggota">&#x1F4AC;</button>' +
+        '<button onclick="_pendaftaranAnggotaKonfirmasi(\'' + d.id + '\')" style="flex:1;padding:7px;border-radius:8px;border:none;background:#2d6a4f;color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">&#x2713; Konfirmasi &amp; Aktifkan Akun</button>' +
+        '<button onclick="_pendaftaranAnggotaHapus(\'' + d.id + '\')" style="width:34px;border-radius:8px;border:1.5px solid rgba(220,38,38,0.3);background:rgba(220,38,38,0.07);color:#dc2626;font-size:11px;cursor:pointer;font-family:inherit">&#x1F5D1;</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── Pesan WhatsApp langsung ke calon anggota untuk konfirmasi akun ── */
+function _pendaftaranAnggotaWA(id) {
+  var d = (window.DB && DB.pendaftaranAnggota || []).find(function(x){ return x.id === id; });
+  if (!d) return;
+  var digits = String(d.noHp || '').replace(/[^\d]/g, '');
+  if (!digits) { showToast('&#x26A0;&#xFE0F; Nomor HP tidak valid'); return; }
+  if (digits.charAt(0) === '0') digits = '62' + digits.slice(1);
+  else if (digits.slice(0,2) !== '62') digits = '62' + digits;
+  var pesan = 'Halo ' + d.nama + ', terima kasih sudah mendaftar sebagai anggota Koperasi Keluarga RENCO. ' +
+    'Kami ingin memastikan data & nomor HP Anda sebelum akun diaktifkan. Mohon konfirmasi ya, terima kasih 🙏';
+  window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(pesan), '_blank');
+}
+
+function _pendaftaranTogglePass(id) {
+  var d = (window.DB && DB.pendaftaranAnggota || []).find(function(x){ return x.id === id; });
+  var el = document.getElementById('pdPass_' + id);
+  if (!d || !el) return;
+  var shown = el.getAttribute('data-shown') === '1';
+  el.textContent = shown ? '••••••' : (d.password || '');
+  el.setAttribute('data-shown', shown ? '0' : '1');
+}
+
+/* ── Konfirmasi & Aktifkan: dipanggil Admin SETELAH menghubungi calon
+   anggota lewat WhatsApp (verifikasi No. HP + penjelasan koperasi).
+   Membuat data Nasabah baru berstatus "Tidak Aktif" (baru jadi "Aktif"
+   otomatis setelah Simpanan Pokok disetujui — lihat _execTransaksi)
+   dan langsung mengaktifkan akun login memakai username & password yang
+   sudah dibuat sendiri oleh calon anggota saat mendaftar. */
+function _pendaftaranAnggotaKonfirmasi(id) {
+  var d = (window.DB && DB.pendaftaranAnggota || []).find(function(x){ return x.id === id; });
+  if (!d) return;
+  if (!d.username || !d.password) {
+    showToast('&#x26A0;&#xFE0F; Pendaftaran ini tidak menyertakan username/password, buat user secara manual lewat "Buat User Baru"');
+    return;
+  }
+  if (!confirm('Buat akun untuk ' + d.nama + ' dengan username "' + d.username + '"?\n\nStatus keanggotaan akan "Tidak Aktif" sampai Simpanan Pokok dibayar & disetujui.')) return;
+
+  if (!window.DB) window.DB = {};
+  if (!Array.isArray(DB.nasabah)) DB.nasabah = [];
+  if (!Array.isArray(DB.users)) DB.users = [];
+  if (typeof DB.nextKKId !== 'number') DB.nextKKId = 1;
+
+  // ── Cek ulang bentrok username (bisa saja sudah dipakai sejak pendaftaran dikirim) ──
+  var usernameLower = d.username.toLowerCase();
+  var bentrok = usernameLower === 'admin' || DB.users.some(function(u){ return (u.username||'').toLowerCase() === usernameLower; });
+  if (bentrok) {
+    showToast('&#x26A0;&#xFE0F; Username "' + d.username + '" sudah dipakai akun lain, minta calon anggota memilih username lain');
+    return;
+  }
+
+  // ── Cek ulang duplikat Nama + No. HP (mis. 2 pendaftaran serupa masuk bersamaan) ──
+  var namaNormKf = (typeof _pendaftaranNormNama === 'function') ? _pendaftaranNormNama(d.nama) : d.nama;
+  var hpNormKf = (typeof _pendaftaranNormHp === 'function') ? _pendaftaranNormHp(d.noHp) : d.noHp;
+  var dupNasabah = DB.nasabah.some(function(n){
+    return (typeof _pendaftaranNormNama === 'function' ? _pendaftaranNormNama(n.nama) : n.nama) === namaNormKf &&
+           (typeof _pendaftaranNormHp === 'function' ? _pendaftaranNormHp(n.hp) : n.hp) === hpNormKf;
+  });
+  if (dupNasabah) {
+    showToast('&#x26A0;&#xFE0F; Nama & No. HP ini sudah terdaftar sebagai anggota lain, periksa kembali sebelum mengaktifkan');
+    return;
+  }
+
+  var nasabahBaru = {
+    id: 'kk' + DB.nextKKId++,
+    nama: d.nama, ktp: '', hp: d.noHp, email: '', alamat: d.alamat,
+    tanggal: (typeof nowISO === 'function') ? nowISO() : new Date().toISOString(),
+    kategori: '', subKategori: '',
+    keanggotaan: [],
+    status: 'Tidak Aktif',
+    keluarga: [], bergabung: (typeof nowISO === 'function') ? nowISO() : new Date().toISOString()
+  };
+  DB.nasabah.push(nasabahBaru);
+
+  DB.users.push({
+    id: 'usr_' + Date.now(),
+    username: d.username, password: d.password,
+    nasabahId: nasabahBaru.id,
+    aksesMenu: (typeof UM_MENUS !== 'undefined') ? UM_MENUS.map(function(m){ return m.id; }) : ['home'],
+    aktif: true, role: 'nasabah', nama: d.nama,
+    createdAt: (typeof nowISO === 'function') ? nowISO() : new Date().toISOString()
+  });
+
+  d.status = 'selesai';
+  d.nasabahId = nasabahBaru.id;
+  saveDB();
+  if (typeof window._doSync === 'function') setTimeout(function(){ window._doSync(); }, 100);
+  if (typeof historyLog === 'function') historyLog('Konfirmasi Pendaftaran', 'Akun baru diaktifkan: ' + d.nama);
+  renderPendaftaranAnggotaList();
+  if (typeof renderUserManagement === 'function') renderUserManagement();
+  if (typeof renderNasabah === 'function') renderNasabah();
+  if (typeof renderHome === 'function') renderHome();
+  showToast('&#x2705; Akun ' + d.nama + ' diaktifkan — status anggota "Tidak Aktif" sampai Simpanan Pokok disetujui');
+}
+
+function _pendaftaranAnggotaHapus(id) {
+  if (!confirm('Hapus permintaan pendaftaran ini?')) return;
+  DB.pendaftaranAnggota = (DB.pendaftaranAnggota || []).filter(function(x){ return x.id !== id; });
+  saveDB();
+  renderPendaftaranAnggotaList();
+  showToast('&#x1F5D1; Permintaan dihapus');
 }
 
 window.showNewUserForm = function() {
@@ -8189,6 +8593,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <input type="password" id="loginPassword" placeholder="Masukkan password" autocomplete="current-password">
     </div>
     <button class="login-btn" id="loginBtn" onclick="handleLogin()">🔐 Masuk</button>
+    <button class="login-btn-secondary" id="daftarAkunBtn" onclick="_openDaftarAkunLogin()">📝 Daftar Akun Baru</button>
     <div class="login-footer">
       RENCO &copy; 2026 &middot; Bersama Membangun Kesejahteraan<br>
       <span style="opacity:0.6">Hubungi admin jika lupa password</span>
@@ -8208,6 +8613,76 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="modal-close" onclick="closeModal('modalLoginInfo')">&#x2715;</button>
     </div>
     <div class="modal-body" id="loginInfoBody"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL PENDAFTARAN AKUN BARU (dari halaman login) ═══
+     Calon anggota mengisi data diri di sini; permintaan tersimpan sebagai
+     "pendaftaran menunggu" agar Admin bisa menindaklanjuti (verifikasi &
+     buat akun resmi lewat Kelola User Nasabah) — bukan langsung membuat
+     akun aktif, karena 1 user selalu ditautkan ke 1 data Nasabah yang
+     sudah diverifikasi Admin. -->
+<div class="modal-overlay" id="modalDaftarAkunLogin" style="z-index:100000">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">📝 Daftar Akun Baru</h3>
+      <button class="modal-close" onclick="closeModal('modalDaftarAkunLogin')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(45,106,79,0.08);border:1px solid rgba(45,106,79,0.2);border-radius:10px;padding:9px 11px;margin-bottom:14px;font-size:11px;color:#2d6a4f;line-height:1.6">
+        💡 Isi data di bawah dan buat username &amp; password Anda sendiri. Akun akan aktif setelah dikonfirmasi Admin lewat WhatsApp — Admin akan memastikan nomor HP benar &amp; memberi penjelasan tentang koperasi.
+      </div>
+      <div class="login-error" id="daftarAkunError" style="display:none"></div>
+      <div class="field" id="field_daftarAkunNama">
+        <label>Nama Lengkap</label>
+        <input type="text" id="daftarAkunNama" placeholder="Sesuai KTP">
+        <div class="field-hint-error" id="daftarAkunNamaErrHint"></div>
+      </div>
+      <div class="field" id="field_daftarAkunNoHp">
+        <label>No. HP / WhatsApp</label>
+        <input type="text" id="daftarAkunNoHp" placeholder="08xxxxxxxxxx">
+        <div style="font-size:10px;color:#6b7280;margin-top:4px;line-height:1.5">📲 Akun akan aktif setelah dikonfirmasi Admin, pemberitahuan akan dikirim ke nomor ini.</div>
+        <div class="field-hint-error" id="daftarAkunNoHpErrHint"></div>
+      </div>
+      <div class="field"><label>Alamat</label><input type="text" id="daftarAkunAlamat" placeholder="Alamat domisili"></div>
+      <div class="field" id="field_daftarAkunUsername">
+        <label>Buat Username</label>
+        <input type="text" id="daftarAkunUsername" placeholder="Untuk login nanti" autocomplete="off">
+        <div class="field-hint-error" id="daftarAkunUsernameErrHint"></div>
+      </div>
+      <div class="field"><label>Buat Password</label><input type="password" id="daftarAkunPassword" placeholder="Minimal 6 karakter" autocomplete="new-password"></div>
+      <div class="field"><label>Ulangi Password</label><input type="password" id="daftarAkunPasswordUlang" placeholder="Ketik ulang password" autocomplete="new-password"></div>
+      <div class="field"><label>Catatan (opsional)</label><input type="text" id="daftarAkunCatatan" placeholder="Contoh: diajak oleh Bapak/Ibu ..."></div>
+      <button class="btn btn-primary btn-block" id="daftarAkunSubmitBtn" onclick="_submitDaftarAkunLogin()">Kirim Pendaftaran</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL REVIEW PENDAFTARAN (tampil sebelum data benar-benar dikirim) ═══
+     Setelah "Kirim Pendaftaran" di form ditekan & lolos validasi, data
+     BELUM disimpan ke DB — hanya ditampung sementara di
+     window._pendaftaranReviewData supaya calon anggota bisa mengecek
+     ulang isiannya di sini. Baru saat menekan "Lanjutkan"
+     (_confirmDaftarAkunLogin) data benar-benar didorong ke
+     DB.pendaftaranAnggota. -->
+<div class="modal-overlay" id="modalDaftarAkunReview" style="z-index:100001">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title">🔎 Periksa Data Pendaftaran</h3>
+      <button class="modal-close" onclick="_kembaliDaftarAkunReview()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(45,106,79,0.08);border:1px solid rgba(45,106,79,0.2);border-radius:10px;padding:9px 11px;margin-bottom:14px;font-size:11px;color:#2d6a4f;line-height:1.6">
+        📋 Pastikan data di bawah sudah benar sebelum dikirim ke Admin. Password tidak ditampilkan di sini demi keamanan.
+      </div>
+      <div id="daftarAkunReviewList" style="display:flex;flex-direction:column;gap:0;margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn btn-block" style="flex:1;background:rgba(107,114,128,0.12);color:#374151" onclick="_kembaliDaftarAkunReview()">&#x2190; Kembali</button>
+        <button type="button" class="btn btn-primary btn-block" style="flex:1" id="daftarAkunReviewSubmitBtn" onclick="_confirmDaftarAkunLogin()">Lanjutkan</button>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -8608,6 +9083,10 @@ window.deletePengurus = function(id) {
       </div>
       <div style="background:rgba(45,106,79,0.08);border:1px solid rgba(45,106,79,0.2);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:10.5px;color:#2d6a4f;line-height:1.5">
         &#x1F4A1; <strong>Aturan:</strong> 1 user untuk 1 nasabah. User nasabah hanya bisa lihat data miliknya & download laporan. Admin mengatur menu yang bisa diakses.
+      </div>
+      <div id="pendaftaranAnggotaSection" style="display:none;margin-bottom:14px">
+        <div class="um-section-title">&#x1F4DD; Pendaftaran Akun Baru (dari Halaman Login)</div>
+        <div id="pendaftaranAnggotaList"></div>
       </div>
       <div class="um-section-title">Daftar User Nasabah</div>
       <div id="userMgmtList"></div>
@@ -10387,30 +10866,50 @@ window.deletePengurus = function(id) {
     .kf-panel { display:none; padding:14px; }
     .kf-panel.active { display:block; }
     .kf-search-row { display:flex; gap:8px; margin-bottom:10px; }
-    .kf-search-row input { flex:1; padding:10px 14px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:13px; font-family:inherit; }
+    .kf-search-wrap { position:relative; flex:1; min-width:0; }
+    .kf-search-wrap .kf-search-icon {
+      position:absolute; left:13px; top:50%; transform:translateY(-50%);
+      font-size:14px; pointer-events:none; line-height:1; opacity:0.6;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .kf-search-row input { width:100%; box-sizing:border-box; padding:10px 14px 10px 36px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:13px; font-family:inherit; }
+    .kf-search-row input:focus { border-color:#7b2d8b; outline:none; }
     .kf-cart-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; cursor:pointer; flex-shrink:0; }
+    .kf-view-toggle-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:17px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#7b2d8b; }
+    .kf-view-toggle-btn:active { background:#f4f1f7; }
+    /* Tab detail & rating pada setiap kartu warung di daftar — dibuat compact & minimalis */
+    .kf-warung-detail-btn {
+      flex-shrink:0; display:flex; align-items:center; gap:2px;
+      padding:3px 7px; border-radius:8px; border:1px solid transparent;
+      background:#f6effa; color:#9b5ead; font-size:10px; font-weight:700;
+      font-family:inherit; cursor:pointer; white-space:nowrap; line-height:1.4;
+    }
+    .kf-warung-detail-btn:active { background:#eee0f2; }
+    .kf-warung-detail-btn.kf-no-rating { color:#adb1b8; background:#f4f4f5; }
     .kf-cart-badge { position:absolute; top:-6px; right:-6px; background:#dc2626; color:#fff; font-size:10px; font-weight:800; border-radius:10px; min-width:18px; height:18px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
     .kf-kat-scroll { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; }
     .kf-kat-chip { flex-shrink:0; padding:6px 12px; border-radius:20px; border:1.5px solid #e5e7eb; background:#fff; font-size:11.5px; font-weight:700; color:#6b7280; cursor:pointer; font-family:inherit; }
     .kf-kat-chip.active { background:#7b2d8b; border-color:#7b2d8b; color:#fff; }
-    .kf-produk-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .kf-produk-card { background:#fff; border-radius:14px; border:1.5px solid #f0eef3; overflow:hidden; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
-    .kf-produk-img { height:110px; background:#f4f1f7; position:relative; }
-    .kf-produk-img img { width:100%; height:100%; object-fit:cover; display:block; }
-    .kf-produk-noimg { display:flex; align-items:center; justify-content:center; height:100%; font-size:30px; }
-    .kf-habis-badge { position:absolute; inset:0; background:rgba(0,0,0,0.55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; text-align:center; }
-    .kf-produk-info { padding:8px 10px 10px; }
-    .kf-produk-nama { font-size:12px; font-weight:700; color:#1f2937; line-height:1.3; margin-bottom:3px; }
-    .kf-produk-harga { font-size:13px; font-weight:800; color:#7b2d8b; }
+    .kf-produk-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .kf-produk-grid.kf-produk-list { display:flex; flex-direction:column; gap:8px; }
+    .kf-produk-list .kf-produk-card { display:flex; align-items:center; gap:10px; padding:8px; }
+    .kf-produk-list .kf-produk-img { width:62px; height:62px; flex-shrink:0; border-radius:12px; }
+    .kf-produk-list .kf-produk-info { padding:0; flex:1; min-width:0; }
+    /* Kartu produk & warung berbagi gaya visual yang sama */
+    .kf-produk-card, .kf-warung-card { background:#fff; border-radius:16px; border:1px solid #f2eef6; overflow:hidden; cursor:pointer; box-shadow:0 2px 10px rgba(123,45,139,0.07); transition:transform .12s ease, box-shadow .12s ease; }
+    .kf-produk-card:active, .kf-warung-card:active { transform:scale(0.97); box-shadow:0 1px 4px rgba(123,45,139,0.08); }
+    .kf-produk-img, .kf-warung-card-logo { height:112px; background:linear-gradient(135deg,#f6f2fa,#efe7f6); position:relative; display:flex; align-items:center; justify-content:center; }
+    .kf-produk-img img, .kf-warung-card-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .kf-produk-noimg { display:flex; align-items:center; justify-content:center; height:100%; font-size:30px; color:#c9b7d9; }
+    .kf-warung-card-logo span { font-size:30px; color:#c9b7d9; }
+    .kf-habis-badge { position:absolute; inset:0; background:rgba(20,10,25,0.6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; text-align:center; }
+    .kf-produk-info, .kf-warung-card-info { padding:10px 11px 12px; }
+    .kf-produk-nama, .kf-warung-card-nama { font-size:12.5px; font-weight:700; color:#1f2937; line-height:1.35; margin-bottom:5px; }
+    .kf-produk-harga { display:inline-block; font-size:12.5px; font-weight:800; color:#7b2d8b; background:#faf5fc; padding:3px 9px; border-radius:8px; }
     .kf-produk-warung { font-size:10px; color:#9ca3af; margin-top:2px; }
     .kf-empty, .kf-empty-cta { text-align:center; padding:40px 20px; color:#9ca3af; font-size:12.5px; }
     .kf-warung-grid { border-radius:14px; overflow:hidden; border:1.5px solid #f0eef3; background:#fff; }
-    .kf-warung-card { background:#fff; border-radius:14px; border:1.5px solid #f0eef3; overflow:hidden; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.04); padding-bottom:10px; }
-    .kf-warung-card-logo { height:88px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:30px; }
-    .kf-warung-card-logo img { width:100%; height:100%; object-fit:cover; display:block; }
-    .kf-warung-card-info { padding:8px 10px 0; }
-    .kf-warung-card-nama { font-size:12.5px; font-weight:800; color:#1f2937; line-height:1.3; margin-bottom:2px; }
-    .kf-warung-card-meta { font-size:10px; color:#9ca3af; }
+    .kf-warung-card-meta { font-size:10px; color:#9ca3af; margin-top:-2px; }
     .kf-warung-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .kf-warung-header-back { width:32px; height:32px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; font-size:14px; cursor:pointer; flex-shrink:0; font-family:inherit; }
     .kf-warung-header-logo { width:38px; height:38px; border-radius:11px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:17px; overflow:hidden; flex-shrink:0; }
@@ -10430,6 +10929,16 @@ window.deletePengurus = function(id) {
     .kf-wa-btn.call { background:rgba(45,106,79,0.1); color:#2d6a4f; }
     .kf-warung-logo-placeholder { width:56px; height:56px; border-radius:14px; background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
     .kf-edit-btn { width:34px; height:34px; border-radius:10px; border:1.5px solid #e5e7eb; background:#fff; cursor:pointer; flex-shrink:0; }
+    /* Modal Detail & Rating Warung */
+    .kf-detail-header { text-align:center; padding:4px 0 14px; }
+    .kf-detail-logo { width:72px; height:72px; border-radius:20px; margin:0 auto 10px; background:linear-gradient(135deg,#f6f2fa,#efe7f6); display:flex; align-items:center; justify-content:center; font-size:30px; color:#c9b7d9; overflow:hidden; }
+    .kf-detail-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .kf-detail-nama { font-size:16px; font-weight:800; color:#1f2937; }
+    .kf-detail-kategori { display:inline-block; margin-top:6px; padding:3px 11px; border-radius:99px; background:#faf5fc; color:#7b2d8b; font-size:10.5px; font-weight:700; }
+    .kf-detail-rating-block { text-align:center; background:#faf7fb; border:1.5px solid #f0eef3; border-radius:14px; padding:14px 12px; margin-bottom:14px; }
+    .kf-detail-rating-stars { font-size:22px; letter-spacing:3px; color:#f4a922; line-height:1; }
+    .kf-detail-rating-stars.kf-empty-stars { color:#d9d3e0; }
+    .kf-detail-rating-num { font-size:11.5px; color:#6b7280; font-weight:700; margin-top:6px; }
     .kf-warung-actions { display:flex; gap:8px; margin-bottom:16px; }
     .kf-section-title { font-size:12.5px; font-weight:800; color:#374151; margin:14px 0 8px; display:flex; align-items:center; gap:6px; }
     .kf-pending-count { background:#dc2626; color:#fff; font-size:10px; font-weight:800; border-radius:10px; padding:1px 7px; }
@@ -10438,14 +10947,40 @@ window.deletePengurus = function(id) {
     .kf-myproduk-item img, .kf-produk-noimg-sm { width:48px; height:48px; border-radius:10px; object-fit:cover; flex-shrink:0; }
     .kf-produk-noimg-sm { background:#f4f1f7; display:flex; align-items:center; justify-content:center; font-size:18px; }
     .kf-mini-btn { width:26px; height:26px; border-radius:7px; border:1px solid #e5e7eb; background:#fff; font-size:11px; cursor:pointer; }
-    .kf-pesanan-card { background:#fff; border:1.5px solid #f0eef3; border-radius:12px; padding:10px 12px; }
-    .kf-status-badge { font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:8px; white-space:nowrap; background:#f4f1f7; color:#7b2d8b; }
+    .kf-pesanan-card { background:#fff; border:1.5px solid #f0eef3; border-radius:12px; padding:10px 12px; transition:box-shadow .2s ease; }
+    .kf-status-badge { font-size:11px; font-weight:800; padding:6px 13px; border-radius:99px; white-space:nowrap; background:#f4f1f7; color:#7b2d8b; display:inline-flex; align-items:center; gap:5px; box-shadow:0 1px 4px rgba(123,45,139,0.12); }
+    .kf-status-badge.kf-clickable { cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; transition:transform .15s ease, box-shadow .15s ease; }
+    .kf-status-badge.kf-clickable:active { transform:scale(0.95); }
+    .kf-status-badge .kf-status-chev { font-size:8px; opacity:0.6; transition:transform .25s ease; display:inline-block; }
+    .kf-status-badge.kf-open .kf-status-chev { transform:rotate(180deg); }
     .kf-status-selesai { background:#dcfce7; color:#16a34a; }
     .kf-status-dibatalkan { background:#fee2e2; color:#dc2626; }
     .kf-status-dikirim { background:#dbeafe; color:#2563eb; }
+    .kf-status-diproses { background:#fef3c7; color:#b45309; }
+    .kf-status-menunggu { background:#f4f1f7; color:#7b2d8b; }
+    @keyframes kfPulseDot { 0%,100%{ box-shadow:0 0 0 0 rgba(123,45,139,0.35); } 50%{ box-shadow:0 0 0 5px rgba(123,45,139,0); } }
+    .kf-timeline-wrap { max-height:0; overflow:hidden; transition:max-height .3s ease; }
+    .kf-timeline-wrap.kf-open { max-height:160px; }
+    .kf-timeline { display:flex; align-items:flex-start; justify-content:space-between; margin:14px 2px 4px; position:relative; }
+    .kf-timeline-step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; z-index:1; }
+    .kf-timeline-dot { width:20px; height:20px; border-radius:50%; background:#f4f1f7; border:2px solid #e5e7eb; display:flex; align-items:center; justify-content:center; font-size:10px; color:#9ca3af; transition:all .25s ease; }
+    .kf-timeline-step.done .kf-timeline-dot { background:#2d6a4f; border-color:#2d6a4f; color:#fff; }
+    .kf-timeline-step.now .kf-timeline-dot { background:#7b2d8b; border-color:#7b2d8b; color:#fff; animation:kfPulseDot 1.4s ease-in-out infinite; }
+    .kf-timeline-step.cancelled .kf-timeline-dot { background:#dc2626; border-color:#dc2626; color:#fff; }
+    .kf-timeline-line { position:absolute; top:9px; left:0; right:0; height:2px; background:#e5e7eb; z-index:0; }
+    .kf-timeline-line-fill { position:absolute; top:9px; left:0; height:2px; background:#2d6a4f; z-index:0; transition:width .3s ease; }
+    .kf-timeline-label { font-size:8.5px; font-weight:700; color:#9ca3af; margin-top:5px; text-align:center; line-height:1.25; }
+    .kf-timeline-step.done .kf-timeline-label, .kf-timeline-step.now .kf-timeline-label { color:#1f2937; }
+    .kf-timeline-cancelled-note { font-size:11px; color:#dc2626; font-weight:700; text-align:center; margin:10px 0 4px; }
     .kf-mini-action { flex:1; padding:6px; border-radius:8px; border:none; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
     .kf-accept { background:#7b2d8b; color:#fff; }
     .kf-reject { background:#fee2e2; color:#dc2626; }
+    .kf-rate { background:#fff7e6; color:#b07a00; border:1.5px solid #f4e0ac !important; }
+    .kf-rating-done { flex:1; display:flex; align-items:center; gap:6px; font-size:11px; color:#6b7280; }
+    .kf-rating-done > :first-child { color:#f4a922; letter-spacing:1px; font-size:12px; }
+    .kf-rating-pick-star { font-size:34px; color:#d9d3e0; cursor:pointer; padding:0 3px; transition:transform .1s ease; display:inline-block; }
+    .kf-rating-pick-star.kf-picked { color:#f4a922; }
+    .kf-rating-pick-star:active { transform:scale(1.15); }
     .kf-cart-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f0eef3; }
     .kf-cart-remove { background:none; border:none; font-size:16px; cursor:pointer; }
     .kf-logo-upload, .kf-foto-upload { width:72px; height:72px; border-radius:14px; border:1.5px dashed #d1d5db; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; margin:0 auto 12px; overflow:hidden; background:#fafafa; position:relative; }
@@ -10504,7 +11039,10 @@ window.deletePengurus = function(id) {
           <button type="button" class="kf-saldo-transfer-btn" onclick="kifayahOpenPindahSaldo()" title="Pindahkan ke Saldo Kifayah">↑</button>
         </div>
         <div class="kf-search-row">
-          <input type="text" id="kfSearchInput" placeholder="Cari warung atau produk..." oninput="renderKifayahBelanja()">
+          <div class="kf-search-wrap">
+            <span class="kf-search-icon">🔎</span>
+            <input type="text" id="kfSearchInput" placeholder="Cari warung atau produk..." oninput="renderKifayahBelanja()">
+          </div>
           <button class="kf-cart-btn" onclick="kifayahOpenCart()">🛒<span class="kf-cart-badge" id="kfCartBadge" style="display:none">0</span></button>
         </div>
         <!-- Daftar Warung: tampil dulu sebelum produk, karena 1 pesanan/checkout hanya untuk 1 warung -->
@@ -10690,6 +11228,42 @@ window.deletePengurus = function(id) {
             Dana akan berpindah dari Saldo Warung menjadi Saldo Kifayah (Simpanan Sukarela) atas nama Anda, dan bisa langsung digunakan untuk belanja Kifayah atau ditarik tunai.
           </div>
           <button class="btn btn-primary btn-block" onclick="kifayahSubmitPindahSaldo()">✅ Pindahkan Sekarang</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Detail & Rating Warung (dibuka dari tab pada tiap kartu daftar warung) -->
+    <div class="modal-overlay" id="modalKfWarungDetail">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalKfWarungDetailTitle">🏪 Detail Warung</h3>
+          <button class="modal-close" onclick="closeModal('modalKfWarungDetail')">✕</button>
+        </div>
+        <div class="modal-body" id="modalKfWarungDetailBody"></div>
+        <div style="padding:0 20px 20px">
+          <button class="btn btn-primary btn-block" id="kfWarungDetailBelanjaBtn">🛍️ Belanja di Warung Ini</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Beri Rating Warung (muncul dari pesanan berstatus "Selesai" milik pembeli) -->
+    <div class="modal-overlay" id="modalKfBeriRating">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">⭐ Beri Rating Warung</h3>
+          <button class="modal-close" onclick="closeModal('modalKfBeriRating')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="text-align:center;font-size:12.5px;color:#6b7280;font-weight:700;margin-bottom:2px">Bagaimana pengalaman belanja Anda di</div>
+          <div style="text-align:center;font-size:15px;font-weight:800;color:#1f2937;margin-bottom:14px" id="kfRatingWarungNama">Warung</div>
+          <div style="text-align:center;margin-bottom:6px" id="kfRatingBintangPicker"></div>
+          <div class="field">
+            <label>Komentar (opsional)</label>
+            <input type="text" id="kfRatingKomentar" placeholder="Ceritakan pengalaman Anda...">
+          </div>
+          <button class="btn btn-primary btn-block" onclick="kifayahSubmitRatingWarung()">Kirim Penilaian</button>
         </div>
       </div>
     </div>
@@ -11535,35 +12109,75 @@ window.deletePengurus = function(id) {
   </div>
 </div>
 
-<!-- MODAL: Bayar Cicilan -->
+<!-- MODAL: Bayar Cicilan / Angsuran (GABUNGAN Koperasi Renco + Renco Capital, 1 tempat pembayaran) -->
 <div class="modal-overlay" id="modalCicilan">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h3 class="modal-title">💳 Bayar Cicilan</h3>
+      <h3 class="modal-title">💳 Bayar Cicilan / Angsuran</h3>
       <button class="modal-close" onclick="closeModal('modalCicilan')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="field"><label>Pilih Pinjaman</label><select id="cicilanPinjaman" onchange="onCicilanPinjamanChange()"></select></div>
-      <!-- Info sisa pokok -->
-      <div id="cicilanSisaInfo" style="display:none;background:rgba(67,97,238,0.07);border:1.5px solid rgba(67,97,238,0.18);border-radius:12px;padding:10px 14px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:11px;font-weight:700;color:#4361ee">🏦 Sisa Pokok Pinjaman</span>
-          <span id="cicilanSisaVal" style="font-size:14px;font-weight:800;color:var(--text)">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:11px;font-weight:700;color:var(--text-soft)">💳 Cicilan Bulan Ini (Disesuaikan)</span>
-          <span id="cicilanNormalVal" style="font-size:13px;font-weight:700;color:var(--text-soft)">—</span>
-        </div>
-        <div id="cicilanUjrahNote" style="display:none;margin-top:7px;padding:6px 9px;border-radius:8px;background:rgba(244,169,34,0.1);border:1px solid rgba(244,169,34,0.35)"></div>
+      <!-- Tab switcher: pilih sumber pinjaman, tapi tetap 1 modal & 1 tombol Bayar per jenis -->
+      <div id="cicilanTabSwitch" style="display:flex;gap:6px;margin-bottom:16px;background:rgba(0,0,0,0.04);padding:4px;border-radius:12px">
+        <button type="button" id="cicilanTabBtnKop" onclick="cicilanSwitchTab('kop')" style="flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;background:#4361ee;color:white;transition:.15s">🏦 Koperasi Renco</button>
+        <button type="button" id="cicilanTabBtnRc" onclick="cicilanSwitchTab('rc')" style="flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;background:transparent;color:var(--text-soft);transition:.15s">🕌 Renco Capital</button>
       </div>
-      <div class="field">
-        <label>Jumlah Bayar (Rp)</label>
-        <input type="number" id="cicilanJumlah" placeholder="0" oninput="onCicilanJumlahInput()">
-        <!-- Peringatan / auto-adjust notice -->
-        <div id="cicilanAdjustNotice" style="display:none;margin-top:6px;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(244,169,34,0.13);color:#b07a00;border:1px solid rgba(244,169,34,0.3)"></div>
+
+      <!-- BLOK: Koperasi Renco (pinjaman biasa) -->
+      <div id="cicilanKopBlock">
+        <div class="field"><label>Pilih Pinjaman</label><select id="cicilanPinjaman" onchange="onCicilanPinjamanChange()"></select></div>
+        <!-- Info sisa pokok -->
+        <div id="cicilanSisaInfo" style="display:none;background:rgba(67,97,238,0.07);border:1.5px solid rgba(67,97,238,0.18);border-radius:12px;padding:10px 14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700;color:#4361ee">🏦 Sisa Pokok Pinjaman</span>
+            <span id="cicilanSisaVal" style="font-size:14px;font-weight:800;color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;font-weight:700;color:var(--text-soft)">💳 Cicilan Bulan Ini (Disesuaikan)</span>
+            <span id="cicilanNormalVal" style="font-size:13px;font-weight:700;color:var(--text-soft)">—</span>
+          </div>
+          <div id="cicilanUjrahNote" style="display:none;margin-top:7px;padding:6px 9px;border-radius:8px;background:rgba(244,169,34,0.1);border:1px solid rgba(244,169,34,0.35)"></div>
+        </div>
+        <div class="field">
+          <label>Jumlah Bayar (Rp)</label>
+          <input type="number" id="cicilanJumlah" placeholder="0" oninput="onCicilanJumlahInput()">
+          <!-- Peringatan / auto-adjust notice -->
+          <div id="cicilanAdjustNotice" style="display:none;margin-top:6px;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(244,169,34,0.13);color:#b07a00;border:1px solid rgba(244,169,34,0.3)"></div>
+        </div>
+        <button id="cicilanBayarBtn" class="btn btn-primary btn-block" onclick="saveCicilan()">💳 Bayar</button>
       </div>
-      <button id="cicilanBayarBtn" class="btn btn-primary btn-block" onclick="saveCicilan()">💳 Bayar</button>
+
+      <!-- BLOK: Renco Capital (pembiayaan / syariah) -->
+      <div id="cicilanRcBlock" style="display:none">
+        <div class="field">
+          <label>Pilih Pembiayaan</label>
+          <select id="rcBayarPmbSelect" onchange="onRcBayarPmbChange()" style="border-color:rgba(123,45,139,0.3)"></select>
+        </div>
+        <!-- Info sisa & cicilan bulan ini — sama persis dengan blok Koperasi -->
+        <div id="rcBayarSisaInfo" style="display:none;background:rgba(123,45,139,0.07);border:1.5px solid rgba(123,45,139,0.2);border-radius:12px;padding:10px 14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700;color:#7b2d8b">🏦 Sisa Pokok Pembiayaan</span>
+            <span id="rcBayarSisaVal" style="font-size:14px;font-weight:800;color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;font-weight:700;color:var(--text-soft)">💳 Tagihan Bulan Ini</span>
+            <span id="rcBayarCicilanVal" style="font-size:13px;font-weight:700;color:var(--text-soft)">—</span>
+          </div>
+          <div id="rcBayarUjrahNote" style="display:none;margin-top:7px;padding:6px 9px;border-radius:8px;background:rgba(123,45,139,0.08);border:1px solid rgba(123,45,139,0.25)"></div>
+        </div>
+        <!-- Input jumlah bayar -->
+        <div class="field">
+          <label>Jumlah Bayar (Rp)</label>
+          <input type="number" id="rcBayarJumlah" placeholder="0" oninput="onRcBayarJumlahInput()" style="border-color:rgba(123,45,139,0.3);font-size:16px;font-weight:700">
+          <!-- Notifikasi otomatis lebih/kurang -->
+          <div id="rcBayarNotice" style="display:none;margin-top:6px;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(244,169,34,0.13);color:#b07a00;border:1px solid rgba(244,169,34,0.3)"></div>
+        </div>
+        <!-- Tombol Bayar -->
+        <button id="rcBayarBtn" class="btn btn-block" onclick="saveRcBayarAngsuran()" style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);color:white;font-size:15px;padding:15px;border-radius:14px">
+          💳 Bayar
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -11625,53 +12239,6 @@ window.deletePengurus = function(id) {
       <!-- Tombol simpan -->
       <button class="btn btn-block" onclick="saveCatatAngsuran()" style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);color:white;font-size:15px;padding:15px;border-radius:14px">
         📝 Simpan Angsuran
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Bayar Angsuran Renco Capital -->
-<div class="modal-overlay" id="modalBayarAngsuranRC">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 class="modal-title" style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:20px">💳</span>
-        <div>
-          <div>Bayar Angsuran</div>
-          <div style="font-size:11px;font-weight:500;color:#7b2d8b;margin-top:1px">Renco Capital</div>
-        </div>
-      </h3>
-      <button class="modal-close" onclick="closeModal('modalBayarAngsuranRC')">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Pilih Pembiayaan -->
-      <div class="field">
-        <label>Pilih Pembiayaan</label>
-        <select id="rcBayarPmbSelect" onchange="onRcBayarPmbChange()" style="border-color:rgba(123,45,139,0.3)"></select>
-      </div>
-      <!-- Info sisa & cicilan bulan ini — sama persis dengan modalCicilan -->
-      <div id="rcBayarSisaInfo" style="display:none;background:rgba(123,45,139,0.07);border:1.5px solid rgba(123,45,139,0.2);border-radius:12px;padding:10px 14px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:11px;font-weight:700;color:#7b2d8b">🏦 Sisa Pokok Pembiayaan</span>
-          <span id="rcBayarSisaVal" style="font-size:14px;font-weight:800;color:var(--text)">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:11px;font-weight:700;color:var(--text-soft)">💳 Tagihan Bulan Ini</span>
-          <span id="rcBayarCicilanVal" style="font-size:13px;font-weight:700;color:var(--text-soft)">—</span>
-        </div>
-        <div id="rcBayarUjrahNote" style="display:none;margin-top:7px;padding:6px 9px;border-radius:8px;background:rgba(123,45,139,0.08);border:1px solid rgba(123,45,139,0.25)"></div>
-      </div>
-      <!-- Input jumlah bayar -->
-      <div class="field">
-        <label>Jumlah Bayar (Rp)</label>
-        <input type="number" id="rcBayarJumlah" placeholder="0" oninput="onRcBayarJumlahInput()" style="border-color:rgba(123,45,139,0.3);font-size:16px;font-weight:700">
-        <!-- Notifikasi otomatis lebih/kurang -->
-        <div id="rcBayarNotice" style="display:none;margin-top:6px;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(244,169,34,0.13);color:#b07a00;border:1px solid rgba(244,169,34,0.3)"></div>
-      </div>
-      <!-- Tombol Bayar -->
-      <button id="rcBayarBtn" class="btn btn-block" onclick="saveRcBayarAngsuran()" style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);color:white;font-size:15px;padding:15px;border-radius:14px">
-        💳 Bayar
       </button>
     </div>
   </div>
@@ -12878,7 +13445,9 @@ function _checkEskalasi() {
   today.setHours(0,0,0,0);
   var changed = false;
 
-  DB.pinjaman.forEach(function(pin) {
+  // Gabungan Pinjaman Koperasi + Pinjaman Kifayah — dua buku terpisah, tapi
+  // sama-sama perlu mesin eskalasi tunggakan yang sama.
+  (DB.pinjaman || []).concat(DB.pinjamanKifayah || []).forEach(function(pin) {
     if (pin.status !== 'aktif' && pin.status !== 'menunggak') return;
     if ((pin.sisaPokok||0) <= 0) return; // sudah lunas, skip
 
@@ -13147,6 +13716,13 @@ let DB = {
   nasabah: [],
   transaksi: [],
   pinjaman: [],
+  // ── Buku Modal Kifayah: pinjaman Qardh khusus Belanja Kifayah, TERPISAH dari
+  // DB.pinjaman (Pinjaman Koperasi umum). Mekanisme: koperasi memberi modal
+  // pinjaman ke Kifayah (per-nasabah, akad Qardh) lalu Kifayah mengembalikan
+  // dana tsb ke koperasi lewat cicilan. Dicatat di sini agar pembukuan Kifayah
+  // tidak tercampur dengan Pinjaman Koperasi biasa (tab Pinjaman, Kelola Pinjaman,
+  // Laporan, dsb) — lihat fungsi-fungsi ber-awalan "kifayah"/"_kf" & totalPembayaranKifayah().
+  pinjamanKifayah: [],
   arisanSetting: { nama: 'Arisan 2025', iuran: 200000 },
   arisanPeserta: [],
   arisanHistory: [],
@@ -13161,6 +13737,7 @@ let DB = {
   nextKKId: 1,
   nextTxnId: 1,
   nextPinId: 1,
+  nextPinKifayahId: 1,
   nextAsetId: 1,
   nextLiabilitasId: 1,
   shuSetting: {
@@ -13202,7 +13779,7 @@ let DB = {
 function _dbMigrate() {
   // Pastikan semua koleksi array ada
   const ARRAYS = [
-    'nasabah','transaksi','pinjaman','aset','liabilitas','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
+    'nasabah','transaksi','pinjaman','pinjamanKifayah','aset','liabilitas','pembiayaan','pembiayaanSyariah','rencoIncome','phuPendapatan','phuPengeluaran',
     'shuDistribusi','arisanPeserta','arisanHistory','forum','polling','pohonImpian','loker',
     'warung','produkWarung','pesananWarung', // Kifayah Marketplace
     'users',  // akun nasabah & admin — disimpan di DB agar sync ke Supabase
@@ -13248,6 +13825,18 @@ function _dbMigrate() {
   if (typeof DB.nextKKId  !== 'number' || DB.nextKKId  < 1) DB.nextKKId  = _maxId(DB.nasabah,  'kk')  + 1;
   if (typeof DB.nextTxnId !== 'number' || DB.nextTxnId < 1) DB.nextTxnId = _maxId(DB.transaksi,'txn') + 1;
   if (typeof DB.nextPinId !== 'number' || DB.nextPinId < 1) DB.nextPinId = _maxId(DB.pinjaman,  'pin') + 1;
+  // ── Migrasi Buku Kifayah: pindahkan pinjaman Qardh asal Kifayah (asalKifayah:true)
+  // yang selama ini nyampur di DB.pinjaman umum, ke buku terpisah DB.pinjamanKifayah.
+  // Dijalankan sekali saja (ditandai DB._kifayahBookMigrated) supaya tidak dobel-proses.
+  if (!DB._kifayahBookMigrated) {
+    var _kfMigrasi = (DB.pinjaman || []).filter(function(p){ return p && p.asalKifayah; });
+    if (_kfMigrasi.length) {
+      DB.pinjaman = DB.pinjaman.filter(function(p){ return !(p && p.asalKifayah); });
+      _kfMigrasi.forEach(function(p){ DB.pinjamanKifayah.push(p); });
+    }
+    DB._kifayahBookMigrated = true;
+  }
+  if (typeof DB.nextPinKifayahId !== 'number' || DB.nextPinKifayahId < 1) DB.nextPinKifayahId = _maxId(DB.pinjamanKifayah, 'pinkf') + 1;
   if (typeof DB.nextAsetId!== 'number' || DB.nextAsetId< 1) DB.nextAsetId= _maxId(DB.aset,     'aset')+ 1;
   if (typeof DB.nextLiabilitasId !== 'number' || DB.nextLiabilitasId < 1) DB.nextLiabilitasId = _maxId(DB.liabilitas, 'liab') + 1;
   // Migrasi: pastikan tiap aset punya array dokumen (arsip dokumen asli)
@@ -13425,7 +14014,7 @@ window.dbCheck = function() {
   var info   = [];
 
   // Koleksi dasar
-  ['nasabah','transaksi','pinjaman','aset','pembiayaan'].forEach(function(k) {
+  ['nasabah','transaksi','pinjaman','pinjamanKifayah','aset','pembiayaan'].forEach(function(k) {
     info.push(k + ': ' + (DB[k]||[]).length + ' item');
   });
 
@@ -16560,7 +17149,25 @@ function saldoSukarelaNasabah(kkId) {
   return setor - tarik;
 }
 function totalPinjamanAktifKK(kkId) {
-  return DB.pinjaman.filter(p=>p.kkId===kkId && p.status==='aktif').reduce((a,b)=>a+b.sisaPokok,0);
+  // Kuota pinjaman pribadi nasabah TETAP menghitung gabungan Pinjaman Koperasi +
+  // Pinjaman Kifayah (dua buku terpisah), sesuai mekanisme awal: hanya BUKUnya
+  // yang dipisah, kuota qardh per-nasabah tetap dihitung total.
+  var totalKop = DB.pinjaman.filter(p=>p.kkId===kkId && p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+  var totalKf  = (DB.pinjamanKifayah||[]).filter(p=>p.kkId===kkId && p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+  return totalKop + totalKf;
+}
+// ── Cari data pinjaman di KEDUA buku (Pinjaman Koperasi & Pinjaman Kifayah).
+// Dipakai oleh alur pembayaran cicilan generik (modal "Bayar Cicilan") yang
+// juga dipakai ulang untuk membayar cicilan Kifayah — supaya satu mesin
+// pembayaran/approval bisa melayani kedua buku tanpa duplikasi logika.
+function _cariPinjamanGabungan(id) {
+  var f = (DB.pinjaman || []).find(function(p){ return p.id === id; });
+  if (f) return f;
+  return (DB.pinjamanKifayah || []).find(function(p){ return p.id === id; }) || null;
+}
+// Kumpulan pinjaman dari kedua buku sekaligus (untuk dropdown/list pembayaran)
+function _semuaPinjamanGabungan() {
+  return (DB.pinjaman || []).concat(DB.pinjamanKifayah || []);
 }
 
 // ========== KAS HEALTH SYSTEM ==========
@@ -16574,7 +17181,7 @@ function getKasSettings() {
 // Buku DB.pembayaranKifayah sendiri adalah CATATAN/AUDIT setiap pembayaran ke warung
 // (untuk ditampilkan sebagai riwayat "buku Pembayaran Kifayah"), bukan sumber hitung kas.
 function totalPembayaranKifayah() {
-  return (DB.pinjaman || []).filter(function(p){ return p.status === 'aktif' && p.asalKifayah; })
+  return (DB.pinjamanKifayah || []).filter(function(p){ return p.status === 'aktif'; })
     .reduce(function(a, b) { return a + (b.sisaPokok || 0); }, 0);
 }
 // Deteksi apakah sebuah baris DB.transaksi berasal dari Kifayah — dipakai untuk
@@ -16582,18 +17189,15 @@ function totalPembayaranKifayah() {
 function _isTxnKifayah(t) {
   if (!t) return false;
   if (t.keterangan && /kifayah/i.test(t.keterangan)) return true;
-  if (t.refId && Array.isArray(DB.pinjaman)) {
-    var pin = DB.pinjaman.find(function(p){ return p.id === t.refId; });
-    if (pin && pin.asalKifayah) return true;
-  }
+  if (t.refId && Array.isArray(DB.pinjamanKifayah) && DB.pinjamanKifayah.some(function(p){ return p.id === t.refId; })) return true;
   return false;
 }
 function calcKas() {
   // Hanya simpanan pokok + wajib yang jadi basis kas (sukarela TIDAK termasuk)
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan' && t.jenis!=='sukarela').reduce((a,b)=>a+b.jumlah,0);
-  // Pinjaman umum (BUKAN pinjaman asal Kifayah — itu dihitung lewat totalPembayaranKifayah
-  // di bawah supaya kas tidak terpotong dua kali untuk transaksi cicilan Kifayah yang sama).
-  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif' && !p.asalKifayah).reduce((a,b)=>a+(b.sisaPokok||0),0);
+  // Pinjaman Koperasi umum (Pinjaman Kifayah kini di buku terpisah DB.pinjamanKifayah,
+  // dihitung lewat totalPembayaranKifayah() di bawah).
+  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
   const totalKifayah = totalPembayaranKifayah();
   const ks = getKasSettings();
   const kasMaks = Math.floor(totalSimpanan * ks.rasioMaks / 100);
@@ -17442,6 +18046,31 @@ function _kfKategoriList(warungId) {
   return Object.keys(set);
 }
 
+var _kfProdukViewMode = localStorage.getItem('kfProdukViewMode') || 'grid'; // 'grid' atau 'list'
+
+function _kfToggleProdukViewMode() {
+  _kfProdukViewMode = (_kfProdukViewMode === 'grid') ? 'list' : 'grid';
+  try { localStorage.setItem('kfProdukViewMode', _kfProdukViewMode); } catch(e) {}
+  renderKifayahBelanja();
+}
+
+function _kfUpdateProdukViewToggleBtn() {
+  var btn = document.getElementById('kfProdukViewToggleBtn');
+  if (!btn) return;
+  btn.innerHTML = (_kfProdukViewMode === 'grid') ? '&#x2630;' : '&#x25A6;';
+  btn.title = (_kfProdukViewMode === 'grid') ? 'Tampilan daftar' : 'Tampilan grid';
+}
+
+// Format rata-rata rating warung jadi bintang ("★★★★☆") untuk tab detail & rating
+// pada tiap kartu daftar warung. Dipakai oleh renderKifayahBelanja() dan
+// _kifayahShowWarungDetail().
+function _kfRatingStars(avg) {
+  var bulat = Math.round(Number(avg) || 0);
+  var out = '';
+  for (var i = 1; i <= 5; i++) out += (i <= bulat) ? '★' : '☆';
+  return out;
+}
+
 function renderKifayahBelanja() {
   _kfRenderSaldoBar();
   var warungListGrid = document.getElementById('kfWarungListGrid');
@@ -17480,10 +18109,15 @@ function renderKifayahBelanja() {
 
     if (warungListEmpty) warungListEmpty.style.display = warungList.length ? 'none' : 'block';
 
+    warungListGrid.className = 'kf-warung-grid';
     warungListGrid.innerHTML = warungList.map(function(w){
       var jumlahProduk = produkAll.filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
       var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
       var subInfo = jumlahProduk+' produk'+(w.alamat ? ' · '+w.alamat : '');
+      var ratingCount = Number(w.ratingCount) || 0;
+      var detailTabHtml = ratingCount > 0
+        ? '<button type="button" class="kf-warung-detail-btn" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">★'+(Number(w.ratingAvg)||0).toFixed(1)+'</button>'
+        : '<button type="button" class="kf-warung-detail-btn kf-no-rating" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">ⓘ</button>';
       return '<div class="member-item-wrap member-active">'
         + '<div class="member-item-row" onclick="_kifayahOpenWarungBelanja(\''+w.id+'\')">'
         +   '<div class="avatar gold">'+logo+'</div>'
@@ -17491,6 +18125,7 @@ function renderKifayahBelanja() {
         +     '<div class="member-name">'+w.nama+'</div>'
         +     '<div class="member-sub">'+subInfo+'</div>'
         +   '</div>'
+        +   detailTabHtml
         +   '<span style="font-size:14px;color:var(--text-soft)">›</span>'
         + '</div></div>';
     }).join('');
@@ -17509,7 +18144,8 @@ function renderKifayahBelanja() {
   warungHeader.innerHTML =
     '<button class="kf-warung-header-back" onclick="_kifayahBackToWarungList()">&#x2190;</button>'
     + '<div class="kf-warung-header-logo">'+wLogo+'</div>'
-    + '<div><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">Belanja hanya dari warung ini per pesanan</div></div>';
+    + '<div style="flex:1;min-width:0"><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">Belanja hanya dari warung ini per pesanan</div></div>'
+    + '<button class="kf-view-toggle-btn" id="kfProdukViewToggleBtn" onclick="_kfToggleProdukViewMode()" title="Ganti tampilan"></button>';
 
   var wInfoEl = document.getElementById('kfWarungInfo');
   if (!wInfoEl) {
@@ -17551,6 +18187,8 @@ function renderKifayahBelanja() {
   }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
 
   if (produkEmptyEl) produkEmptyEl.style.display = produk.length ? 'none' : 'block';
+  _kfUpdateProdukViewToggleBtn();
+  grid.className = 'kf-produk-grid' + (_kfProdukViewMode === 'list' ? ' kf-produk-list' : '');
 
   grid.innerHTML = produk.map(function(p){
     var img = p.foto ? '<img src="'+p.foto+'" alt="'+p.nama+'">' : '<div class="kf-produk-noimg">🛍️</div>';
@@ -17562,6 +18200,56 @@ function renderKifayahBelanja() {
       + '<div class="kf-produk-harga">'+fmt(p.harga)+'</div>'
       + '</div></div>';
   }).join('');
+}
+
+// Tab "Detail & Rating" pada tiap kartu daftar warung Kifayah — menampilkan
+// profil warung (logo, kategori, alamat, kontak, jumlah produk) beserta
+// rating warung (rata-rata bintang dari w.ratingAvg/w.ratingCount, bila
+// belum ada penilaian akan tampil "Belum ada penilaian").
+function _kifayahShowWarungDetail(warungId) {
+  var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
+  if (!w) { if (typeof showToast === 'function') showToast('⚠️ Warung tidak ditemukan'); return; }
+
+  var jumlahProduk = (DB.produkWarung||[]).filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
+  var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
+  var ratingCount = Number(w.ratingCount) || 0;
+  var ratingAvg = Number(w.ratingAvg) || 0;
+  var ratingHtml = ratingCount > 0
+    ? '<div class="kf-detail-rating-stars">'+_kfRatingStars(ratingAvg)+'</div>'
+      + '<div class="kf-detail-rating-num">'+ratingAvg.toFixed(1)+' dari 5 · '+ratingCount+' penilaian</div>'
+    : '<div class="kf-detail-rating-stars kf-empty-stars">☆☆☆☆☆</div>'
+      + '<div class="kf-detail-rating-num">Belum ada penilaian</div>';
+
+  var wLinks = w.kontak ? _lokerPhoneLinks(w.kontak) : null;
+  var kontakHtml = wLinks
+    ? '<div class="kf-wa-contact"><span>'+w.kontak+'</span>'
+      + '<a class="kf-wa-btn wa" href="'+wLinks.wa+'" target="_blank" rel="noopener" title="Chat WhatsApp">'
+      +   '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.24.66-1.2 1.24-1.94 1.4-.5.1-1.16.18-3.4-.73-2.86-1.16-4.7-4.05-4.84-4.24-.14-.19-1.15-1.53-1.15-2.92s.72-2.07 1-2.35c.24-.24.55-.32.73-.32h.53c.17 0 .4-.03.62.48.24.55.8 1.9.87 2.04.07.14.12.3.02.49-.1.19-.15.3-.3.46-.15.16-.31.36-.44.48-.15.14-.3.3-.13.6.17.3.75 1.26 1.62 2.05 1.12 1.02 2.05 1.34 2.35 1.5.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.77.85 2.07 1.01.3.15.5.23.57.36.08.13.08.72-.16 1.38z"/></svg>'
+      + '</a>'
+      + '<a class="kf-wa-btn call" href="'+wLinks.tel+'" title="Telepon Langsung">'
+      +   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+      + '</a></div>'
+    : '-';
+
+  var body =
+      '<div class="kf-detail-header">'
+    +   '<div class="kf-detail-logo">'+logo+'</div>'
+    +   '<div class="kf-detail-nama">'+w.nama+'</div>'
+    +   (w.kategori ? '<div class="kf-detail-kategori">'+w.kategori+'</div>' : '')
+    + '</div>'
+    + '<div class="kf-detail-rating-block">'+ratingHtml+'</div>'
+    + (w.deskripsi ? '<div class="info-row"><span class="info-icon">📝</span><div class="info-text"><div class="info-label">Deskripsi</div><div class="info-val">'+w.deskripsi+'</div></div></div>' : '')
+    + '<div class="info-row"><span class="info-icon">🏠</span><div class="info-text"><div class="info-label">Alamat Warung</div><div class="info-val">'+(w.alamat||'-')+'</div></div></div>'
+    + '<div class="info-row"><span class="info-icon">📱</span><div class="info-text"><div class="info-label">No. HP / WhatsApp</div><div class="info-val">'+kontakHtml+'</div></div></div>'
+    + '<div class="info-row"><span class="info-icon">🛍️</span><div class="info-text"><div class="info-label">Jumlah Produk</div><div class="info-val">'+jumlahProduk+' produk tersedia</div></div></div>';
+
+  var titleEl = document.getElementById('modalKfWarungDetailTitle');
+  var bodyEl = document.getElementById('modalKfWarungDetailBody');
+  var belanjaBtn = document.getElementById('kfWarungDetailBelanjaBtn');
+  if (titleEl) titleEl.innerHTML = '🏪 ' + w.nama;
+  if (bodyEl) bodyEl.innerHTML = body;
+  if (belanjaBtn) belanjaBtn.setAttribute('onclick', "closeModal('modalKfWarungDetail');_kifayahOpenWarungBelanja('"+warungId+"')");
+  if (typeof openModal === 'function') openModal('modalKfWarungDetail');
 }
 
 function _kifayahOpenWarungBelanja(warungId) {
@@ -17829,20 +18517,23 @@ function kifayahCheckout() {
       // tenor terkunci 4 bulan, berstatus "pengajuan" menunggu persetujuan admin,
       // sama seperti pengajuan Qardh biasa dari menu Pinjaman.
       var pin = {
-        id: 'pin' + DB.nextPinId++,
+        id: 'pinkf' + DB.nextPinKifayahId++,
         kkId: myId, jumlah: total, bunga: 0, tenor: 4, akad: 'qardh',
         tujuan: 'Belanja Kifayah — ' + (w ? w.nama : '-'),
         biayaAdmin: 0, adminJenis: 'none',
         sisaPokok: 0, status: 'pengajuan', tanggal: pesanan.dibuatPada, cicilan: [],
-        // Penanda: pinjaman ini lahir dari transaksi Kifayah cicilan. Dipakai calcKas()
-        // untuk MENGECUALIKAN pinjaman ini dari totalPinjaman umum, karena pengurangan
-        // kas untuk Kifayah cicilan sudah dicatat lewat buku Pembayaran Kifayah
-        // (DB.pembayaranKifayah) — supaya kas koperasi tidak terpotong dua kali.
+        // Penanda: pinjaman ini lahir dari transaksi Kifayah cicilan. Mekanismenya
+        // koperasi memberi modal pinjaman ke Kifayah, lalu Kifayah mengembalikan
+        // dana tsb ke koperasi lewat cicilan — dicatat di buku TERPISAH
+        // (DB.pinjamanKifayah), bukan di DB.pinjaman (Pinjaman Koperasi umum),
+        // supaya pembukuan Kifayah khusus untuk pembayaran Kifayah saja & tidak
+        // tampil di tab Pinjaman koperasi biasa. Kas koperasi dihitung lewat
+        // totalPembayaranKifayah() & calcKas() supaya tidak terpotong dua kali.
         // Kuota pinjaman pribadi nasabah (totalPinjamanAktifKK) TETAP menghitung
-        // pinjaman ini seperti biasa — hanya kas koperasi yang dikecualikan.
+        // pinjaman ini seperti biasa (gabungan kedua buku).
         asalKifayah: true
       };
-      DB.pinjaman.push(pin);
+      DB.pinjamanKifayah.push(pin);
       DB.transaksi.push({
         id: 'txn' + DB.nextTxnId++,
         kkId: myId, type: 'pinjaman', jumlah: total,
@@ -18207,6 +18898,41 @@ function kifayahHapusProduk(produkId) {
 function _kfStatusLabel(s) {
   return { menunggu:'⏳ Menunggu Konfirmasi', diproses:'🔧 Diproses', dikirim:'🚚 Dikirim', selesai:'✅ Selesai', dibatalkan:'✕ Dibatalkan' }[s] || s;
 }
+// Urutan tahap normal pesanan (dipakai untuk render stepper progres)
+var _KF_STEPS = [
+  { key:'menunggu', label:'Menunggu', icon:'⏳' },
+  { key:'diproses',  label:'Diproses',  icon:'🔧' },
+  { key:'dikirim',   label:'Dikirim',   icon:'🚚' },
+  { key:'selesai',   label:'Selesai',   icon:'✅' }
+];
+function _kfRenderTimeline(p) {
+  if (p.status === 'dibatalkan') {
+    return '<div class="kf-timeline-cancelled-note">✕ Pesanan ini dibatalkan'+(p.catatanBatal ? ' — '+p.catatanBatal : '')+'</div>';
+  }
+  var curIdx = _KF_STEPS.findIndex(function(s){ return s.key === p.status; });
+  if (curIdx < 0) curIdx = 0;
+  var fillPct = _KF_STEPS.length > 1 ? Math.round((curIdx / (_KF_STEPS.length - 1)) * 100) : 0;
+  var stepsHtml = _KF_STEPS.map(function(s, i){
+    var cls = i < curIdx ? 'done' : (i === curIdx ? 'now' : '');
+    var icon = i <= curIdx ? s.icon : (i);
+    return '<div class="kf-timeline-step '+cls+'">'
+      + '<div class="kf-timeline-dot">'+(i < curIdx ? '✓' : s.icon)+'</div>'
+      + '<div class="kf-timeline-label">'+s.label+'</div>'
+      + '</div>';
+  }).join('');
+  return '<div class="kf-timeline">'
+    + '<div class="kf-timeline-line"></div>'
+    + '<div class="kf-timeline-line-fill" style="width:'+fillPct+'%"></div>'
+    + stepsHtml
+    + '</div>';
+}
+// Toggle buka/tutup stepper progres pesanan saat badge status ditap
+function _kfToggleTimeline(pesananId, badgeEl) {
+  var wrap = document.getElementById('kfTimeline_' + pesananId);
+  if (!wrap) return;
+  var open = wrap.classList.toggle('kf-open');
+  if (badgeEl) badgeEl.classList.toggle('kf-open', open);
+}
 function _kfRenderPesananCard(sellerView, p) {
   var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
   var actions = '';
@@ -18219,6 +18945,11 @@ function _kfRenderPesananCard(sellerView, p) {
     } else if (p.status === 'dikirim') {
       actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'selesai\')">Selesai</button>';
     }
+  } else if (p.status === 'selesai') {
+    // Pembeli hanya bisa menilai warung SETELAH pesanan berstatus "Selesai", dan hanya sekali per pesanan.
+    actions = p.sudahDiRating
+      ? '<div class="kf-rating-done">'+_kfRatingStars(p.ratingValue)+' <span>Terima kasih atas penilaian Anda</span></div>'
+      : '<button class="kf-mini-action kf-rate" onclick="_kifayahOpenRatingModal(\''+p.id+'\')">⭐ Beri Rating Warung</button>';
   }
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh '+(p.pinjamanId?4:(p.cicilan?p.cicilan.tenor:''))+'x</span>' : '';
   var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Koperasi</span>' : '';
@@ -18229,10 +18960,76 @@ function _kfRenderPesananCard(sellerView, p) {
     + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
     + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">'+fmt(p.total)+'</div>'
     + '</div>'
-    + '<div class="kf-status-badge kf-status-'+p.status+'">'+_kfStatusLabel(p.status)+'</div>'
+    + '<div class="kf-status-badge kf-clickable kf-status-'+p.status+'" onclick="_kfToggleTimeline(\''+p.id+'\',this)">'
+      + '<span>'+_kfStatusLabel(p.status)+'</span><span class="kf-status-chev">▾</span>'
     + '</div>'
+    + '</div>'
+    + '<div class="kf-timeline-wrap" id="kfTimeline_'+p.id+'">'+_kfRenderTimeline(p)+'</div>'
     + (actions ? '<div style="display:flex;gap:8px;margin-top:8px">'+actions+'</div>' : '')
     + '</div>';
+}
+
+/* ---------- RATING WARUNG (otomatis dari pembeli, sekali per pesanan "Selesai") ---------- */
+var _kfRatingPesananId = null;
+var _kfRatingPilih = 0;
+
+function _kifayahOpenRatingModal(pesananId) {
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
+  if (!p) return;
+  if (p.status !== 'selesai') { if (typeof showToast === 'function') showToast('⚠️ Pesanan belum selesai'); return; }
+  if (p.sudahDiRating) { if (typeof showToast === 'function') showToast('✅ Pesanan ini sudah dinilai'); return; }
+  _kfRatingPesananId = pesananId;
+  _kfRatingPilih = 0;
+  var namaEl = document.getElementById('kfRatingWarungNama');
+  if (namaEl) namaEl.textContent = p.warungNama || 'Warung';
+  var komentarEl = document.getElementById('kfRatingKomentar');
+  if (komentarEl) komentarEl.value = '';
+  _kfRenderRatingBintangPicker();
+  if (typeof openModal === 'function') openModal('modalKfBeriRating');
+}
+
+function _kfPilihRatingBintang(n) {
+  _kfRatingPilih = n;
+  _kfRenderRatingBintangPicker();
+}
+
+function _kfRenderRatingBintangPicker() {
+  var wrap = document.getElementById('kfRatingBintangPicker');
+  if (!wrap) return;
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += '<span class="kf-rating-pick-star'+(i <= _kfRatingPilih ? ' kf-picked' : '')+'" onclick="_kfPilihRatingBintang('+i+')">'+(i <= _kfRatingPilih ? '★' : '☆')+'</span>';
+  }
+  wrap.innerHTML = html;
+}
+
+function kifayahSubmitRatingWarung() {
+  if (!_kfRatingPilih) { if (typeof showToast === 'function') showToast('⚠️ Pilih bintang penilaian terlebih dahulu'); return; }
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === _kfRatingPesananId; });
+  if (!p) { if (typeof showToast === 'function') showToast('⚠️ Pesanan tidak ditemukan'); return; }
+  if (p.sudahDiRating) { if (typeof showToast === 'function') showToast('✅ Pesanan ini sudah dinilai'); closeModal('modalKfBeriRating'); return; }
+  var w = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
+  if (!w) { if (typeof showToast === 'function') showToast('⚠️ Warung tidak ditemukan'); return; }
+
+  var komentarEl = document.getElementById('kfRatingKomentar');
+  var komentar = komentarEl ? komentarEl.value.trim() : '';
+
+  var oldCount = Number(w.ratingCount) || 0;
+  var oldAvg = Number(w.ratingAvg) || 0;
+  var newCount = oldCount + 1;
+  var newAvg = ((oldAvg * oldCount) + _kfRatingPilih) / newCount;
+  w.ratingCount = newCount;
+  w.ratingAvg = newAvg;
+
+  p.sudahDiRating = true;
+  p.ratingValue = _kfRatingPilih;
+  p.ratingKomentar = komentar;
+  p.ratingPada = nowISO();
+
+  saveDB();
+  closeModal('modalKfBeriRating');
+  if (typeof showToast === 'function') showToast('✅ Terima kasih atas penilaian Anda');
+  renderKifayahPesananSaya();
 }
 function kifayahUpdatePesananStatus(pesananId, status) {
   var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
@@ -18243,7 +19040,7 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   // Koperasi otomatis melunasi ke Warung Nasabah memakai Kas yang tersedia.
   // Kalau Kas tidak mencukupi, pesanan (dan pengajuan Qardh-nya) dibatalkan otomatis.
   if (status === 'selesai' && p.metodeBayar === 'cicilan' && p.pinjamanId) {
-    var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+    var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === p.pinjamanId; });
     if (!pin) {
       showToast('⚠️ Data pinjaman Qardh untuk pesanan ini tidak ditemukan');
       return;
@@ -18411,7 +19208,7 @@ function _kfRenderCicilanCard(p, isPembeliView) {
 // Kartu cicilan BARU — terhubung ke pinjaman Qardh Koperasi Renco sungguhan (DB.pinjaman).
 // Pembayaran angsurannya dilakukan lewat tab Pembayaran → Koperasi Renco (mekanisme Qardh biasa).
 function _kfRenderCicilanCardQardh(p) {
-  var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+  var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === p.pinjamanId; });
   if (!pin) {
     return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
       + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+'</div>'
@@ -18455,17 +19252,23 @@ function _kfRenderCicilanCardQardh(p) {
 // dipanggil dari dalam layar Kifayah (kontainer #pembayaranSubContent hanya
 // ada di layar menu Pembayaran, bukan di Kifayah).
 function kifayahBayarPinjamanTerkait(pinjamanId) {
-  if (typeof openCicilan !== 'function') { showToast('⚠️ Modul pembayaran koperasi tidak tersedia'); return; }
-  var pin = (DB.pinjaman||[]).find(function(x){ return x.id === pinjamanId; });
+  var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === pinjamanId; });
   if (!pin) { showToast('⚠️ Data pinjaman Qardh tidak ditemukan'); return; }
-  openCicilan();
-  setTimeout(function(){
-    var sel = document.getElementById('cicilanPinjaman');
-    if (sel) {
-      sel.value = pinjamanId;
-      if (typeof onCicilanPinjamanChange === 'function') onCicilanPinjamanChange();
-    }
-  }, 120);
+  if (typeof openModal !== 'function') { showToast('⚠️ Modul pembayaran koperasi tidak tersedia'); return; }
+  // Isi dropdown HANYA dengan pinjaman Kifayah ini (bukan seluruh Pinjaman Koperasi)
+  // supaya buku Kifayah tidak tercampur dengan daftar Pinjaman Koperasi umum.
+  if (typeof cicilanSwitchTab === 'function') cicilanSwitchTab('kop');
+  var el = document.getElementById('cicilanPinjaman');
+  if (el) {
+    var kk = typeof getNasabah === 'function' ? getNasabah(pin.kkId) : (DB.nasabah||[]).find(function(a){return a.id===pin.kkId;});
+    el.innerHTML = '<option value="' + pin.id + '">' + (kk ? kk.nama : '?') + ' — ' + fmt(pin.sisaPokok) + '</option>';
+  }
+  var inpCicilan = document.getElementById('cicilanJumlah');
+  if (inpCicilan) { inpCicilan.value = ''; inpCicilan.readOnly = false; inpCicilan.style.background = ''; inpCicilan.style.color = ''; inpCicilan.style.cursor = ''; }
+  var notice = document.getElementById('cicilanAdjustNotice');
+  if (notice) notice.style.display = 'none';
+  openModal('modalCicilan');
+  if (typeof onCicilanPinjamanChange === 'function') onCicilanPinjamanChange();
 }
 function _renderKifayahPembayaranTab() {
   var myId = (typeof _kfMyNasabahId === 'function') ? _kfMyNasabahId() : null;
@@ -18508,6 +19311,20 @@ function kifayahBayarAngsuran(pesananId, ke) {
 }
 
 /* ---------- LAPORAN KEUANGAN (rekap penjualan warung sendiri) ---------- */
+var _kfLaporanBulan = 'semua'; // 'semua' atau 'YYYY-MM'
+
+var _KF_BULAN_NAMA = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function _kfBulanLabel(ym) {
+  if (!ym || ym === 'semua') return 'Semua Bulan';
+  var parts = ym.split('-');
+  var idx = parseInt(parts[1], 10) - 1;
+  return (_KF_BULAN_NAMA[idx]||'-') + ' ' + parts[0];
+}
+function _kfSetLaporanBulan(ym) {
+  _kfLaporanBulan = ym;
+  renderKifayahLaporanKeuangan();
+}
+
 function renderKifayahLaporanKeuangan() {
   var el = document.getElementById('kfLaporanKeuanganContent');
   if (!el) return;
@@ -18520,13 +19337,36 @@ function renderKifayahLaporanKeuangan() {
       + '</div>';
     return;
   }
-  var semuaPesanan = (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; });
+  var semuaPesananAll = (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; });
+
+  // ===== Daftar bulan yang tersedia (untuk selector & arsip) =====
+  var bulanSet = {};
+  semuaPesananAll.forEach(function(p){
+    var ym = (p.dibuatPada||'').slice(0,7);
+    if (ym) bulanSet[ym] = true;
+  });
+  var daftarBulan = Object.keys(bulanSet).sort(function(a,b){ return b.localeCompare(a); });
+
+  // Kalau bulan yang tadinya dipilih sudah tidak ada datanya, kembali ke 'semua'.
+  if (_kfLaporanBulan !== 'semua' && daftarBulan.indexOf(_kfLaporanBulan) === -1) _kfLaporanBulan = 'semua';
+
+  var semuaPesanan = (_kfLaporanBulan === 'semua') ? semuaPesananAll
+    : semuaPesananAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === _kfLaporanBulan; });
+
+  // ===== Selector bulan (chip scroll horizontal) =====
+  var html = '<div class="kf-kat-scroll" style="margin:0 4px 12px">'
+    + '<button class="kf-kat-chip'+(_kfLaporanBulan==='semua'?' active':'')+'" onclick="_kfSetLaporanBulan(\'semua\')">Semua Bulan</button>'
+    + daftarBulan.map(function(ym){
+        return '<button class="kf-kat-chip'+(_kfLaporanBulan===ym?' active':'')+'" onclick="_kfSetLaporanBulan(\''+ym+'\')">'+_kfBulanLabel(ym)+'</button>';
+      }).join('')
+    + '</div>';
+
   var selesai = semuaPesanan.filter(function(p){ return p.status === 'selesai'; });
   var pendapatan = selesai.reduce(function(s,p){ return s+(p.total||0); }, 0);
   var piutangCicilan = semuaPesanan.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan && !p.cicilan.lunas; })
     .reduce(function(s,p){ return s + p.cicilan.jadwal.filter(function(j){ return j.status!=='lunas'; }).reduce(function(s2,j){ return s2+j.jumlah; },0); }, 0);
 
-  // Produk terlaris (berdasarkan qty terjual di seluruh pesanan, tidak hanya selesai)
+  // Produk terlaris (berdasarkan qty terjual di seluruh pesanan pada rentang bulan terpilih, tidak hanya selesai)
   var qtyPerProduk = {};
   semuaPesanan.forEach(function(p){
     p.items.forEach(function(i){
@@ -18536,7 +19376,9 @@ function renderKifayahLaporanKeuangan() {
   var terlaris = Object.keys(qtyPerProduk).map(function(nama){ return {nama:nama, qty:qtyPerProduk[nama]}; })
     .sort(function(a,b){ return b.qty - a.qty; }).slice(0, 5);
 
-  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+  html += '<div class="kf-section-title" style="padding:0 4px;margin-bottom:6px">'+_kfBulanLabel(_kfLaporanBulan)+'</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
     + '<div style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);border-radius:14px;padding:12px;color:#fff">'
     + '<div style="font-size:10px;opacity:0.85">💰 Total Pendapatan</div>'
     + '<div style="font-size:16px;font-weight:800;margin-top:2px">'+fmt(pendapatan)+'</div>'
@@ -18568,6 +19410,27 @@ function renderKifayahLaporanKeuangan() {
           + '</div>';
       }).join('') + '</div>'
       : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada penjualan.</div>');
+
+  // ===== Arsip Bulanan: rekap ringkas tiap bulan, tampil saat 'Semua Bulan' dipilih =====
+  if (_kfLaporanBulan === 'semua' && daftarBulan.length) {
+    html += '<div class="kf-section-title" style="margin-top:16px">🗂️ Arsip Bulanan</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px">' + daftarBulan.map(function(ym){
+      var pBulan = semuaPesananAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === ym; });
+      var selesaiBulan = pBulan.filter(function(p){ return p.status === 'selesai'; });
+      var pendapatanBulan = selesaiBulan.reduce(function(s,p){ return s+(p.total||0); }, 0);
+      return '<div class="kf-myproduk-item" style="cursor:pointer" onclick="_kfSetLaporanBulan(\''+ym+'\')">'
+        + '<div class="kf-produk-noimg-sm">🗓️</div>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-size:12.5px;font-weight:700;color:#1f2937">'+_kfBulanLabel(ym)+'</div>'
+        +   '<div style="font-size:10.5px;color:#9ca3af">'+pBulan.length+' pesanan · '+selesaiBulan.length+' selesai</div>'
+        + '</div>'
+        + '<div style="text-align:right">'
+        +   '<div style="font-size:12.5px;font-weight:800;color:#7b2d8b">'+fmt(pendapatanBulan)+'</div>'
+        +   '<span style="font-size:11px;color:var(--text-soft)">Lihat ›</span>'
+        + '</div>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
 
   el.innerHTML = html;
 }
@@ -18720,7 +19583,7 @@ function kifayahAdminHapusSemuaTransaksi() {
   var pinIdsPending = [];
   pesananList.forEach(function(p){
     if (p.pinjamanId) {
-      var pin = (DB.pinjaman||[]).find(function(x){ return x.id === p.pinjamanId; });
+      var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === p.pinjamanId; });
       if (pin && pin.status === 'pengajuan') pinIdsPending.push(pin.id);
     }
   });
@@ -18743,7 +19606,7 @@ function kifayahAdminHapusSemuaTransaksi() {
     return !(t.statusTxn === 'pending' && pinIdsPending.indexOf(t.refId) !== -1);
   });
   // Hapus pinjaman Qardh Kifayah yang masih pengajuan (belum disetujui admin)
-  DB.pinjaman = (DB.pinjaman||[]).filter(function(x){ return pinIdsPending.indexOf(x.id) === -1; });
+  DB.pinjamanKifayah = (DB.pinjamanKifayah||[]).filter(function(x){ return pinIdsPending.indexOf(x.id) === -1; });
   // Hapus semua pesanan/transaksi Kifayah
   DB.pesananWarung = [];
 
@@ -21252,8 +22115,9 @@ window.rpBayarAngsuranRC = function(pmbId, noAng) {
     rcBayar(pmbId, noAng);
     return;
   }
-  /* Fallback: modal RencoPay bawaan */
-  if(typeof openModal==='function') openModal('modalBayarAngsuranRC');
+  /* Fallback: modal gabungan Bayar Cicilan/Angsuran, tab Renco Capital */
+  if(typeof cicilanSwitchTab==='function') cicilanSwitchTab('rc');
+  if(typeof openModal==='function') openModal('modalCicilan');
   if(typeof showToast==='function') showToast('⚠️ Gunakan menu Bayar Angsuran di tab Pinjaman');
 };
 
@@ -21987,9 +22851,15 @@ function rpDetailTagihan(id) {
   const getPinjamanAktif = () => {
     const db = getDB();
     const nasabah = db.nasabah || [];
-    return (db.pinjaman || [])
-      .filter(p => p.status === 'aktif' && (p.sisaPokok || 0) > 0)
-      .map(p => {
+    // Gabungkan Pinjaman Koperasi umum + Pinjaman Kifayah (buku terpisah) —
+    // keduanya tetap butuh reminder tagihan bulanan yang sama, hanya labelnya
+    // dibedakan supaya kelihatan mana yang berasal dari Belanja Kifayah.
+    const sumberPin = (db.pinjaman || []).map(p => ({ p, _kf: false }))
+      .concat((db.pinjamanKifayah || []).map(p => ({ p, _kf: true })));
+    return sumberPin
+      .filter(x => x.p.status === 'aktif' && (x.p.sisaPokok || 0) > 0)
+      .map(x => {
+        const p = x.p;
         const kk = nasabah.find(n => n.id === p.kkId);
         const sisa   = p.sisaPokok || p.jumlah || 0;
         const tenor  = Math.max(1, p.tenor || 12);
@@ -22019,7 +22889,7 @@ function rpDetailTagihan(id) {
 
         return {
           id:      p.id,
-          sumber:  'Koperasi Renco',
+          sumber:  x._kf ? 'Koperasi Renco — Kifayah' : 'Koperasi Renco',
           name:    kk ? kk.nama : ('Nasabah ' + (p.kkId||'')),
           kkId:    p.kkId,
           cicilan,
@@ -32708,6 +33578,12 @@ function saveSimpanan() {
 
   DB.transaksi.push(txn);
 
+  // ── Simpanan Pokok dicatat langsung oleh Admin → anggota otomatis jadi "Aktif" ──
+  if (jenis === 'pokok') {
+    var _nbPokokAdm = (DB.nasabah||[]).find(function(n){ return n.id === kkId; });
+    if (_nbPokokAdm && _nbPokokAdm.status !== 'Aktif') _nbPokokAdm.status = 'Aktif';
+  }
+
   // Hapus pending iuran wajib bulan yang sama jika ada (admin langsung approve)
   if (bulanIuran && Array.isArray(DB.pendingTransaksi)) {
     DB.pendingTransaksi = DB.pendingTransaksi.filter(function(p) {
@@ -33349,7 +34225,33 @@ function updateEditBungaNolBtn() {
   }
 }
 
+/* ── GABUNGAN 1 TEMPAT PEMBAYARAN: switch antara tab Koperasi Renco & Renco Capital
+     di dalam modal yang sama (#modalCicilan). Sistem/logika perhitungan masing-masing
+     TIDAK diubah — hanya tampilannya digabung jadi satu modal. ── */
+function cicilanSwitchTab(tab) {
+  var kopBlock = document.getElementById('cicilanKopBlock');
+  var rcBlock  = document.getElementById('cicilanRcBlock');
+  var btnKop   = document.getElementById('cicilanTabBtnKop');
+  var btnRc    = document.getElementById('cicilanTabBtnRc');
+  if (!kopBlock || !rcBlock) return;
+  if (tab === 'rc') {
+    kopBlock.style.display = 'none';
+    rcBlock.style.display  = '';
+    if (btnKop) { btnKop.style.background = 'transparent'; btnKop.style.color = 'var(--text-soft)'; }
+    if (btnRc)  { btnRc.style.background  = 'linear-gradient(135deg,#7b2d8b,#9b59b6)'; btnRc.style.color = 'white'; }
+    if (typeof _rcPopulateBayarSelect === 'function') _rcPopulateBayarSelect();
+  } else {
+    tab = 'kop';
+    rcBlock.style.display  = 'none';
+    kopBlock.style.display = '';
+    if (btnRc)  { btnRc.style.background  = 'transparent'; btnRc.style.color = 'var(--text-soft)'; }
+    if (btnKop) { btnKop.style.background = '#4361ee'; btnKop.style.color = 'white'; }
+  }
+  window._cicilanActiveTab = tab;
+}
+
 function openCicilan() {
+  cicilanSwitchTab('kop');
   const el = document.getElementById('cicilanPinjaman');
   el.innerHTML = DB.pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').map(p=>{
     const kk = getNasabah(p.kkId);
@@ -33368,7 +34270,7 @@ function openCicilan() {
 
 function onCicilanPinjamanChange() {
   const pinId = document.getElementById('cicilanPinjaman').value;
-  const pin = DB.pinjaman.find(p=>p.id===pinId);
+  const pin = _cariPinjamanGabungan(pinId);
   const infoEl = document.getElementById('cicilanSisaInfo');
   if (!pin) { infoEl.style.display='none'; return; }
 
@@ -33527,7 +34429,7 @@ function onCicilanJumlahInput() {
 function saveCicilan() {
   const pinId = document.getElementById('cicilanPinjaman').value;
   let jumlah = parseFloat(document.getElementById('cicilanJumlah').value)||0;
-  const pin = DB.pinjaman.find(p=>p.id===pinId);
+  const pin = _cariPinjamanGabungan(pinId);
   if (!pin||jumlah<=0) { showToast('⚠️ Data tidak valid'); return; }
 
   const sisa = pin.sisaPokok||0;
@@ -47332,10 +48234,13 @@ function renderRencoCapitalHTML() {
   +'<div style="height:16px"></div>';
 }
 
-/* ── Bayar angsuran langsung dari Renco Capital ── */
-function _rcBayarAngsuran(pmbId, noAng) {
-  // Populate dropdown dengan semua pembiayaan aktif (DB.pembiayaan + DB.pembiayaanSyariah)
+/* ── Populate dropdown Renco Capital dengan semua pembiayaan aktif
+     (DB.pembiayaan + DB.pembiayaanSyariah). Dipakai baik saat dibuka lewat
+     tombol khusus RC (dengan pmbId preselect) maupun saat pindah tab manual
+     dari dalam modal gabungan (tanpa preselect). ── */
+function _rcPopulateBayarSelect(pmbId) {
   var sel = document.getElementById('rcBayarPmbSelect');
+  if (!sel) return;
   var AKAD_LBL = {murabahah:'Murabahah',mudharabah:'Mudharabah',musyarakah:'Musyarakah',ijarah:'Ijarah',istishna:"Istishna'",qardh:'Qardh'};
   var aktif = (DB.pembiayaan || []).filter(function(p){ return p.status === 'aktif'; });
   var syariah = (DB.pembiayaanSyariah || []).filter(function(p){ return p.status === 'aktif'; });
@@ -47365,7 +48270,13 @@ function _rcBayarAngsuran(pmbId, noAng) {
   document.getElementById('rcBayarJumlah').value = '';
   document.getElementById('rcBayarNotice').style.display = 'none';
   document.getElementById('rcBayarSisaInfo').style.display = 'none';
-  openModal('modalBayarAngsuranRC');
+}
+
+/* ── Bayar angsuran langsung dari Renco Capital — kini membuka modal gabungan (#modalCicilan) tab RC ── */
+function _rcBayarAngsuran(pmbId, noAng) {
+  cicilanSwitchTab('rc');
+  _rcPopulateBayarSelect(pmbId);
+  openModal('modalCicilan');
   onRcBayarPmbChange();
 }
 
@@ -47631,7 +48542,7 @@ function saveRcBayarAngsuran() {
 
   // ── Pembiayaan: delegate ke bayarAngsuranPembSy ──
   if (isSyr) {
-    closeModal('modalBayarAngsuranRC');
+    closeModal('modalCicilan');
     if (typeof bayarAngsuranPembSy === 'function') bayarAngsuranPembSy(pmbId);
     return;
   }
@@ -47868,7 +48779,7 @@ function saveRcBayarAngsuran() {
   }
 
   saveDB();
-  closeModal('modalBayarAngsuranRC');
+  closeModal('modalCicilan');
   rerenderRencoCapital();
   // Sync tagihan RencoPay setelah bayar angsuran RC
   if (window.TagihanApp) {
@@ -54242,17 +55153,17 @@ window.rcBayar = function(pmbId, noAngsuran) {
     _rcBayarAngsuran(pmbId, noAngsuran);
     return;
   }
-  // Fallback: cari pmb & buka modal bayar angsuran RC
+  // Fallback: cari pmb & buka modal gabungan (tab Renco Capital)
   var db = window.DB || {};
   var pmb = (db.pembiayaan || []).find(function(p){ return p.id === pmbId; });
   if (!pmb) { if(typeof showToast==='function') showToast('⚠️ Data pembiayaan tidak ditemukan'); return; }
-  var modal = document.getElementById('modalBayarAngsuranRC');
+  var modal = document.getElementById('modalCicilan');
   if (!modal) { if(typeof showToast==='function') showToast('⚠️ Modal tidak tersedia'); return; }
-  // Isi field modal jika ada
-  var selPmb = document.getElementById('rcBayarPmbId') || document.getElementById('angsuranPmbId');
-  if (selPmb) { selPmb.value = pmbId; if(typeof onRcPmbChange==='function') onRcPmbChange(); }
-  if(typeof openModal==='function') openModal('modalBayarAngsuranRC');
+  if (typeof cicilanSwitchTab === 'function') cicilanSwitchTab('rc');
+  if (typeof _rcPopulateBayarSelect === 'function') _rcPopulateBayarSelect(pmbId);
+  if(typeof openModal==='function') openModal('modalCicilan');
   else { modal.style.display='flex'; modal.classList.add('active'); }
+  if (typeof onRcBayarPmbChange === 'function') onRcBayarPmbChange();
 };
 
 window.rcPerp = function(pmbId, noAngsuran) {
@@ -54466,7 +55377,7 @@ window.nsBayarCicilan = function(pinId) {
         });
         if (adaPending) {
           if (typeof showToast === 'function') showToast('⏳ Pembayaran RC sudah diajukan — menunggu persetujuan admin');
-          if (typeof closeModal === 'function') closeModal('modalBayarAngsuranRC');
+          if (typeof closeModal === 'function') closeModal('modalCicilan');
           return;
         }
 
@@ -54480,7 +55391,7 @@ window.nsBayarCicilan = function(pinId) {
           keterangan: 'Bayar angsuran Renco Capital — ' + namaNasabah + ' (Rp ' + jumlah.toLocaleString('id-ID') + ')',
           data: { pmbId: pmbId, jumlah: jumlah, kkId: pmb.kkId }
         });
-        if (typeof closeModal === 'function') closeModal('modalBayarAngsuranRC');
+        if (typeof closeModal === 'function') closeModal('modalCicilan');
         if (typeof renderHome === 'function') renderHome();
         if (typeof rerenderRencoCapital === 'function') setTimeout(rerenderRencoCapital, 100);
         if (typeof showToast === 'function') showToast('⏳ Pembayaran angsuran RC dikirim — menunggu persetujuan admin');
@@ -54680,6 +55591,13 @@ window.nsBayarCicilan = function(pinId) {
           tanggal:txnTanggal, approvalId:item.id};
         if (bulanIuranApv) txnObj.bulanIuran = bulanIuranApv;
         DB.transaksi.push(txnObj);
+        // ── Simpanan Pokok disetujui → anggota otomatis jadi "Aktif" ──
+        // (akun baru dari pendaftaran mandiri berstatus "Tidak Aktif" sampai
+        // titik ini; lihat _pendaftaranAnggotaKonfirmasi)
+        if ((item.jenis||'') === 'pokok') {
+          var _nbPokok = (DB.nasabah||[]).find(function(n){ return n.id === item.kkId; });
+          if (_nbPokok && _nbPokok.status !== 'Aktif') _nbPokok.status = 'Aktif';
+        }
         // Refresh tab iuran jika sedang terbuka
         if (typeof renderNasabahIuranWajib==='function' &&
             document.getElementById('iuranWajibContent'))
@@ -54699,7 +55617,7 @@ window.nsBayarCicilan = function(pinId) {
       }
       if (item.type==='cicilan') {
         var pinId=d.pinId;
-        var pin=(DB.pinjaman||[]).find(function(p){return p.id===pinId;});
+        var pin=typeof _cariPinjamanGabungan==='function' ? _cariPinjamanGabungan(pinId) : (DB.pinjaman||[]).find(function(p){return p.id===pinId;});
         if(!pin){ if(typeof showToast==='function') showToast('⚠️ Pinjaman tidak ditemukan'); return false; }
         var jml=Math.min(item.jumlah,pin.sisaPokok||0);
         // Hitung nomor angsuran saat ini
@@ -57781,11 +58699,14 @@ console.log('✅ Modul Berjangka Syariah & Transparansi Dana termuat');
     if (typeof _origOpenModal === 'function') _origOpenModal.apply(this, arguments);
     var el = document.getElementById(id);
     if (el) {
-      // FIX: modal info halaman login (Tentang/Produk/Legalitas/Struktur/Bantuan)
-      // harus selalu tampil DI ATAS #loginScreen (z-index 99999), jadi jangan
-      // ikut ditimpa oleh counter _topZ yang basisnya cuma 500.
-      if (id === 'modalLoginInfo') {
-        el.style.zIndex = '100000';
+      // FIX: modal-modal yang dibuka dari HALAMAN LOGIN (info Tentang/Produk/
+      // Legalitas/Struktur/Bantuan, DAN modal Daftar Akun Baru) harus selalu
+      // tampil DI ATAS #loginScreen (z-index 99999), jadi jangan ikut ditimpa
+      // oleh counter _topZ yang basisnya cuma 500 — kalau ikut ketimpa, modal
+      // jadi tersembunyi DI BELAKANG layar login (seolah tidak muncul sama
+      // sekali) walau sebenarnya sudah "open".
+      if (id === 'modalLoginInfo' || id === 'modalDaftarAkunLogin' || id === 'modalDaftarAkunReview') {
+        el.style.zIndex = '100001';
         return;
       }
       _topZ += 1;
