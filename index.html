@@ -5806,6 +5806,30 @@ function handleLogin() {
   btn.disabled = true; btn.textContent = 'Memuat data...';
   err.style.display = 'none';
 
+  // Langkah-langkah "berhasil login" — dipakai di beberapa jalur (login lokal
+  // langsung berhasil, atau berhasil setelah fresh-reload dari cloud) supaya
+  // tidak terduplikasi.
+  function _handleLoginSuccess() {
+    err.style.display = 'none';
+    hideLoginScreen();
+    applyRoleRestrictions();
+    updateHeaderUserInfo();
+    if (typeof renderHome === 'function') renderHome();
+    if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
+    if (typeof showToast === 'function') showToast('&#x1F44B; Selamat datang, ' + (AUTH.user.nama || AUTH.user.username) + '!');
+    setTimeout(function() { if (typeof window._tampilkanNasehat === 'function') window._tampilkanNasehat(); }, 800);
+    // Refresh data cloud setelah login agar data terbaru tampil tanpa logout
+    if (window._rencoSupabase && typeof window._rencoSupabase.load === 'function') {
+      window._rencoSupabase.load().then(function(result) {
+        if (result && result.payload) {
+          if (typeof window._applyCloudDataPublic === 'function') window._applyCloudDataPublic(result.payload);
+          if (typeof window._reRenderAllPublic === 'function') window._reRenderAllPublic();
+          if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
+        }
+      }).catch(function(){});
+    }
+  }
+
   // Jika DB.users masih kosong, tunggu cloud selesai dulu (maks 10 detik)
   function _tryLogin() {
     var users = (window.DB && Array.isArray(window.DB.users)) ? window.DB.users : [];
@@ -5814,28 +5838,25 @@ function handleLogin() {
       // Data sudah siap, lakukan login
       btn.textContent = 'Memverifikasi...';
       setTimeout(function() {
-        // SKENARIO 1: pastikan window.DB fresh tepat sebelum authLogin()
-        // (dan _catatLoginLog() di dalamnya) berjalan.
+        // PERBAIKAN: coba login LANGSUNG dulu pakai data yang sudah ada di
+        // perangkat (window.DB.users saat ini) — SEBELUM menarik ulang data
+        // dari cloud. Ini penting untuk akun yang BARU SAJA dibuat (mis. admin
+        // ke-2/ke-3): kalau upload ke cloud belum selesai (koneksi lambat)
+        // saat admin logout lalu langsung mencoba login pakai akun baru itu,
+        // fresh-reload-dari-cloud di bawah bisa menimpa data lokal dengan
+        // snapshot cloud yang BELUM memuat akun baru tsb, sehingga login
+        // gagal padahal akunnya sudah benar dibuat. Coba lokal dulu — kalau
+        // berhasil, tidak perlu menunggu jaringan sama sekali.
+        if (authLogin(u, p)) {
+          _handleLoginSuccess();
+          return;
+        }
+        // Login lokal gagal — mungkin memang salah, ATAU data di perangkat ini
+        // memang belum sinkron (mis. device lain / device baru). Tarik ulang
+        // dari cloud lalu coba sekali lagi sebelum benar-benar dianggap gagal.
         _rencoFreshReloadBeforeLogin(function() {
         if (authLogin(u, p)) {
-          err.style.display = 'none';
-          hideLoginScreen();
-          applyRoleRestrictions();
-          updateHeaderUserInfo();
-          if (typeof renderHome === 'function') renderHome();
-          if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
-          if (typeof showToast === 'function') showToast('&#x1F44B; Selamat datang, ' + (AUTH.user.nama || AUTH.user.username) + '!');
-          setTimeout(function() { if (typeof window._tampilkanNasehat === 'function') window._tampilkanNasehat(); }, 800);
-          // Refresh data cloud setelah login agar data terbaru tampil tanpa logout
-          if (window._rencoSupabase && typeof window._rencoSupabase.load === 'function') {
-            window._rencoSupabase.load().then(function(result) {
-              if (result && result.payload) {
-                if (typeof window._applyCloudDataPublic === 'function') window._applyCloudDataPublic(result.payload);
-                if (typeof window._reRenderAllPublic === 'function') window._reRenderAllPublic();
-                if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
-              }
-            }).catch(function(){});
-          }
+          _handleLoginSuccess();
         } else {
           err.textContent = '&#x274C; Username atau password salah';
           err.style.display = 'block';
@@ -5863,24 +5884,7 @@ function handleLogin() {
         btn.textContent = 'Memverifikasi...';
         setTimeout(function() {
           if (authLogin(u, p)) {
-            err.style.display = 'none';
-            hideLoginScreen();
-            applyRoleRestrictions();
-            updateHeaderUserInfo();
-            if (typeof renderHome === 'function') renderHome();
-            if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
-            if (typeof showToast === 'function') showToast('&#x1F44B; Selamat datang, ' + (AUTH.user.nama || AUTH.user.username) + '!');
-            setTimeout(function() { if (typeof window._tampilkanNasehat === 'function') window._tampilkanNasehat(); }, 800);
-            // Refresh data cloud setelah login agar data terbaru tampil tanpa logout
-            if (window._rencoSupabase && typeof window._rencoSupabase.load === 'function') {
-              window._rencoSupabase.load().then(function(result) {
-                if (result && result.payload) {
-                  if (typeof window._applyCloudDataPublic === 'function') window._applyCloudDataPublic(result.payload);
-                  if (typeof window._reRenderAllPublic === 'function') window._reRenderAllPublic();
-                  if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
-                }
-              }).catch(function(){});
-            }
+            _handleLoginSuccess();
           } else {
             err.textContent = '&#x274C; Username atau password salah';
             err.style.display = 'block';
@@ -7870,7 +7874,32 @@ window.submitNasabahChangePassword = function() {
     }
     if (typeof usersLoad === 'function') {
       var users = usersLoad();
-      var found = users.find(function(x){ return x.username.toLowerCase()===u && x.password===password && x.aktif; });
+      var pTrim = (password||'').trim();
+      // ── Pencocokan utama: username & password ter-trim (bukan sekadar
+      // fallback) — keyboard HP kerap menyisipkan spasi tak terlihat di
+      // awal/akhir input, terutama saat mengetik di kolom password. Field
+      // "aktif" yang kosong/undefined (data lama sebelum field ini ada)
+      // dianggap AKTIF; hanya aktif:false eksplisit yang dianggap nonaktif.
+      var found = users.find(function(x){
+        return x.username && x.username.toLowerCase().trim() === u
+          && (x.password||'').trim() === pTrim
+          && x.aktif !== false;
+      });
+      // ── DIAGNOSTIK (console saja — TIDAK PERNAH mencetak password asli) ──
+      // Membantu membedakan penyebab gagal login: username tidak ditemukan
+      // sama sekali vs ditemukan tapi password tidak cocok vs ditemukan tapi
+      // akun nonaktif. Buka DevTools console saat mencoba login untuk melihat ini.
+      if (!found) {
+        var byUsername = users.filter(function(x){ return x.username && x.username.toLowerCase().trim() === u; });
+        if (byUsername.length === 0) {
+          console.warn('[RENCO][login-debug] Username "' + u + '" TIDAK DITEMUKAN sama sekali di DB.users (total user: ' + users.length + '). Cek apakah akun benar2 tersimpan (lihat Kelola Admin) & sudah sinkron ke perangkat ini.');
+        } else {
+          byUsername.forEach(function(x){
+            var pwMatch = x.password === password || (x.password||'').trim() === (password||'').trim();
+            console.warn('[RENCO][login-debug] Username "' + u + '" DITEMUKAN (id: ' + x.id + ', role: ' + x.role + ') — password cocok: ' + pwMatch + ', status aktif: ' + !!x.aktif + '.' + (byUsername.length > 1 ? ' (PERINGATAN: ada ' + byUsername.length + ' entri dengan username sama!)' : ''));
+          });
+        }
+      }
       if (found) {
         // Role diambil dari data user itu sendiri — mendukung akun Admin ke-2/ke-3
         // (role:'admin') selain akun nasabah biasa (role:'nasabah').
@@ -8488,11 +8517,11 @@ window.deleteAdmin = function(userId) {
   if (typeof auditLog === 'function') auditLog('Hapus Admin', 'Akun admin dihapus: ' + (u.nama || u.username) + ' (@' + u.username + ')', 'user-mgmt');
 };
 
-window.saveAdminForm = function() {
+window.saveAdminForm = async function() {
   var id = document.getElementById('adminFormId').value;
   var nama = document.getElementById('adminFormNama').value.trim();
   var username = document.getElementById('adminFormUsername').value.trim();
-  var password = document.getElementById('adminFormPassword').value;
+  var password = document.getElementById('adminFormPassword').value.trim();
 
   if (!nama) { showToast('&#x26A0;&#xFE0F; Nama wajib diisi'); return; }
   if (!username) { showToast('&#x26A0;&#xFE0F; Username wajib diisi'); return; }
@@ -8504,19 +8533,52 @@ window.saveAdminForm = function() {
   var dup = users.find(function(x){ return x.username.toLowerCase() === username.toLowerCase() && x.id !== id; });
   if (dup) { showToast('&#x26A0;&#xFE0F; Username sudah digunakan'); return; }
 
+  var newId = id || ('adm_' + Date.now());
   if (id) {
     var u = users.find(function(x){ return x.id === id; });
     if (u) { u.username = username; if (password) u.password = password; u.nama = nama; }
-    showToast('&#x2705; Admin berhasil diperbarui');
     if (typeof auditLog === 'function') auditLog('Edit Admin', 'Akun admin diperbarui: ' + nama + ' (@' + username + ')', 'user-mgmt');
   } else {
-    users.push({ id: 'adm_' + Date.now(), username: username, password: password, aktif: true, role: 'admin', nama: nama, createdAt: new Date().toISOString() });
-    showToast('&#x2705; Admin baru berhasil dibuat!');
+    users.push({ id: newId, username: username, password: password, aktif: true, role: 'admin', nama: nama, createdAt: new Date().toISOString() });
     if (typeof auditLog === 'function') auditLog('Tambah Admin', 'Akun admin baru dibuat: ' + nama + ' (@' + username + ')', 'user-mgmt');
   }
   usersSave(users);
-  if (typeof window._doSync === 'function') { setTimeout(function(){ window._doSync(); }, 100); }
+
+  // ── Simpan dulu di layar (biar terasa responsif), lalu PASTIKAN benar2
+  // sampai ke cloud sebelum menganggap sukses — sebelumnya panggilan
+  // _doSync() di sini "tembak lalu lupa" (fire-and-forget via setTimeout),
+  // jadi kalau upload gagal diam-diam (koneksi lambat/putus), akun admin
+  // baru itu tampak berhasil dibuat di layar tapi sebenarnya TIDAK pernah
+  // tersimpan ke cloud — lalu hilang lagi begitu aplikasi reload (karena
+  // loadDB() selalu ambil data cloud-first), sehingga admin ke-2/ke-3 itu
+  // gagal login di perangkat manapun dengan pesan "username/password salah".
   cancelAdminForm();
+  renderAdminManagement();
+  showToast('&#x23F3; Menyimpan ke cloud...');
+
+  var syncOk = false;
+  try {
+    if (typeof window._rencoSupabase !== 'undefined' && window._rencoSupabase && typeof window._rencoSupabase.sync === 'function') {
+      await window._rencoSupabase.sync();
+      // Verifikasi: tarik ulang dari cloud & pastikan user barusan benar ada di sana
+      if (typeof window._rencoSupabase.load === 'function') {
+        var verify = await window._rencoSupabase.load();
+        var cloudUsers = (verify && verify.payload && Array.isArray(verify.payload.users)) ? verify.payload.users : [];
+        syncOk = cloudUsers.some(function(cu){ return cu.id === newId; });
+      }
+    } else if (typeof window._doSync === 'function') {
+      await window._doSync();
+      syncOk = true; // tidak ada cara verifikasi tanpa _rencoSupabase.load, anggap OK jika tidak error
+    }
+  } catch (syncErr) {
+    console.error('[RENCO] Gagal sync admin baru ke cloud:', syncErr);
+  }
+
+  if (syncOk) {
+    showToast(id ? '&#x2705; Admin berhasil diperbarui & tersimpan ke cloud' : '&#x2705; Admin baru berhasil dibuat & tersimpan ke cloud');
+  } else {
+    showToast('&#x26A0;&#xFE0F; Tersimpan di perangkat ini TAPI GAGAL sync ke cloud — akun mungkin tidak bisa dipakai login di perangkat lain / setelah reload. Coba lagi saat koneksi stabil.');
+  }
   renderAdminManagement();
 };
 
@@ -10958,8 +11020,6 @@ window.deletePengurus = function(id) {
     .kf-search-row input { width:100%; box-sizing:border-box; padding:10px 14px 10px 36px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:13px; font-family:inherit; }
     .kf-search-row input:focus { border-color:#7b2d8b; outline:none; }
     .kf-cart-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; cursor:pointer; flex-shrink:0; }
-    .kf-view-toggle-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:17px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#7b2d8b; }
-    .kf-view-toggle-btn:active { background:#f4f1f7; }
     /* Tab detail & rating pada setiap kartu warung di daftar — dibuat compact & minimalis */
     .kf-warung-detail-btn {
       flex-shrink:0; display:flex; align-items:center; gap:2px;
@@ -10973,11 +11033,9 @@ window.deletePengurus = function(id) {
     .kf-kat-scroll { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; }
     .kf-kat-chip { flex-shrink:0; padding:6px 12px; border-radius:20px; border:1.5px solid #e5e7eb; background:#fff; font-size:11.5px; font-weight:700; color:#6b7280; cursor:pointer; font-family:inherit; }
     .kf-kat-chip.active { background:#7b2d8b; border-color:#7b2d8b; color:#fff; }
-    .kf-produk-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .kf-produk-grid.kf-produk-list { display:flex; flex-direction:column; gap:8px; }
-    .kf-produk-list .kf-produk-card { display:flex; align-items:center; gap:10px; padding:8px; }
-    .kf-produk-list .kf-produk-img { width:62px; height:62px; flex-shrink:0; border-radius:12px; }
-    .kf-produk-list .kf-produk-info { padding:0; flex:1; min-width:0; }
+    .kf-produk-grid { display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; padding-bottom:6px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+    .kf-produk-grid::-webkit-scrollbar { height:0; }
+    .kf-produk-grid .kf-produk-card { flex:0 0 132px; scroll-snap-align:start; }
     /* Kartu produk & warung berbagi gaya visual yang sama */
     .kf-produk-card, .kf-warung-card { background:#fff; border-radius:16px; border:1px solid #f2eef6; overflow:hidden; cursor:pointer; box-shadow:0 2px 10px rgba(123,45,139,0.07); transition:transform .12s ease, box-shadow .12s ease; }
     .kf-produk-card:active, .kf-warung-card:active { transform:scale(0.97); box-shadow:0 1px 4px rgba(123,45,139,0.08); }
@@ -10988,6 +11046,7 @@ window.deletePengurus = function(id) {
     .kf-habis-badge { position:absolute; inset:0; background:rgba(20,10,25,0.6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; text-align:center; }
     .kf-produk-info, .kf-warung-card-info { padding:10px 11px 12px; }
     .kf-produk-nama, .kf-warung-card-nama { font-size:12.5px; font-weight:700; color:#1f2937; line-height:1.35; margin-bottom:5px; }
+    .kf-produk-toko { font-size:10px; color:#9ca3af; margin-bottom:4px; }
     .kf-produk-harga { display:inline-block; font-size:12.5px; font-weight:800; color:#7b2d8b; background:#faf5fc; padding:3px 9px; border-radius:8px; }
     .kf-produk-warung { font-size:10px; color:#9ca3af; margin-top:2px; }
     .kf-empty, .kf-empty-cta { text-align:center; padding:40px 20px; color:#9ca3af; font-size:12.5px; }
@@ -11207,6 +11266,31 @@ window.deletePengurus = function(id) {
             <div class="kf-popular-scroll-track" id="kfPopularTrack"></div>
           </div>
         </div>
+        <!-- Produk (semua warung digabung 1 daftar, filter lewat kategori/pencarian).
+             Saldo Kifayah, Saldo Warung, dan Direktori Warung dipindah ke tab
+             "Warung Saya" — lihat #kfPanel-warungSaya. -->
+        <div class="kf-kat-scroll" id="kfKatScroll"></div>
+        <div class="kf-produk-grid" id="kfProdukGrid"></div>
+        <div class="kf-empty" id="kfBelanjaEmpty" style="display:none">
+          <div style="font-size:38px">🛍️</div>
+          <div>Belum ada produk</div>
+        </div>
+        <!-- Area Iklan: sama persis mekanismenya dengan Hero Banner di atas
+             (animasi slide otomatis + tap gambar untuk memunculkan tombol
+             kelola khusus admin), ditempatkan di bawah daftar produk. -->
+        <div class="kf-hero-slide-wrap" id="kfAdSlideWrap" style="margin-top:14px">
+          <div class="kf-hero-slide-track" id="kfAdSlideTrack" onclick="kfAdEditToggle(event)"></div>
+          <button class="kf-hero-slide-nav kf-hero-slide-prev" onclick="kfAdSlidePrev()">‹</button>
+          <button class="kf-hero-slide-nav kf-hero-slide-next" onclick="kfAdSlideNext()">›</button>
+          <div class="kf-hero-slide-dots" id="kfAdSlideDots"></div>
+          <button type="button" class="kf-hero-edit-btn" id="kfAdEditBtn" onclick="event.stopPropagation();kfAdSlideOpenManage()" style="display:none" title="Kelola Iklan">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- WARUNG SAYA -->
+      <div class="kf-panel" id="kfPanel-warungSaya">
         <div class="kf-saldo-bar" id="kfSaldoBar" style="display:none">
           <div class="kf-saldo-info">
             <div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>
@@ -11220,25 +11304,13 @@ window.deletePengurus = function(id) {
           </div>
           <button type="button" class="kf-saldo-transfer-btn" onclick="kifayahOpenPindahSaldo()" title="Pindahkan ke Saldo Kifayah">↑</button>
         </div>
-        <!-- Daftar Warung: tampil dulu sebelum produk, karena 1 pesanan/checkout hanya untuk 1 warung -->
+        <div id="kfWarungSayaContent"></div>
+        <div class="kf-section-title" style="margin-top:14px">🏪 Direktori Warung</div>
         <div class="kf-warung-grid" id="kfWarungListGrid"></div>
         <div class="kf-empty" id="kfWarungListEmpty" style="display:none">
           <div style="font-size:38px">🏪</div>
           <div>Belum ada warung terdaftar</div>
         </div>
-        <!-- Detail Warung + Produk: tampil setelah warung dipilih -->
-        <div class="kf-warung-header" id="kfWarungHeader" style="display:none"></div>
-        <div class="kf-kat-scroll" id="kfKatScroll" style="display:none"></div>
-        <div class="kf-produk-grid" id="kfProdukGrid"></div>
-        <div class="kf-empty" id="kfBelanjaEmpty" style="display:none">
-          <div style="font-size:38px">🛍️</div>
-          <div>Belum ada produk di warung ini</div>
-        </div>
-      </div>
-
-      <!-- WARUNG SAYA -->
-      <div class="kf-panel" id="kfPanel-warungSaya">
-        <div id="kfWarungSayaContent"></div>
       </div>
 
       <!-- PESANAN SAYA -->
@@ -11294,6 +11366,24 @@ window.deletePengurus = function(id) {
           </div>
           <div id="kfHeroSlideManageList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
           <button class="btn btn-primary btn-block" onclick="kfHeroSlideUpload()">+ Tambah Slide</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Kelola Area Iklan Kifayah (khusus Admin) -->
+    <div class="modal-overlay" id="modalKfAdSlideManage">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h3 class="modal-title">📢 Kelola Area Iklan</h3>
+          <button class="modal-close" onclick="closeModal('modalKfAdSlideManage')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="background:rgba(123,45,139,0.08);border:1px solid rgba(123,45,139,0.2);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:10.5px;color:#7b2d8b;line-height:1.5">
+            &#x1F4A1; Slide iklan tampil bergantian di bawah daftar produk tab Belanja Kifayah. Gunakan gambar landscape agar tidak terpotong.
+          </div>
+          <div id="kfAdSlideManageList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+          <button class="btn btn-primary btn-block" onclick="kfAdSlideUpload()">+ Tambah Iklan</button>
         </div>
       </div>
     </div>
@@ -12046,6 +12136,7 @@ window.deletePengurus = function(id) {
         <button onclick="setTarikNominal(50000)"  style="flex:1;min-width:80px;padding:7px 4px;border-radius:10px;border:1.5px solid rgba(45,106,79,0.25);background:rgba(45,106,79,0.06);color:var(--forest-mid);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">50rb</button>
         <button onclick="setTarikNominal(100000)" style="flex:1;min-width:80px;padding:7px 4px;border-radius:10px;border:1.5px solid rgba(45,106,79,0.25);background:rgba(45,106,79,0.06);color:var(--forest-mid);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">100rb</button>
         <button onclick="setTarikNominal(250000)" style="flex:1;min-width:80px;padding:7px 4px;border-radius:10px;border:1.5px solid rgba(45,106,79,0.25);background:rgba(45,106,79,0.06);color:var(--forest-mid);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">250rb</button>
+        <button onclick="setTarikNominal(500000)" style="flex:1;min-width:80px;padding:7px 4px;border-radius:10px;border:1.5px solid rgba(45,106,79,0.25);background:rgba(45,106,79,0.06);color:var(--forest-mid);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">500rb</button>
         <button onclick="setTarikSemuaSaldo()" style="flex:1;min-width:80px;padding:7px 4px;border-radius:10px;border:1.5px solid rgba(244,169,34,0.4);background:rgba(244,169,34,0.1);color:#a06800;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Semua</button>
       </div>
 
@@ -14385,6 +14476,13 @@ let DB = {
   // tidak tercampur dengan Pinjaman Koperasi biasa (tab Pinjaman, Kelola Pinjaman,
   // Laporan, dsb) — lihat fungsi-fungsi ber-awalan "kifayah"/"_kf" & totalPembayaranKifayah().
   pinjamanKifayah: [],
+  // ── Modal Investasi Koperasi → Kifayah: Koperasi kini berperan HANYA sebagai
+  // investor/pemodal bagi Kifayah, bukan penanggung kas cicilan Kifayah secara
+  // langsung. Modal disetor sekali (bisa ditambah/ditarik lewat riwayat di
+  // `history`), lalu Kifayah mengelola kas & limit cicilannya sendiri dari
+  // pool ini (lihat calcKasKifayah()/checkKasLimitKifayah()) — TERPISAH dari
+  // kas simpanan/pinjaman Koperasi (calcKas()/checkKasLimit()).
+  kifayahModal: { total: 0, history: [] },
   arisanSetting: { nama: 'Arisan 2025', iuran: 200000 },
   arisanPeserta: [],
   arisanHistory: [],
@@ -14528,6 +14626,12 @@ function _dbMigrate() {
   // Pastikan objek setting ada
   if (!DB.shuSetting || typeof DB.shuSetting !== 'object') DB.shuSetting = { pctSHU:70, pctNasabah:40, pctPengurus:20, pctCadangan:20, pctSosial:10, pctPendidikan:10 };
   if (!DB.kasSettings|| typeof DB.kasSettings!== 'object') DB.kasSettings= { rasioMaks:80, limitPerNasabah:0, multiplierSimpanan:0 };
+  // Migrasi: pastikan Modal Kifayah (investasi Koperasi → Kifayah) ada & konsisten
+  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
+  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
+  if (typeof DB.kifayahModal.total !== 'number') {
+    DB.kifayahModal.total = DB.kifayahModal.history.reduce(function(a,h){ return a + (h.tipe==='tarik' ? -h.jumlah : h.jumlah); }, 0);
+  }
   // Pengaturan Kifayah: limit cicilan Qardh (Nasabah) & Murabahah (Mitra Warung), margin, dan biaya transaksi Mitra — semua bisa diubah admin lewat menu Kifayah > Admin > Pengaturan.
   if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = { nasabahLimit:200000, mitraLimit:500000, mitraMarginPercent:2, mitraFeeFlat:0 };
   if (!DB.arisanSetting||typeof DB.arisanSetting!=='object') DB.arisanSetting={ nama:'Arisan 2025', iuran:200000 };
@@ -14559,6 +14663,36 @@ function _dbMigrate() {
 /* ── Integritas: perbaiki data rusak tanpa mengubah yang valid ── */
 function _dbIntegrity() {
   var fixed = 0;
+
+  // 0. Users (admin/nasabah login accounts): bersihkan spasi tersembunyi di
+  // username/password (peninggalan sebelum field ini di-trim saat disimpan),
+  // pastikan "aktif" tidak undefined, dan hapus duplikat username — kalau ada
+  // percobaan buat akun yang gagal/rusak sebelumnya tersimpan berdampingan
+  // dengan akun yang benar, ini yang menyebabkan akun baru "tidak bisa
+  // dipakai login" walau tampak sudah ada di daftar. Yang dipertahankan saat
+  // ada duplikat: entri yang paling baru dibuat (createdAt terbaru).
+  if (Array.isArray(DB.users)) {
+    DB.users.forEach(function(x) {
+      if (!x || typeof x !== 'object') return;
+      if (typeof x.username === 'string' && x.username !== x.username.trim()) { x.username = x.username.trim(); fixed++; }
+      if (typeof x.password === 'string' && x.password !== x.password.trim()) { x.password = x.password.trim(); fixed++; }
+      if (x.aktif === undefined) { x.aktif = true; fixed++; }
+    });
+    var seenUsername = {};
+    DB.users.forEach(function(x) {
+      if (!x || !x.username) return;
+      var key = x.username.toLowerCase();
+      if (!seenUsername[key] || new Date(x.createdAt||0) > new Date(seenUsername[key].createdAt||0)) {
+        seenUsername[key] = x;
+      }
+    });
+    var beforeCount = DB.users.length;
+    DB.users = DB.users.filter(function(x) {
+      if (!x || !x.username) return true;
+      return seenUsername[x.username.toLowerCase()] === x;
+    });
+    if (DB.users.length !== beforeCount) fixed += (beforeCount - DB.users.length);
+  }
 
   // 1. Nasabah: pastikan id unik, nama tidak kosong
   var kkIds = new Set();
@@ -17863,16 +17997,78 @@ function _isTxnKifayah(t) {
 function calcKas() {
   // Hanya simpanan pokok + wajib yang jadi basis kas (sukarela TIDAK termasuk)
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan' && t.jenis!=='sukarela').reduce((a,b)=>a+b.jumlah,0);
-  // Pinjaman Koperasi umum (Pinjaman Kifayah kini di buku terpisah DB.pinjamanKifayah,
-  // dihitung lewat totalPembayaranKifayah() di bawah).
+  // Pinjaman Koperasi umum (Pinjaman Kifayah kini punya buku & kas SENDIRI —
+  // lihat calcKasKifayah() — Koperasi hanya berperan sebagai investor/pemodal,
+  // jadi cicilan Kifayah yang masih berjalan TIDAK lagi mengurangi kas Koperasi
+  // di sini setiap saat; yang mengurangi kas Koperasi hanyalah MODAL yang sudah
+  // disetor ke Kifayah, dicatat sekali sebagai alokasi tetap/terkunci).
   const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
-  const totalKifayah = totalPembayaranKifayah();
+  const totalKifayah = totalPembayaranKifayah(); // ditampilkan utk info, TIDAK dipakai mengurangi kasAvailable Koperasi
+  const modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
   const ks = getKasSettings();
   const kasMaks = Math.floor(totalSimpanan * ks.rasioMaks / 100);
-  const kasAvailable = Math.max(0, kasMaks - totalPinjaman - totalKifayah);
-  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, ((totalPinjaman + totalKifayah) / totalSimpanan) * 100) : 0;
-  const limitMaks = Math.max(0, kasMaks - totalPinjaman - totalKifayah);
-  return { totalSimpanan, totalPinjaman, totalKifayah, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
+  const kasAvailable = Math.max(0, kasMaks - totalPinjaman - modalKifayah);
+  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, ((totalPinjaman + modalKifayah) / totalSimpanan) * 100) : 0;
+  const limitMaks = Math.max(0, kasMaks - totalPinjaman - modalKifayah);
+  return { totalSimpanan, totalPinjaman, totalKifayah, modalKifayah, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
+}
+
+// ========== KAS KIFAYAH (pool terpisah — Koperasi = investor/pemodal) ==========
+// Kas Kifayah TIDAK lagi bersumber dari kas Koperasi (simpanan/kasMaks Koperasi).
+// Sumbernya HANYA modal yang sudah disetor Koperasi (DB.kifayahModal.total),
+// dikurangi sisa pokok cicilan Qardh Kifayah yang masih aktif (revolving: begitu
+// nasabah mencicil, sisaPokok mengecil & kas Kifayah otomatis pulih/bisa dipakai lagi).
+function calcKasKifayah() {
+  const modalTotal = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
+  const totalOutstanding = totalPembayaranKifayah(); // sisa pokok Qardh Kifayah aktif
+  const kasAvailable = Math.max(0, modalTotal - totalOutstanding);
+  const kasUsedPct = modalTotal > 0 ? Math.min(100, (totalOutstanding / modalTotal) * 100) : 0;
+  return { modalTotal, totalOutstanding, kasAvailable, kasUsedPct };
+}
+
+// Setor/tarik modal Koperasi → Kifayah. Dicatat sebagai riwayat (audit trail),
+// walau modelnya "modal awal tetap" — admin tetap bisa menambah/menyesuaikan
+// modal di kemudian hari lewat menu ini kalau memang dibutuhkan.
+function kifayahModalSetor(jumlah, catatan) {
+  jumlah = Math.round(Number(jumlah) || 0);
+  if (jumlah <= 0) return false;
+  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
+  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
+  DB.kifayahModal.history.push({ tanggal: new Date().toISOString(), tipe: 'setor', jumlah: jumlah, catatan: catatan || '' });
+  DB.kifayahModal.total = (DB.kifayahModal.total || 0) + jumlah;
+  saveDB();
+  return true;
+}
+function kifayahModalTarik(jumlah, catatan) {
+  jumlah = Math.round(Number(jumlah) || 0);
+  if (jumlah <= 0) return false;
+  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
+  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
+  var kk = calcKasKifayah();
+  if (jumlah > kk.kasAvailable) return false; // tidak boleh menarik modal yang sedang dipakai (outstanding)
+  DB.kifayahModal.history.push({ tanggal: new Date().toISOString(), tipe: 'tarik', jumlah: jumlah, catatan: catatan || '' });
+  DB.kifayahModal.total = Math.max(0, (DB.kifayahModal.total || 0) - jumlah);
+  saveDB();
+  return true;
+}
+
+// Cek apakah cicilan/Qardh Kifayah baru diizinkan — dicek terhadap pool modal
+// Kifayah SENDIRI (calcKasKifayah), BUKAN terhadap kas Koperasi (checkKasLimit).
+function checkKasLimitKifayah(kkId, jumlahBaru) {
+  const { kasAvailable } = calcKasKifayah();
+  const errors = [];
+  if (jumlahBaru > kasAvailable) {
+    errors.push(`Modal Kifayah tidak cukup. Maks. cicilan baru: ${fmt(kasAvailable)}`);
+  }
+  const ks = getKasSettings();
+  if (ks.limitPerNasabah > 0) {
+    const sudahPinjam = totalPinjamanAktifKK(kkId);
+    const sisaQuota = Math.max(0, ks.limitPerNasabah - sudahPinjam);
+    if (jumlahBaru > sisaQuota) {
+      errors.push(`Melebihi batas per nasabah. Sisa kuota: ${fmt(sisaQuota)}`);
+    }
+  }
+  return errors;
 }
 
 function renderKasHealth() {
@@ -18491,6 +18687,9 @@ function renderKifayah() {
   if (!_kfIsAdmin) _kfHeroEditVisible = false;
   var heroEditBtn = document.getElementById('kfHeroEditBtn');
   if (heroEditBtn) heroEditBtn.style.display = (_kfIsAdmin && _kfHeroEditVisible) ? 'flex' : 'none';
+  if (!_kfIsAdmin) _kfAdEditVisible = false;
+  var adEditBtn = document.getElementById('kfAdEditBtn');
+  if (adEditBtn) adEditBtn.style.display = (_kfIsAdmin && _kfAdEditVisible) ? 'flex' : 'none';
   // Kalau tab admin sempat aktif lalu sesi berpindah ke akun non-admin, alihkan ke Belanja.
   if (tab === 'admin' && !_kfIsAdmin) tab = _kfActiveTab = 'belanja';
   // Kalau sesi bukan admin (atau logout), pastikan mode "berperan sebagai" ikut nonaktif.
@@ -18519,7 +18718,7 @@ function kifayahTab(tab, btnEl) {
   var panel = document.getElementById('kfPanel-'+tab);
   if (panel) panel.classList.add('active');
 
-  if (tab === 'belanja') { renderKifayahBelanja(); if (typeof _kfHeroSlideRender === 'function') _kfHeroSlideRender(); }
+  if (tab === 'belanja') { renderKifayahBelanja(); if (typeof _kfHeroSlideRender === 'function') _kfHeroSlideRender(); if (typeof _kfAdSlideRender === 'function') _kfAdSlideRender(); }
   else if (tab === 'warungSaya') renderKifayahWarungSaya();
   else if (tab === 'pesanan') renderKifayahPesananSaya();
   else if (tab === 'cicilan') renderKifayahCicilan();
@@ -18766,21 +18965,6 @@ function _kfKategoriList(warungId) {
   return Object.keys(set);
 }
 
-var _kfProdukViewMode = localStorage.getItem('kfProdukViewMode') || 'grid'; // 'grid' atau 'list'
-
-function _kfToggleProdukViewMode() {
-  _kfProdukViewMode = (_kfProdukViewMode === 'grid') ? 'list' : 'grid';
-  try { localStorage.setItem('kfProdukViewMode', _kfProdukViewMode); } catch(e) {}
-  renderKifayahBelanja();
-}
-
-function _kfUpdateProdukViewToggleBtn() {
-  var btn = document.getElementById('kfProdukViewToggleBtn');
-  if (!btn) return;
-  btn.innerHTML = (_kfProdukViewMode === 'grid') ? '&#x2630;' : '&#x25A6;';
-  btn.title = (_kfProdukViewMode === 'grid') ? 'Tampilan daftar' : 'Tampilan grid';
-}
-
 // Format rata-rata rating warung jadi bintang ("★★★★☆") untuk tab detail & rating
 // pada tiap kartu daftar warung. Dipakai oleh renderKifayahBelanja() dan
 // _kifayahShowWarungDetail().
@@ -18847,7 +19031,8 @@ function _kfHeroSlideRender() {
 function _kfHeroSlideUpdatePos() {
   var track = document.getElementById('kfHeroSlideTrack');
   if (track) track.style.transform = 'translateX(-' + (_kfHeroIdx * 100) + '%)';
-  document.querySelectorAll('.kf-hero-slide-dot').forEach(function(d,i){ d.classList.toggle('active', i===_kfHeroIdx); });
+  var dotsWrap = document.getElementById('kfHeroSlideDots');
+  if (dotsWrap) dotsWrap.querySelectorAll('.kf-hero-slide-dot').forEach(function(d,i){ d.classList.toggle('active', i===_kfHeroIdx); });
 }
 
 function kfHeroSlideGo(i) {
@@ -18935,6 +19120,152 @@ function kfHeroSlideDeleteAt(idx) {
   showToast('🗑️ Slide banner dihapus');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   AREA IKLAN — di bawah daftar produk tab Belanja Kifayah.
+   Mekanisme identik dengan Hero Banner di atas (animasi slide
+   otomatis + tap gambar untuk memunculkan tombol kelola admin),
+   hanya dipisah datanya (DB.kifayahAdSlides) supaya bisa dikelola
+   independen dari Hero Banner promosi Kifayah.
+════════════════════════════════════════════════════════════════ */
+var KF_AD_SLIDES = [
+  { img: 'data:image/jpeg;base64,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', alt: 'Renco Vision 2045 by Aren Community' }
+];
+var _kfAdIdx = 0;
+var _kfAdEditVisible = false; // default tersembunyi — ketuk gambar untuk menampilkan tombol edit (admin)
+var _kfAdTimer = null;
+
+function kfAdEditToggle(e) {
+  var isAdminUser = (typeof isAdmin === 'function') && isAdmin();
+  if (!isAdminUser) return; // hanya admin yang bisa membuka tombol kelola
+  _kfAdEditVisible = !_kfAdEditVisible;
+  var btn = document.getElementById('kfAdEditBtn');
+  if (btn) btn.style.display = _kfAdEditVisible ? 'flex' : 'none';
+}
+window.kfAdEditToggle = kfAdEditToggle;
+
+// Selama admin belum pernah mengubahnya, area iklan memakai KF_AD_SLIDES
+// (default bawaan) supaya tidak menggandakan data base64 besar ke
+// localStorage/Supabase tanpa perlu. Begitu admin menambah/menghapus
+// slide, DB.kifayahAdSlides dimaterialisasi dan menjadi sumber data
+// seterusnya — persis pola yang sama dengan Hero Banner.
+function _kfAdActiveSlides() {
+  return (DB.kifayahAdSlides && DB.kifayahAdSlides.length) ? DB.kifayahAdSlides : KF_AD_SLIDES;
+}
+function _kfAdEnsureEditable() {
+  if (!Array.isArray(DB.kifayahAdSlides) || !DB.kifayahAdSlides.length) {
+    DB.kifayahAdSlides = KF_AD_SLIDES.map(function(s){ return { img: s.img, alt: s.alt }; });
+  }
+  return DB.kifayahAdSlides;
+}
+
+function _kfAdSlideRender() {
+  var track = document.getElementById('kfAdSlideTrack');
+  var dots  = document.getElementById('kfAdSlideDots');
+  if (!track || !dots) return;
+  var slides = _kfAdActiveSlides();
+  if (_kfAdIdx >= slides.length) _kfAdIdx = 0;
+  track.innerHTML = slides.map(function(s){
+    return '<div class="kf-hero-slide-item"><img src="'+s.img+'" alt="'+(s.alt||'')+'" loading="lazy"></div>';
+  }).join('');
+  dots.innerHTML = slides.map(function(_,i){
+    return '<button class="kf-hero-slide-dot'+(i===_kfAdIdx?' active':'')+'" onclick="kfAdSlideGo('+i+')"></button>';
+  }).join('');
+  _kfAdSlideUpdatePos();
+  _kfAdSlideRestartTimer();
+}
+
+function _kfAdSlideUpdatePos() {
+  var track = document.getElementById('kfAdSlideTrack');
+  if (track) track.style.transform = 'translateX(-' + (_kfAdIdx * 100) + '%)';
+  var dotsWrap = document.getElementById('kfAdSlideDots');
+  if (dotsWrap) dotsWrap.querySelectorAll('.kf-hero-slide-dot').forEach(function(d,i){ d.classList.toggle('active', i===_kfAdIdx); });
+}
+
+function kfAdSlideGo(i) {
+  var total = _kfAdActiveSlides().length || 1;
+  _kfAdIdx = (i + total) % total;
+  _kfAdSlideUpdatePos();
+  _kfAdSlideRestartTimer();
+}
+function kfAdSlideNext() { kfAdSlideGo(_kfAdIdx + 1); }
+function kfAdSlidePrev() { kfAdSlideGo(_kfAdIdx - 1); }
+
+function _kfAdSlideRestartTimer() {
+  if (_kfAdTimer) clearInterval(_kfAdTimer);
+  _kfAdTimer = setInterval(function(){
+    var total = _kfAdActiveSlides().length || 1;
+    _kfAdIdx = (_kfAdIdx + 1) % total;
+    _kfAdSlideUpdatePos();
+  }, 4000);
+}
+window._kfAdSlideRender = _kfAdSlideRender;
+
+/* ── Kelola Area Iklan (khusus Admin) ── */
+function kfAdSlideOpenManage() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) { showToast('⚠️ Hanya admin yang bisa mengelola area iklan'); return; }
+  _kfAdSlideRenderManage();
+  if (typeof openModal === 'function') openModal('modalKfAdSlideManage');
+}
+function _kfAdSlideRenderManage() {
+  var list = document.getElementById('kfAdSlideManageList');
+  if (!list) return;
+  var slides = _kfAdActiveSlides();
+  if (!slides.length) {
+    list.innerHTML = '<div class="kf-popular-empty">Belum ada slide iklan.</div>';
+    return;
+  }
+  list.innerHTML = slides.map(function(s, i){
+    return '<div class="kf-hero-manage-item">'
+      + '<div class="kf-hero-manage-thumb"><img src="'+s.img+'" alt=""></div>'
+      + '<div style="flex:1;min-width:0;font-size:10.5px;color:#6b7280">Iklan '+(i+1)+'</div>'
+      + '<button type="button" class="kf-hero-manage-del" onclick="kfAdSlideDeleteAt('+i+')">Hapus</button>'
+      + '</div>';
+  }).join('');
+}
+function kfAdSlideUpload() {
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var maxW = 900;
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var b64 = canvas.toDataURL('image/jpeg', 0.82);
+        var slides = _kfAdEnsureEditable();
+        slides.push({ img: b64, alt: 'Iklan Kifayah' });
+        saveDB();
+        _kfAdSlideRenderManage();
+        _kfAdSlideRender();
+        showToast('✅ Iklan ditambahkan');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+function kfAdSlideDeleteAt(idx) {
+  var slides = _kfAdEnsureEditable();
+  if (slides.length <= 1) { showToast('⚠️ Minimal harus ada 1 slide iklan'); return; }
+  if (!confirm('Hapus slide iklan ini?')) return;
+  slides.splice(idx, 1);
+  saveDB();
+  _kfAdSlideRenderManage();
+  if (_kfAdIdx >= slides.length) _kfAdIdx = 0;
+  _kfAdSlideRender();
+  showToast('🗑️ Slide iklan dihapus');
+}
+
 /* ── Popular: produk unggulan dari tiap warung populer (diambil dari rating
    warung — semakin tinggi rating & jumlah penilaian, semakin "populer") ── */
 function _kfPopularData() {
@@ -19017,146 +19348,102 @@ function kfPopularLihatSemua() {
 
 
 function renderKifayahBelanja() {
-  _kfRenderSaldoBar();
-  var warungListGrid = document.getElementById('kfWarungListGrid');
-  var warungListEmpty = document.getElementById('kfWarungListEmpty');
-  var warungHeader = document.getElementById('kfWarungHeader');
   var katScroll = document.getElementById('kfKatScroll');
   var grid = document.getElementById('kfProdukGrid');
   var produkEmptyEl = document.getElementById('kfBelanjaEmpty');
-  if (!grid || !warungListGrid) return;
+  if (!grid) return;
 
   var q = (document.getElementById('kfSearchInput')||{}).value || '';
   q = q.toLowerCase().trim();
 
-  // Kalau warung yang tadinya dipilih ternyata sudah dihapus, kembali ke daftar warung.
-  // Warung yang sekadar tutup tetap boleh dibuka untuk dilihat-lihat produknya,
-  // hanya saja pemesanan diblok (lihat kifayahOpenProduk/kifayahAddToCart/kifayahCheckout).
-  if (_kfSelectedWarung) {
-    var wCek = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; });
-    if (!wCek) _kfSelectedWarung = null;
-  }
+  if (typeof _kfRenderPopular === 'function') _kfRenderPopular();
 
-  if (!_kfSelectedWarung) {
-    // ===== TAMPILAN 1: DAFTAR WARUNG (dipilih dulu sebelum lihat produk) =====
-    warungHeader.style.display = 'none';
-    var wInfoElHide = document.getElementById('kfWarungInfo');
-    if (wInfoElHide) wInfoElHide.style.display = 'none';
-    katScroll.style.display = 'none';
-    grid.style.display = 'none';
-    if (produkEmptyEl) produkEmptyEl.style.display = 'none';
-    warungListGrid.style.display = 'block';
-    if (typeof _kfRenderPopular === 'function') _kfRenderPopular();
+  var warungMap = {};
+  (DB.warung||[]).forEach(function(w){ warungMap[w.id] = w; });
 
-    var produkAll = DB.produkWarung || [];
-    var warungList = (DB.warung||[]).filter(function(w){
-      if (q && (w.nama||'').toLowerCase().indexOf(q) === -1) return false;
-      return true;
-    }).sort(function(a,b){
-      // Warung buka tampil lebih dulu, baru yang tutup, masing-masing terbaru dulu.
-      var aBuka = a.status === 'aktif' ? 1 : 0;
-      var bBuka = b.status === 'aktif' ? 1 : 0;
-      if (aBuka !== bBuka) return bBuka - aBuka;
-      return (b.dibuatPada||'').localeCompare(a.dibuatPada||'');
-    });
-
-    if (warungListEmpty) warungListEmpty.style.display = warungList.length ? 'none' : 'block';
-
-    warungListGrid.className = 'kf-warung-grid';
-    warungListGrid.innerHTML = warungList.map(function(w){
-      var buka = w.status === 'aktif';
-      var jumlahProduk = produkAll.filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
-      var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
-      var statusBadge = '<div style="font-size:10.5px;font-weight:700;color:'+(buka?'#16a34a':'#dc2626')+'">● '+(buka?'Buka':'Tutup')+'</div>';
-      var subInfo = jumlahProduk+' produk'+(w.alamat ? ' · '+w.alamat : '');
-      var ratingCount = Number(w.ratingCount) || 0;
-      var detailTabHtml = ratingCount > 0
-        ? '<button type="button" class="kf-warung-detail-btn" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">★'+(Number(w.ratingAvg)||0).toFixed(1)+'</button>'
-        : '<button type="button" class="kf-warung-detail-btn kf-no-rating" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">ⓘ</button>';
-      return '<div class="member-item-wrap member-active"'+(buka?'':' style="opacity:0.75"')+'>'
-        + '<div class="member-item-row" onclick="_kifayahOpenWarungBelanja(\''+w.id+'\')">'
-        +   '<div class="avatar gold">'+logo+'</div>'
-        +   '<div class="member-info">'
-        +     '<div class="member-name">'+w.nama+'</div>'
-        +     statusBadge
-        +     '<div class="member-sub">'+subInfo+'</div>'
-        +   '</div>'
-        +   detailTabHtml
-        +   '<span style="font-size:14px;color:var(--text-soft)">›</span>'
-        + '</div></div>';
-    }).join('');
-    return;
-  }
-
-  // ===== TAMPILAN 2: PRODUK DALAM 1 WARUNG YANG DIPILIH =====
-  warungListGrid.style.display = 'none';
-  if (warungListEmpty) warungListEmpty.style.display = 'none';
-  var popularSectionHide = document.getElementById('kfPopularSection');
-  if (popularSectionHide) popularSectionHide.style.display = 'none';
-  warungHeader.style.display = 'flex';
-  katScroll.style.display = 'flex';
-  grid.style.display = 'grid';
-
-  var w = (DB.warung||[]).find(function(x){ return x.id === _kfSelectedWarung; }) || {};
-  var wBuka = w.status === 'aktif';
-  var wLogo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
-  warungHeader.innerHTML =
-    '<button class="kf-warung-header-back" onclick="_kifayahBackToWarungList()">&#x2190;</button>'
-    + '<div class="kf-warung-header-logo">'+wLogo+'</div>'
-    + '<div style="flex:1;min-width:0"><div class="kf-warung-header-nama">'+(w.nama||'-')+'</div><div class="kf-warung-header-meta">'+(wBuka ? 'Belanja hanya dari warung ini per pesanan' : '<span style="color:#dc2626;font-weight:700">● Tutup — belum bisa pesan</span>')+'</div></div>'
-    + '<button class="kf-view-toggle-btn" id="kfProdukViewToggleBtn" onclick="_kfToggleProdukViewMode()" title="Ganti tampilan"></button>';
-
-  var wInfoEl = document.getElementById('kfWarungInfo');
-  if (!wInfoEl) {
-    wInfoEl = document.createElement('div');
-    wInfoEl.id = 'kfWarungInfo';
-    warungHeader.insertAdjacentElement('afterend', wInfoEl);
-  }
-  wInfoEl.style.display = 'block';
-  var wLinks = w.kontak ? _lokerPhoneLinks(w.kontak) : null;
-  var wKontakHtml;
-  if (wLinks) {
-    wKontakHtml = '<div class="kf-wa-contact"><span>'+w.kontak+'</span>'
-      + '<a class="kf-wa-btn wa" href="'+wLinks.wa+'" target="_blank" rel="noopener" title="Chat WhatsApp" onclick="event.stopPropagation()">'
-      +   '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.24.66-1.2 1.24-1.94 1.4-.5.1-1.16.18-3.4-.73-2.86-1.16-4.7-4.05-4.84-4.24-.14-.19-1.15-1.53-1.15-2.92s.72-2.07 1-2.35c.24-.24.55-.32.73-.32h.53c.17 0 .4-.03.62.48.24.55.8 1.9.87 2.04.07.14.12.3.02.49-.1.19-.15.3-.3.46-.15.16-.31.36-.44.48-.15.14-.3.3-.13.6.17.3.75 1.26 1.62 2.05 1.12 1.02 2.05 1.34 2.35 1.5.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.77.85 2.07 1.01.3.15.5.23.57.36.08.13.08.72-.16 1.38z"/></svg>'
-      + '</a>'
-      + '<a class="kf-wa-btn call" href="'+wLinks.tel+'" title="Telepon Langsung" onclick="event.stopPropagation()">'
-      +   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
-      + '</a></div>';
-  } else {
-    wKontakHtml = '-';
-  }
-  wInfoEl.innerHTML =
-      '<div class="info-row"><span class="info-icon">🏠</span><div class="info-text"><div class="info-label">Alamat Warung</div><div class="info-val">'+(w.alamat||'-')+'</div></div></div>'
-    + '<div class="info-row"><span class="info-icon">📱</span><div class="info-text"><div class="info-label">No. HP / WhatsApp</div><div class="info-val">'+wKontakHtml+'</div></div></div>';
-
-  var kats = _kfKategoriList(_kfSelectedWarung);
+  var kats = _kfKategoriList();
   var katHtml = '<button class="kf-kat-chip'+(_kfActiveKat==='semua'?' active':'')+'" onclick="_kfSetKat(\'semua\')">Semua</button>';
   kats.forEach(function(k){
     katHtml += '<button class="kf-kat-chip'+(_kfActiveKat===k?' active':'')+'" onclick="_kfSetKat(\''+k.replace(/'/g,"\\'")+'\')">'+k+'</button>';
   });
-  katScroll.innerHTML = katHtml;
+  if (katScroll) katScroll.innerHTML = katHtml;
 
+  // Produk digabung dari SEMUA warung — pencarian mencocokkan nama produk
+  // ATAU nama warung, supaya "Belanja di Warung Ini" / kartu Populer bisa
+  // menyaring ke 1 warung tertentu lewat kotak pencarian yang sama.
   var produk = (DB.produkWarung||[]).filter(function(p){
-    if (p.warungId !== _kfSelectedWarung) return false;
     if (p.status === 'nonaktif') return false;
+    var pw = warungMap[p.warungId];
+    if (!pw) return false;
     if (_kfActiveKat !== 'semua' && p.kategori !== _kfActiveKat) return false;
-    if (q && (p.nama||'').toLowerCase().indexOf(q) === -1) return false;
+    if (q) {
+      var matchNama = (p.nama||'').toLowerCase().indexOf(q) !== -1;
+      var matchWarung = (pw.nama||'').toLowerCase().indexOf(q) !== -1;
+      if (!matchNama && !matchWarung) return false;
+    }
     return true;
-  }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+  }).sort(function(a,b){
+    // Produk dari warung yang buka tampil lebih dulu, baru yang tutup; masing2 terbaru dulu.
+    var aBuka = (warungMap[a.warungId]||{}).status === 'aktif' ? 1 : 0;
+    var bBuka = (warungMap[b.warungId]||{}).status === 'aktif' ? 1 : 0;
+    if (aBuka !== bBuka) return bBuka - aBuka;
+    return (b.dibuatPada||'').localeCompare(a.dibuatPada||'');
+  });
 
   if (produkEmptyEl) produkEmptyEl.style.display = produk.length ? 'none' : 'block';
-  _kfUpdateProdukViewToggleBtn();
-  grid.className = 'kf-produk-grid' + (_kfProdukViewMode === 'list' ? ' kf-produk-list' : '');
+  grid.className = 'kf-produk-grid';
 
   grid.innerHTML = produk.map(function(p){
+    var pw = warungMap[p.warungId] || {};
+    var wTutup = pw.status !== 'aktif';
     var img = p.foto ? '<img src="'+p.foto+'" alt="'+p.nama+'">' : '<div class="kf-produk-noimg">🛍️</div>';
     var habis = (Number(p.stok)||0) <= 0;
     return '<div class="kf-produk-card" onclick="kifayahOpenProduk(\''+p.id+'\')">'
-      + '<div class="kf-produk-img">'+img+(habis?'<div class="kf-habis-badge">Stok Habis</div>':'')+'</div>'
+      + '<div class="kf-produk-img">'+img+(wTutup?'<div class="kf-habis-badge" style="background:rgba(220,38,38,0.85)">⏳ Menunggu Buka</div>':habis?'<div class="kf-habis-badge">Stok Habis</div>':'')+'</div>'
       + '<div class="kf-produk-info">'
       + '<div class="kf-produk-nama">'+p.nama+'</div>'
+      + '<div class="kf-produk-toko">🏪 '+(pw.nama||'-')+'</div>'
       + '<div class="kf-produk-harga">'+fmt(p.harga)+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+// Daftar semua warung (direktori) — sekarang ditampilkan di tab "Warung Saya",
+// bukan lagi di tab Belanja. Klik kartu warung membuka detail & rating; dari
+// situ tombol "Belanja di Warung Ini" menyaring produk warung tsb di tab Belanja.
+function renderKifayahWarungDirektori() {
+  var warungListGrid = document.getElementById('kfWarungListGrid');
+  var warungListEmpty = document.getElementById('kfWarungListEmpty');
+  if (!warungListGrid) return;
+  var produkAll = DB.produkWarung || [];
+  var warungList = (DB.warung||[]).slice().sort(function(a,b){
+    var aBuka = a.status === 'aktif' ? 1 : 0;
+    var bBuka = b.status === 'aktif' ? 1 : 0;
+    if (aBuka !== bBuka) return bBuka - aBuka;
+    return (b.dibuatPada||'').localeCompare(a.dibuatPada||'');
+  });
+  if (warungListEmpty) warungListEmpty.style.display = warungList.length ? 'none' : 'block';
+  warungListGrid.className = 'kf-warung-grid';
+  warungListGrid.innerHTML = warungList.map(function(w){
+    var buka = w.status === 'aktif';
+    var jumlahProduk = produkAll.filter(function(p){ return p.warungId === w.id && p.status !== 'nonaktif'; }).length;
+    var logo = w.logo ? '<img src="'+w.logo+'" alt="'+w.nama+'">' : '<span>🏪</span>';
+    var statusBadge = '<div style="font-size:10.5px;font-weight:700;color:'+(buka?'#16a34a':'#dc2626')+'">● '+(buka?'Buka':'Tutup')+'</div>';
+    var subInfo = jumlahProduk+' produk'+(w.alamat ? ' · '+w.alamat : '');
+    var ratingCount = Number(w.ratingCount) || 0;
+    var detailTabHtml = ratingCount > 0
+      ? '<button type="button" class="kf-warung-detail-btn" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">★'+(Number(w.ratingAvg)||0).toFixed(1)+'</button>'
+      : '<button type="button" class="kf-warung-detail-btn kf-no-rating" onclick="event.stopPropagation();_kifayahShowWarungDetail(\''+w.id+'\')" title="Lihat detail &amp; rating warung">ⓘ</button>';
+    return '<div class="member-item-wrap member-active"'+(buka?'':' style="opacity:0.75"')+'>'
+      + '<div class="member-item-row" onclick="_kifayahShowWarungDetail(\''+w.id+'\')">'
+      +   '<div class="avatar gold">'+logo+'</div>'
+      +   '<div class="member-info">'
+      +     '<div class="member-name">'+w.nama+'</div>'
+      +     statusBadge
+      +     '<div class="member-sub">'+subInfo+'</div>'
+      +   '</div>'
+      +   detailTabHtml
+      +   '<span style="font-size:14px;color:var(--text-soft)">›</span>'
       + '</div></div>';
   }).join('');
 }
@@ -19211,20 +19498,16 @@ function _kifayahShowWarungDetail(warungId) {
   if (typeof openModal === 'function') openModal('modalKfWarungDetail');
 }
 
+// Dipanggil dari kartu "Populer" & tombol "Belanja di Warung Ini" pada modal
+// detail warung. Sejak Belanja menampilkan produk semua warung sekaligus,
+// fungsi ini cukup menyaring grid produk ke warung tsb lewat kotak pencarian
+// yang sama (bukan lagi berpindah ke tampilan per-warung terpisah).
 function _kifayahOpenWarungBelanja(warungId) {
-  _kfSelectedWarung = warungId;
+  var w = (DB.warung||[]).find(function(x){ return x.id === warungId; });
   _kfActiveKat = 'semua';
   var input = document.getElementById('kfSearchInput');
-  if (input) input.value = '';
-  renderKifayahBelanja();
-}
-
-function _kifayahBackToWarungList() {
-  _kfSelectedWarung = null;
-  _kfActiveKat = 'semua';
-  var input = document.getElementById('kfSearchInput');
-  if (input) input.value = '';
-  renderKifayahBelanja();
+  if (input) input.value = w ? w.nama : '';
+  kifayahTab('belanja', document.querySelector('.kf-tab[data-kf="belanja"]'));
 }
 
 function _kfSetKat(k) { _kfActiveKat = k; renderKifayahBelanja(); }
@@ -19244,7 +19527,7 @@ function kifayahOpenProduk(produkId) {
     + '<div style="font-size:12px;color:#6b7280;margin-bottom:8px">🏪 '+(w.nama||'-')+' · Stok: '+(p.stok||0)+'</div>'
     + '<div style="font-size:13px;color:#374151;line-height:1.5;margin-bottom:14px">'+(p.deskripsi||'Tidak ada deskripsi.')+'</div>'
     + (wTutup
-        ? '<button class="btn btn-block" disabled style="opacity:0.5">🔴 Warung Sedang Tutup</button>'
+        ? '<button class="btn btn-block" disabled style="opacity:0.5">&#x23F3; Menunggu Warung Buka</button>'
         : habis
         ? '<button class="btn btn-block" disabled style="opacity:0.5">Stok Habis</button>'
         : '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
@@ -19266,15 +19549,10 @@ function kifayahAddToCart(produkId) {
   var p = (DB.produkWarung||[]).find(function(x){ return x.id === produkId; });
   if (!p) return;
   var wCart = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
-  if (!wCart || wCart.status !== 'aktif') { showToast('🔴 Warung sedang tutup, tidak bisa melakukan pesanan'); return; }
-  // 1 keranjang/checkout hanya boleh berisi produk dari 1 warung yang sama.
-  if (_kfCart.length) {
-    var pExisting = (DB.produkWarung||[]).find(function(x){ return x.id === _kfCart[0].produkId; });
-    if (pExisting && pExisting.warungId !== p.warungId) {
-      if (!confirm('Keranjang Anda masih berisi produk dari warung lain. 1 pesanan hanya bisa untuk 1 warung.\n\nKosongkan keranjang dan mulai belanja baru dari warung ini?')) return;
-      _kfCart = [];
-    }
-  }
+  if (!wCart || wCart.status !== 'aktif') { showToast('⏳ Warung sedang tutup — menunggu warung buka untuk bisa pesan'); return; }
+  // Keranjang boleh berisi produk dari beberapa warung sekaligus — saat checkout,
+  // item dikelompokkan per warung dan tiap warung jadi 1 pesanan terpisah
+  // (lihat kifayahCheckout: variabel byWarung).
   var qty = window._kfDetailQty || 1;
   var existing = _kfCart.find(function(c){ return c.produkId === produkId; });
   if (existing) existing.qty += qty; else _kfCart.push({ produkId: produkId, qty: qty });
@@ -19328,17 +19606,36 @@ function kifayahOpenCart() {
     return;
   }
   var total = 0;
-  var html = _kfCart.map(function(c){
+  var warungMap = {};
+  (DB.warung||[]).forEach(function(w){ warungMap[w.id] = w; });
+  var byWarungCart = {};
+  var warungOrder = [];
+  _kfCart.forEach(function(c){
     var p = (DB.produkWarung||[]).find(function(x){ return x.id === c.produkId; });
-    if (!p) return '';
-    var sub = (p.harga||0) * c.qty;
-    total += sub;
-    return '<div class="kf-cart-item">'
-      + '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+p.nama+'</div>'
-      + '<div style="font-size:11.5px;color:#6b7280">'+fmt(p.harga)+' × '+c.qty+' = '+fmt(sub)+'</div></div>'
-      + '<button class="kf-cart-remove" onclick="kifayahRemoveFromCart(\''+c.produkId+'\')">🗑️</button>'
+    if (!p) return;
+    if (!byWarungCart[p.warungId]) { byWarungCart[p.warungId] = []; warungOrder.push(p.warungId); }
+    byWarungCart[p.warungId].push({ c: c, p: p });
+  });
+  var html = warungOrder.map(function(wid){
+    var w = warungMap[wid] || {};
+    var itemsHtml = byWarungCart[wid].map(function(row){
+      var p = row.p, c = row.c;
+      var sub = (p.harga||0) * c.qty;
+      total += sub;
+      return '<div class="kf-cart-item">'
+        + '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+p.nama+'</div>'
+        + '<div style="font-size:11.5px;color:#6b7280">'+fmt(p.harga)+' × '+c.qty+' = '+fmt(sub)+'</div></div>'
+        + '<button class="kf-cart-remove" onclick="kifayahRemoveFromCart(\''+c.produkId+'\')">🗑️</button>'
+        + '</div>';
+    }).join('');
+    return '<div class="kf-cart-warung-group" style="margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:800;color:#7b2d8b;padding:4px 2px;display:flex;align-items:center;gap:5px">🏪 '+(w.nama||'-')+(warungOrder.length>1?' <span style="font-weight:600;color:#9ca3af;font-size:10px">· pesanan terpisah</span>':'')+'</div>'
+      + itemsHtml
       + '</div>';
   }).join('');
+  if (warungOrder.length > 1) {
+    html = '<div style="font-size:10.5px;color:#6b7280;background:#faf7fb;border:1px solid #f0eef3;border-radius:10px;padding:8px 10px;margin-bottom:10px">🧾 Belanja dari '+warungOrder.length+' warung sekaligus akan dibuat sebagai '+warungOrder.length+' pesanan terpisah (1 pesanan per warung).</div>' + html;
+  }
   body.innerHTML = html;
   document.getElementById('kfCartFooter').style.display = 'block';
   document.getElementById('kfCartTotal').textContent = fmt(total);
@@ -19493,6 +19790,14 @@ function kifayahCheckout() {
         : '🚫 Melebihi batas 80% simpanan. Sisa kuota Qardh: ' + fmt(kuotaCek.sisaKuota));
       return;
     }
+    // Cek juga terhadap pool Modal Kifayah (bukan kas Koperasi) supaya nasabah
+    // tidak diberi harapan pesanan diterima padahal nanti dibatalkan otomatis
+    // saat admin menandai pesanan "Selesai" (lihat kifayahUpdatePesananStatus).
+    var modalKfCek = typeof checkKasLimitKifayah === 'function' ? checkKasLimitKifayah(myId, totalSemua) : [];
+    if (modalKfCek.length > 0) {
+      showToast('🚫 ' + modalKfCek[0]);
+      return;
+    }
   }
   Object.keys(byWarung).forEach(function(warungId){
     var items = byWarung[warungId];
@@ -19582,6 +19887,8 @@ function kifayahCheckout() {
 
 /* ---------- WARUNG SAYA (kelola toko sendiri) ---------- */
 function renderKifayahWarungSaya() {
+  if (typeof _kfRenderSaldoBar === 'function') _kfRenderSaldoBar();
+  if (typeof renderKifayahWarungDirektori === 'function') renderKifayahWarungDirektori();
   var el = document.getElementById('kfWarungSayaContent');
   if (!el) return;
   var myId = _kfMyNasabahId();
@@ -19615,14 +19922,6 @@ function renderKifayahWarungSaya() {
     + '<div style="font-size:11px;color:'+(w.status==='aktif'?'#16a34a':'#dc2626')+';font-weight:700;margin-top:2px">● '+(w.status==='aktif'?'Buka':'Tutup')+'</div>'
     + '</div>'
     + '<button class="kf-edit-btn" onclick="kifayahOpenWarungForm(true)">✏️</button>'
-    + '</div>'
-
-    + '<div class="kf-saldo-bar kf-saldo-warung">'
-    + '<div class="kf-saldo-info">'
-    + '<div class="kf-saldo-label">Saldo Warung (Hasil Penjualan Kifayah)</div>'
-    + '<div class="kf-saldo-nilai">'+fmt(saldoWarungByWarungId(w.id))+'</div>'
-    + '</div>'
-    + '<button type="button" class="kf-saldo-transfer-btn" onclick="kifayahOpenPindahSaldo()" title="Pindahkan ke Saldo Kifayah">↑</button>'
     + '</div>'
 
     + '<div class="kf-warung-actions">'
@@ -20085,20 +20384,22 @@ function kifayahUpdatePesananStatus(pesananId, status) {
       return;
     }
     if (pin.status === 'pengajuan') {
-      var kasErrors = typeof checkKasLimit === 'function' ? checkKasLimit(pin.kkId, pin.jumlah) : [];
+      // Dicek terhadap MODAL KIFAYAH (pool investasi Koperasi), bukan kas
+      // umum Koperasi — Koperasi kini hanya berperan sebagai investor/pemodal.
+      var kasErrors = typeof checkKasLimitKifayah === 'function' ? checkKasLimitKifayah(pin.kkId, pin.jumlah) : [];
       if (kasErrors.length > 0) {
-        // Kas tidak cukup -> tolak pengajuan Qardh & batalkan pesanan otomatis
+        // Modal Kifayah tidak cukup -> tolak pengajuan Qardh & batalkan pesanan otomatis
         pin.status = 'ditolak';
-        pin.alasanTolak = 'Dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung (' + kasErrors[0] + ')';
+        pin.alasanTolak = 'Dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung (' + kasErrors[0] + ')';
         pin.tanggalDitolak = nowISO();
         if (Array.isArray(DB.transaksi)) {
           var txnPendingTolak = DB.transaksi.find(function(t){ return t.refId === pin.id && t.statusTxn === 'pending'; });
           if (txnPendingTolak) txnPendingTolak.statusTxn = 'gagal';
         }
         p.status = 'dibatalkan';
-        p.catatanBatal = 'Dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung';
+        p.catatanBatal = 'Dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung';
         saveDB();
-        showToast('❌ Pesanan dibatalkan otomatis — Kas Koperasi tidak mencukupi untuk membayar Warung');
+        showToast('❌ Pesanan dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung');
         renderKifayahWarungSaya();
         if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
         return;
@@ -20133,9 +20434,10 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   // pertama kalinya), nilai pesanan langsung DITAMBAHKAN ke saldo tersimpan warung
   // (w.saldoWarung) — bukan dihitung ulang dari riwayat pesanan setiap kali dibuka.
   // Nilai yang sama JUGA dicatat ke buku "Pembayaran Kifayah" tersendiri (DB.pembayaranKifayah,
-  // BUKAN buku PHU) — HANYA untuk metode cicilan (Qardh). Kas koperasi yang tersedia
+  // BUKAN buku PHU) — HANYA untuk metode cicilan (Qardh). Modal Kifayah yang tersedia
   // sudah dikurangi lewat sisa pokok pinjaman Qardh terkait (lihat totalPembayaranKifayah()
-  // & calcKas()), jadi buku ini murni catatan riwayat, bukan sumber hitung kas kedua.
+  // & calcKasKifayah()) — TERPISAH dari kas Koperasi (calcKas()) — jadi buku ini murni
+  // catatan riwayat, bukan sumber hitung kas kedua.
   if (status === 'selesai' && !sudahSelesaiSebelumnya) {
     var wTujuan = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
     if (wTujuan) {
@@ -20563,6 +20865,26 @@ function _renderKifayahAdminSection(key) {
       + '<span style="font-size:11.5px;color:#6b7280">⏳ Sisa Tagihan Cicilan (semua warung)</span>'
       + '<span style="font-size:13px;font-weight:800;color:'+(cicilanOutstanding>0?'#dc2626':'#374151')+'">'+fmt(cicilanOutstanding)+'</span>'
       + '</div>';
+    // ── Kas Kifayah: pool modal investasi dari Koperasi, terpisah dari kas Koperasi ──
+    (function(){
+      var kk = typeof calcKasKifayah === 'function' ? calcKasKifayah() : { modalTotal:0, totalOutstanding:0, kasAvailable:0, kasUsedPct:0 };
+      var barColor = kk.kasUsedPct >= 100 ? 'linear-gradient(90deg,#e63946,#ff6b6b)' : (kk.kasUsedPct >= 80 ? 'linear-gradient(90deg,#f4a922,#ffd166)' : 'linear-gradient(90deg,#7b2d8b,#9b59b6)');
+      html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px;margin-top:10px">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        + '<span style="font-size:11.5px;font-weight:800;color:#7b2d8b">💼 Modal Kifayah (dari Koperasi)</span>'
+        + '<span style="font-size:11px;color:#9ca3af">'+Math.round(kk.kasUsedPct)+'% terpakai</span>'
+        + '</div>'
+        + '<div style="background:#f0eef3;border-radius:99px;height:7px;overflow:hidden;margin-bottom:8px">'
+        + '<div style="height:100%;border-radius:99px;background:'+barColor+';width:'+Math.min(100,kk.kasUsedPct)+'%"></div>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">'
+        + '<div><div style="font-size:12px;font-weight:800;color:#374151">'+fmt(kk.modalTotal)+'</div><div style="font-size:9px;color:#9ca3af">Modal Total</div></div>'
+        + '<div><div style="font-size:12px;font-weight:800;color:#dc2626">'+fmt(kk.totalOutstanding)+'</div><div style="font-size:9px;color:#9ca3af">Terpakai (Cicilan Aktif)</div></div>'
+        + '<div><div style="font-size:12px;font-weight:800;color:#16a34a">'+fmt(kk.kasAvailable)+'</div><div style="font-size:9px;color:#9ca3af">Tersedia</div></div>'
+        + '</div>'
+        + '<div style="font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.5">Koperasi berperan sebagai investor/pemodal — kas ini terpisah dari kas Koperasi. Kelola modal di tab Pengaturan.</div>'
+        + '</div>';
+    })();
     html += '<div style="margin-top:16px;padding-top:14px;border-top:1.5px dashed #f0eef3">'
       + '<div style="font-size:10.5px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">⚠️ Zona Berbahaya</div>'
       + '<button onclick="kifayahAdminHapusSemuaTransaksi()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(220,38,38,0.3);background:rgba(220,38,38,0.06);color:#dc2626;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">🗑️ Hapus Semua Transaksi Kifayah</button>'
@@ -20582,6 +20904,30 @@ function _renderKifayahAdminSection(key) {
       : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada transaksi cicilan.</div>';
   } else if (key === 'pengaturan') {
     var ksAdm = DB.kifayahSetting || {};
+    var kkModal = typeof calcKasKifayah === 'function' ? calcKasKifayah() : { modalTotal:0, totalOutstanding:0, kasAvailable:0 };
+    var modalHist = (DB.kifayahModal && DB.kifayahModal.history || []).slice().reverse().slice(0, 8);
+    html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px;margin-bottom:16px">'
+      + '<div style="font-size:11.5px;font-weight:800;color:#7b2d8b;margin-bottom:8px">💼 Modal Investasi Koperasi → Kifayah</div>'
+      + '<div style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:10px">Koperasi berperan sebagai investor/pemodal Kifayah. Modal disetor sekali (bisa ditambah di kemudian hari), lalu Kifayah mengelola kas cicilannya sendiri dari pool ini — terpisah dari kas Koperasi.</div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px"><span style="color:#6b7280">Modal saat ini</span><span style="font-weight:800;color:#374151">'+fmt(kkModal.modalTotal)+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px"><span style="color:#6b7280">Tersedia (belum terpakai)</span><span style="font-weight:800;color:#16a34a">'+fmt(kkModal.kasAvailable)+'</span></div>'
+      + '<div class="field"><label>Jumlah (Rp)</label><input type="number" id="kfModalJumlah" min="0" step="50000" placeholder="0"></div>'
+      + '<div class="field"><label>Catatan (opsional)</label><input type="text" id="kfModalCatatan" placeholder="mis. Setoran modal awal"></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      + '<button class="btn btn-primary" onclick="kifayahAdminSetorModal()">➕ Setor Modal</button>'
+      + '<button class="btn" onclick="kifayahAdminTarikModal()">➖ Tarik Modal</button>'
+      + '</div>'
+      + (modalHist.length ? '<div style="margin-top:12px;padding-top:10px;border-top:1.5px dashed #f0eef3">'
+          + modalHist.map(function(h){
+              var d = new Date(h.tanggal);
+              var tglF = isNaN(d) ? '-' : d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+              return '<div style="display:flex;justify-content:space-between;font-size:10.5px;padding:4px 0;color:#6b7280">'
+                + '<span>'+tglF+(h.catatan?' · '+h.catatan:'')+'</span>'
+                + '<span style="font-weight:700;color:'+(h.tipe==='tarik'?'#dc2626':'#16a34a')+'">'+(h.tipe==='tarik'?'-':'+')+fmt(h.jumlah)+'</span>'
+                + '</div>';
+            }).join('')
+          + '</div>' : '')
+      + '</div>';
     html += '<div style="font-size:11px;color:#6b7280;margin-bottom:12px;line-height:1.5">Atur limit cicilan, margin, dan biaya transaksi Kifayah. Perubahan berlaku untuk pengajuan baru.</div>'
       + '<div class="field"><label>Limit Cicilan Qardh — Nasabah (Rp)</label><input type="number" id="kfSetNasabahLimit" min="0" step="10000" value="'+(ksAdm.nasabahLimit!=null?ksAdm.nasabahLimit:200000)+'"></div>'
       + '<div class="field"><label>Limit Cicilan Murabahah — Mitra Warung (Rp)</label><input type="number" id="kfSetMitraLimit" min="0" step="10000" value="'+(ksAdm.mitraLimit!=null?ksAdm.mitraLimit:500000)+'"></div>'
@@ -20591,6 +20937,37 @@ function _renderKifayahAdminSection(key) {
   }
 
   el.innerHTML = html;
+}
+// Setor/tarik Modal Kifayah (Koperasi = investor/pemodal) dari panel admin Pengaturan.
+function kifayahAdminSetorModal() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var inp = document.getElementById('kfModalJumlah');
+  var catInp = document.getElementById('kfModalCatatan');
+  var jumlah = Math.round(parseFloat(inp && inp.value) || 0);
+  if (jumlah <= 0) { showToast('⚠️ Masukkan jumlah setoran modal'); return; }
+  if (!confirm('Setor modal ' + fmt(jumlah) + ' dari Koperasi ke Kifayah?')) return;
+  var ok = kifayahModalSetor(jumlah, catInp ? catInp.value.trim() : '');
+  if (ok) {
+    showToast('✅ Modal Kifayah bertambah ' + fmt(jumlah));
+    renderKifayahAdmin();
+  } else {
+    showToast('❌ Gagal menyetor modal');
+  }
+}
+function kifayahAdminTarikModal() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var inp = document.getElementById('kfModalJumlah');
+  var catInp = document.getElementById('kfModalCatatan');
+  var jumlah = Math.round(parseFloat(inp && inp.value) || 0);
+  if (jumlah <= 0) { showToast('⚠️ Masukkan jumlah penarikan modal'); return; }
+  if (!confirm('Tarik modal ' + fmt(jumlah) + ' dari Kifayah kembali ke Koperasi?')) return;
+  var ok = kifayahModalTarik(jumlah, catInp ? catInp.value.trim() : '');
+  if (ok) {
+    showToast('✅ Modal Kifayah berkurang ' + fmt(jumlah));
+    renderKifayahAdmin();
+  } else {
+    showToast('❌ Modal yang sedang terpakai (outstanding) tidak bisa ditarik');
+  }
 }
 // Simpan pengaturan limit/margin/biaya transaksi Kifayah (admin).
 function kifayahAdminSimpanSetting() {
@@ -29427,6 +29804,7 @@ function buildRiwayatPanel(nasabahSimpanan) {
             <div class="txn-row-right">
               <div class="txn-row-amount ${isTarik?'minus':'plus'}" style="${isTarik?'color:var(--danger)':''}">${isTarik?'−':'+'}${fmt(t.jumlah)}</div>
               <div class="txn-row-actions">
+                ${isTarik ? `<button class="txn-act-btn" onclick="event.stopPropagation();_bukaLaporanTarikLalu('${t.id}')" title="Laporan / Kirim WhatsApp">📄</button>` : ''}
                 <button class="txn-act-btn edit" onclick="event.stopPropagation();openEditTxnRiwayat('${t.id}')" title="Edit">✏️</button>
                 <button class="txn-act-btn del" onclick="event.stopPropagation();hapusTxnRiwayat('${t.id}')" title="Hapus">🗑</button>
               </div>
@@ -34512,7 +34890,186 @@ function saveTarikTunai() {
   saveDB();
   closeModal('modalTarikTunai');
   renderHome();
-  showToast('✅ Penarikan ' + fmt(jumlah) + ' berhasil! Sisa: ' + fmt(saldo - jumlah));
+  var sisaSaldo = saldo - jumlah;
+  showToast('✅ Penarikan ' + fmt(jumlah) + ' berhasil! Sisa: ' + fmt(sisaSaldo));
+
+  // Tampilkan sheet laporan: download PDF atau kirim WhatsApp ke nasabah
+  if (typeof _showTarikTunaiSukses === 'function') {
+    _showTarikTunaiSukses({
+      nama: kk ? kk.nama : '-',
+      hp: kk ? (kk.hp || '') : '',
+      jumlah: jumlah,
+      saldoSebelum: saldo,
+      saldoSesudah: sisaSaldo,
+      ket: ket,
+      tanggal: nowISO()
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LAPORAN TARIK TUNAI + TOTAL SIMPANAN KOPERASI
+//  Muncul setelah penarikan berhasil: bisa diunduh sebagai PDF
+//  atau langsung dikirim via WhatsApp ke nasabah bersangkutan.
+// ══════════════════════════════════════════════════════════════
+
+// Hitung Total Simpanan Koperasi (saldo bersih seluruh simpanan, semua jenis, semua anggota)
+function _totalSimpananKoperasiSaatIni() {
+  var totalSimpanan = (DB.transaksi || []).filter(function (t) { return t.type === 'simpanan'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  var totalTarik = (DB.transaksi || []).filter(function (t) { return t.type === 'tarik-sukarela'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
+  return totalSimpanan - totalTarik;
+}
+
+// Generator PDF native (vector, memakai helper _pdfKop/_pdfSection/_pdfRingkasan/_pdfTtd yang sama dengan laporan lain)
+function _pdfGenTarikTunai(jsPDFCls, data) {
+  var totalSimpananKoperasi = _totalSimpananKoperasiSaatIni();
+  var tgl = new Date(data.tanggal || Date.now());
+  var tglLabel = tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) +
+    ', ' + tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+  var doc = new jsPDFCls({ orientation: 'p', unit: 'mm', format: 'a4' });
+  var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+  var margin = 14, usableW = pageW - margin * 2;
+  var y = _pdfKop(doc, pageW, margin, 'LAPORAN TARIK TUNAI', 'Dicetak ' + _pdfTglPanjang() + '  |  ' + (data.nama || '-'));
+
+  y = _pdfSection(doc, y, margin, 'Detail Penarikan', [176, 122, 0]);
+  var ringkasanPenarikan = [
+    { label: 'Nama Nasabah', value: data.nama || '-', color: [26, 71, 42] },
+    { label: 'Waktu Transaksi', value: tglLabel, color: [70, 70, 70] },
+    { label: 'Jumlah Ditarik', value: _pdfFmt(data.jumlah), color: [220, 38, 38] }
+  ];
+  if (data.saldoSebelum != null) ringkasanPenarikan.push({ label: 'Saldo Sebelum', value: _pdfFmt(data.saldoSebelum), color: [70, 70, 70] });
+  ringkasanPenarikan.push({ label: data.saldoSebelum != null ? 'Saldo Sesudah' : 'Saldo Saat Ini', value: _pdfFmt(data.saldoSesudah), color: [26, 71, 42] });
+  ringkasanPenarikan.push({ label: 'Keterangan', value: data.ket || '-', color: [70, 70, 70] });
+  y = _pdfRingkasan(doc, y, margin, usableW, ringkasanPenarikan);
+
+  y = _pdfSection(doc, y, margin, 'Kondisi Koperasi', [26, 71, 42]);
+  y = _pdfRingkasan(doc, y, margin, usableW, [
+    { label: 'Total Simpanan Koperasi (saat ini)', value: _pdfFmt(totalSimpananKoperasi), color: [26, 71, 42] }
+  ]);
+
+  y = _pdfTtd(doc, y + 6, pageW, pageH, margin);
+  _pdfFooterSemua(doc, pageW, pageH, margin, 'Laporan Tarik Tunai');
+  var fname = 'laporan-tarik-tunai-' + (data.nama || 'nasabah').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + new Date().toISOString().slice(0, 10) + '.pdf';
+  doc.save(fname);
+  return fname;
+}
+
+// Unduh laporan tarik tunai sebagai PDF (memuat library jsPDF dulu jika belum siap)
+function _downloadTarikTunaiPDF(data) {
+  var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if (!jsPDFCls) {
+    if (typeof showToast === 'function') showToast('⏳ Memuat library PDF...');
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = function () { _downloadTarikTunaiPDF(data); };
+    document.head.appendChild(s);
+    return;
+  }
+  try {
+    var fname = _pdfGenTarikTunai(jsPDFCls, data);
+    if (typeof showToast === 'function') showToast('✅ Laporan PDF berhasil diunduh!');
+    return fname;
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('❌ Gagal membuat PDF. Silakan coba lagi.');
+    console.error('[TarikTunaiPDF]', e);
+  }
+}
+
+// Susun teks pesan WhatsApp berisi laporan tarik tunai + total simpanan koperasi
+function _buildTarikTunaiWAMsg(data) {
+  var totalSimpananKoperasi = _totalSimpananKoperasiSaatIni();
+  var line = '━━━━━━━━━━━━━━━━━━━━━';
+  var tgl = new Date(data.tanggal || Date.now());
+  var tglLabel = tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) +
+    ', ' + tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  return '🏦 *KOPERASI KELUARGA RENCO*\n' + line + '\n' +
+    '💰 *Laporan Tarik Tunai*\n' + line + '\n' +
+    '• Nama: ' + (data.nama || '-') + '\n' +
+    '• Waktu: ' + tglLabel + '\n' +
+    '• Jumlah Ditarik: ' + fmt(data.jumlah) + '\n' +
+    (data.saldoSebelum != null ? '• Saldo Sebelum: ' + fmt(data.saldoSebelum) + '\n' : '') +
+    '• ' + (data.saldoSebelum != null ? 'Saldo Sesudah' : 'Saldo Saat Ini') + ': ' + fmt(data.saldoSesudah) + '\n' +
+    (data.ket ? '• Keterangan: ' + data.ket + '\n' : '') +
+    line + '\n' +
+    '📊 *Total Simpanan Koperasi (saat ini):* ' + fmt(totalSimpananKoperasi) + '\n' +
+    line + '\n' +
+    '_Terima kasih telah menjadi bagian dari Koperasi Keluarga RENCO._';
+}
+
+// Kirim laporan tarik tunai langsung ke WhatsApp nasabah
+function _kirimTarikTunaiWA(data) {
+  var hp = (data.hp || '').replace(/\D/g, '');
+  if (!hp) { if (typeof showToast === 'function') showToast('⚠️ Nasabah ini belum punya No. HP/WhatsApp'); return; }
+  if (hp.startsWith('0')) hp = '62' + hp.slice(1);
+  else if (!hp.startsWith('62')) hp = '62' + hp;
+  var msg = _buildTarikTunaiWAMsg(data);
+  window.open('https://wa.me/' + hp + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// Sheet konfirmasi setelah penarikan berhasil: pilih Download PDF / Kirim WhatsApp
+function _showTarikTunaiSukses(data) {
+  var ov = document.getElementById('tarikSuksesOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'tarikSuksesOverlay';
+    ov.style.cssText = 'display:none;position:fixed;inset:0;z-index:99991;background:rgba(0,0,0,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);align-items:flex-end;justify-content:center';
+    ov.addEventListener('click', function (e) { if (e.target === ov) _closeTarikTunaiSukses(); });
+    document.body.appendChild(ov);
+  }
+  var hpDigits = (data.hp || '').replace(/\D/g, '');
+  ov.innerHTML =
+    '<div onclick="event.stopPropagation()" style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:0 0 env(safe-area-inset-bottom);max-height:92vh;overflow-y:auto">' +
+      '<div style="display:flex;justify-content:center;padding:10px 0 4px"><div style="width:36px;height:4px;border-radius:99px;background:rgba(0,0,0,.12)"></div></div>' +
+      '<div style="padding:6px 20px 14px;text-align:center">' +
+        '<div style="font-size:34px;margin-bottom:4px">' + (data.isLalu ? '📄' : '✅') + '</div>' +
+        '<div style="font-size:16px;font-weight:800;color:#1c3025;margin-bottom:3px">' + (data.isLalu ? 'Laporan Tarik Tunai' : 'Penarikan Berhasil') + '</div>' +
+        '<div style="font-size:11px;color:#6b7280">' + (data.nama || '-') + ' &middot; ' + fmt(data.jumlah) + '</div>' +
+      '</div>' +
+      '<div style="margin:0 16px 14px;border-radius:16px;background:linear-gradient(135deg,#1a472a,#2d6a4f);color:#fff;padding:14px 16px;font-size:12px;line-height:1.8">' +
+        '<div style="display:flex;justify-content:space-between"><span style="opacity:.75">' + (data.saldoSebelum != null ? 'Sisa Saldo Sukarela' : 'Saldo Saat Ini') + '</span><span style="font-weight:700;color:var(--gold,#f4a922)">' + fmt(data.saldoSesudah) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between"><span style="opacity:.75">Total Simpanan Koperasi</span><span style="font-weight:700;color:var(--gold,#f4a922)">' + fmt(_totalSimpananKoperasiSaatIni()) + '</span></div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;padding:0 16px 20px">' +
+        '<button onclick="_downloadTarikTunaiPDF(window._lastTarikTunaiData)" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left;background:#eef4ff;color:#1a3a2a">' +
+          '<div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(26,71,42,.1)">📑</div>' +
+          '<div style="flex:1"><div style="font-size:13px;font-weight:700">Download Laporan PDF</div><div style="font-size:10px;font-weight:500;opacity:.7;margin-top:1px">Tarik Tunai + Total Simpanan Koperasi</div></div>' +
+        '</button>' +
+        '<button onclick="_kirimTarikTunaiWA(window._lastTarikTunaiData)" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left;background:#e7fdf0;color:#128c7e">' +
+          '<div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(37,211,102,.15)">📱</div>' +
+          '<div style="flex:1"><div style="font-size:13px;font-weight:700">Kirim WhatsApp ke Nasabah</div><div style="font-size:10px;font-weight:500;opacity:.7;margin-top:1px">' + (hpDigits ? 'Ke ' + (data.hp || '') : '⚠️ No. HP nasabah belum diisi') + '</div></div>' +
+        '</button>' +
+        '<button onclick="_closeTarikTunaiSukses()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left;background:#f9fafb;color:#374151">' +
+          '<div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:rgba(55,65,81,.08)">✕</div>' +
+          '<div style="flex:1"><div style="font-size:13px;font-weight:700">Tutup</div></div>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  window._lastTarikTunaiData = data;
+  ov.style.display = 'flex';
+}
+
+function _closeTarikTunaiSukses() {
+  var ov = document.getElementById('tarikSuksesOverlay');
+  if (ov) ov.style.display = 'none';
+}
+
+// Buka kembali sheet Laporan/WhatsApp untuk transaksi tarik tunai yang SUDAH LALU (dari riwayat)
+function _bukaLaporanTarikLalu(txnId) {
+  var t = (DB.transaksi || []).find(function (x) { return x.id === txnId && x.type === 'tarik-sukarela'; });
+  if (!t) { if (typeof showToast === 'function') showToast('⚠️ Transaksi tidak ditemukan'); return; }
+  var kk = (DB.nasabah || []).find(function (a) { return a.id === t.kkId; });
+  var saldoSaatIni = typeof saldoSukarelaNasabah === 'function' ? saldoSukarelaNasabah(t.kkId) : null;
+  _showTarikTunaiSukses({
+    nama: kk ? kk.nama : '-',
+    hp: kk ? (kk.hp || '') : '',
+    jumlah: t.jumlah,
+    saldoSebelum: null,
+    saldoSesudah: saldoSaatIni,
+    ket: t.keterangan,
+    tanggal: t.tanggal,
+    isLalu: true
+  });
 }
 
 // ========== PEMASUKAN / PENGELUARAN MANUAL NASABAH ==========
@@ -38843,7 +39400,11 @@ function _pdfGenKoperasi(jsPDFCls) {
   var totalPiutang = pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   var kasKoperasi = saldoSimpanan - totalPiutang;
   var totalAset = (DB.aset || []).reduce(function (a, b) { return a + (b.nilai || 0); }, 0);
-  var totalAktiva = saldoSimpanan + totalPiutang + totalAset;
+  // Modal Koperasi → Kifayah: Koperasi hanya berperan sebagai investor/pemodal bagi
+  // Kifayah, jadi dicatat sebagai ASET INVESTASI (bukan piutang pinjaman biasa) —
+  // sisi Kifayah punya kas & pembukuannya sendiri (lihat calcKasKifayah()).
+  var modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
+  var totalAktiva = saldoSimpanan + totalPiutang + totalAset + modalKifayah;
   var totalBungaEstimasi = pinAktif.reduce(function (a, p) { return a + Math.round(p.jumlah * ((p.bunga || 0) / 100) * ((p.tenor || 12) / 12)); }, 0);
   var shuPct = ((DB.shuSetting && DB.shuSetting.pctSHU) || 70) / 100;
   var totalSHU = totalBungaEstimasi * shuPct;
@@ -38862,6 +39423,7 @@ function _pdfGenKoperasi(jsPDFCls) {
     { label: 'Kas Tersedia', value: _pdfFmt(kasKoperasi), color: kasKoperasi >= 0 ? [26, 71, 42] : [230, 57, 70] },
     { label: 'Piutang Pinjaman', value: _pdfFmt(totalPiutang), color: [230, 57, 70] },
     { label: 'Total Aset', value: _pdfFmt(totalAset), color: [244, 169, 34] },
+    { label: 'Modal Investasi di Kifayah', value: _pdfFmt(modalKifayah), color: [123, 45, 139] },
     { label: 'Total Aktiva', value: _pdfFmt(totalAktiva), color: [26, 71, 42] },
     { label: 'Estimasi SHU (' + Math.round(shuPct * 100) + '%)', value: _pdfFmt(totalSHU), color: [107, 33, 168] },
     { label: 'PHU Bersih', value: _pdfFmt(phuBersih), color: [244, 169, 34] },
@@ -53570,7 +54132,9 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
     // ── Neraca ──
     const kasKoperasi = saldoSimpanan - totalPiutang;
-    const totalAktiva = saldoSimpanan + totalPiutang + totalAset;
+    // Modal Koperasi → Kifayah dicatat sebagai aset investasi (Koperasi = investor/pemodal Kifayah)
+    const modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
+    const totalAktiva = saldoSimpanan + totalPiutang + totalAset + modalKifayah;
 
     // ── Data bulan ini ──
     const isThisMonth = t => { const d=new Date(t.tanggal||t.createdAt||''); return d.getMonth()===m && d.getFullYear()===y; };
@@ -53671,6 +54235,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           ${_tableRow('Kas & Dana Likuid',_fmt(kasKoperasi),false,kasKoperasi>=0?'#2d6a4f':'#e63946')}
           ${_tableRow('Piutang Pinjaman Aktif',_fmt(totalPiutang),false,'#e63946')}
           ${_tableRow('Aset Tetap & Usaha',_fmt(totalAset),false,'#b07a00')}
+          ${_tableRow('Modal Investasi di Kifayah',_fmt(modalKifayah),false,'#7b2d8b')}
           ${_totalRow('TOTAL AKTIVA',_fmt(totalAktiva),'#1a472a')}
 
           <div style="padding:8px 14px;font-size:10px;font-weight:800;color:#2d6a4f;text-transform:uppercase;letter-spacing:.5px;background:rgba(45,106,79,0.06);margin-top:4px">KEWAJIBAN</div>
@@ -58354,12 +58919,22 @@ function tbAutoProcess() {
       tb.aroLastRollover = nowISO();
     } else {
       // ── ARO tidak aktif: cairkan otomatis saat jatuh tempo ──
+      // Dipecah jadi 2 catatan transaksi terpisah: Modal Pokok (selalu) &
+      // Keuntungan Berjangka (hanya kalau ada bagi hasil).
       DB.transaksi.push({
         id: 'txn' + DB.nextTxnId++, kkId: tb.kkId, type: 'simpanan', jenis: 'sukarela',
-        jumlah: tb.jumlah + bagiHasil,
-        keterangan: 'Pencairan Otomatis Berjangka Syariah (jatuh tempo)' + (bagiHasil > 0 ? ' + bagi hasil ' + fmt(bagiHasil) : '') + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
+        jumlah: tb.jumlah,
+        keterangan: 'Modal Pokok Berjangka Syariah (Pencairan Otomatis — jatuh tempo)' + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
         tanggal: nowISO(), tbId: tb.id
       });
+      if (bagiHasil > 0) {
+        DB.transaksi.push({
+          id: 'txn' + DB.nextTxnId++, kkId: tb.kkId, type: 'simpanan', jenis: 'sukarela',
+          jumlah: bagiHasil,
+          keterangan: 'Keuntungan Berjangka Syariah (Pencairan Otomatis — jatuh tempo)' + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
+          tanggal: nowISO(), tbId: tb.id
+        });
+      }
       tb.status = 'cair';
       tb.tanggalCair = nowISO();
       tb.bagiHasilDiterima = bagiHasil;
@@ -58618,12 +59193,23 @@ window.konfirmasiCairTB = function() {
   var bagiHasil = matang ? tbBagiHasil(tb, tb.tanggalJatuhTempo) : 0;
   var nasabahObj = typeof getNasabah === 'function' ? getNasabah(tb.kkId) : null;
 
+  // Dipecah jadi 2 catatan transaksi terpisah: Modal Pokok (selalu) & Keuntungan
+  // Berjangka (hanya kalau ada bagi hasil) — supaya laporan bisa memisahkan
+  // pengembalian pokok vs pendapatan bagi hasil nasabah.
   DB.transaksi.push({
     id: 'txn' + DB.nextTxnId++, kkId: tb.kkId, type: 'simpanan', jenis: 'sukarela',
-    jumlah: tb.jumlah + bagiHasil,
-    keterangan: 'Pencairan Berjangka Syariah' + (bagiHasil > 0 ? ' + bagi hasil ' + fmt(bagiHasil) : ' (sebelum jatuh tempo)') + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
+    jumlah: tb.jumlah,
+    keterangan: 'Modal Pokok Berjangka Syariah' + (!matang ? ' (sebelum jatuh tempo)' : '') + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
     tanggal: nowISO(), tbId: tb.id
   });
+  if (bagiHasil > 0) {
+    DB.transaksi.push({
+      id: 'txn' + DB.nextTxnId++, kkId: tb.kkId, type: 'simpanan', jenis: 'sukarela',
+      jumlah: bagiHasil,
+      keterangan: 'Keuntungan Berjangka Syariah' + (nasabahObj ? ' — ' + nasabahObj.nama : ''),
+      tanggal: nowISO(), tbId: tb.id
+    });
+  }
   tb.status = 'cair';
   tb.tanggalCair = nowISO();
   tb.bagiHasilDiterima = bagiHasil;
