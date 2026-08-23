@@ -11262,6 +11262,12 @@ window.deletePengurus = function(id) {
             <span class="kf-akun-menu-label">Pesanan Saya</span>
             <span class="kf-akun-menu-arrow">›</span>
           </button>
+          <button class="kf-akun-menu-item" onclick="kifayahOpenAkunSub('cicilan')">
+            <span class="kf-akun-menu-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9.5h19" stroke="currentColor" stroke-width="1.6"/><rect x="5.5" y="13" width="6" height="2.4" rx="1.2" fill="currentColor" opacity="0.7"/></svg></span>
+            <span class="kf-akun-menu-label">Cicilan</span>
+            <span class="kf-pending-count" id="kfAkunCicilanBadge" style="display:none;margin-right:4px"></span>
+            <span class="kf-akun-menu-arrow">›</span>
+          </button>
           <button class="kf-akun-menu-item" onclick="kifayahOpenAkunSub('pesananMasuk')">
             <span class="kf-akun-menu-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg></span>
             <span class="kf-akun-menu-label">Pesanan Masuk (Warung)</span>
@@ -11338,6 +11344,15 @@ window.deletePengurus = function(id) {
           <span class="kf-sub-title">Pesanan Saya</span>
         </div>
         <div id="kfPesananSayaContent"></div>
+      </div>
+
+      <!-- CICILAN SAYA (sub-menu Akun) — bayar angsuran Qardh/Murabahah -->
+      <div class="kf-panel" id="kfPanel-cicilan">
+        <div class="kf-sub-header">
+          <button class="kf-sub-back" onclick="kifayahBackToAkun()">‹ Akun</button>
+          <span class="kf-sub-title">Cicilan</span>
+        </div>
+        <div id="kfCicilanSayaContent"></div>
       </div>
 
       <!-- LAPORAN KEUANGAN (sekarang sub-menu Akun) -->
@@ -11473,15 +11488,30 @@ window.deletePengurus = function(id) {
             </div>
             <div class="field" style="margin-bottom:10px">
               <label>Metode Pembayaran</label>
-              <select id="kfCartMetode" onchange="_kfToggleTenorField()">
-                <option value="tunai">💵 Tunai (Bayar di Tempat)</option>
-                <option value="saldo">💰 Saldo Kifayah (Simpanan Sukarela)</option>
-              </select>
+              <input type="hidden" id="kfCartMetode" value="tunai">
+              <div id="kfCartMetodeChips" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button type="button" class="kf-metode-chip active" data-val="tunai" onclick="_kfSetMetode('tunai')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> <span>Tunai</span></button>
+                <button type="button" class="kf-metode-chip" data-val="saldo" onclick="_kfSetMetode('saldo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M19 7V5.5A2.5 2.5 0 0 0 16.5 3h-11A2.5 2.5 0 0 0 3 5.5v13A2.5 2.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V16"/><path d="M17 10.5h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3a2.5 2.5 0 0 1 0-5z"/></svg> <span>Saldo Kifayah</span></button>
+                <button type="button" class="kf-metode-chip" data-val="cicilan-qardh" onclick="_kfSetMetode('cicilan-qardh')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span>Cicilan Qardh</span></button>
+                <button type="button" class="kf-metode-chip" data-val="cicilan-murabahah" onclick="_kfSetMetode('cicilan-murabahah')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> <span>Cicilan Murabahah</span></button>
+              </div>
+            </div>
+            <style>
+              .kf-metode-chip{display:flex;align-items:center;gap:7px;padding:10px 10px;border-radius:12px;border:1.5px solid #e8e8e8;background:#fff;font-family:inherit;font-size:12px;font-weight:700;color:#6b7280;cursor:pointer;transition:all .18s ease;text-align:left;line-height:1.25}
+              .kf-metode-chip svg{flex-shrink:0}
+              .kf-metode-chip.active{border-color:#7b2d8b;background:rgba(123,45,139,0.08);color:#7b2d8b}
+              .kf-metode-chip:active{transform:scale(0.97)}
+            </style>
+            <div class="field" id="kfCartTenorWrap" style="display:none;margin-bottom:10px">
+              <label>Tenor Cicilan</label>
+              <select id="kfCartTenor" onchange="_kfToggleTenorField()"></select>
+              <div id="kfCartCicilanInfo" style="font-size:11px;color:#6b7280;margin-top:6px;line-height:1.5"></div>
             </div>
             <div class="field" id="kfCartSaldoWrap" style="display:none;margin-bottom:10px;font-size:11.5px;color:#6b7280">
               Saldo Kifayah tersedia: <strong id="kfCartSaldoAngka">Rp 0</strong>
               <div id="kfCartSaldoWarning" style="display:none;color:#dc2626;font-weight:700;margin-top:3px">⚠️ Saldo tidak mencukupi untuk pesanan ini</div>
             </div>
+            <div id="kfCartBiayaWrap" style="display:none;margin-bottom:12px"></div>
             <button class="btn btn-primary btn-block" onclick="kifayahCheckout()">Buat Pesanan</button>
           </div>
         </div>
@@ -14522,11 +14552,18 @@ let DB = {
   pinjaman: [],
   // ── Buku Cicilan Kifayah: pinjaman Qardh/Murabahah khusus Belanja Kifayah,
   // buku INTERNAL milik Kifayah sendiri — sepenuhnya TERPISAH dari DB.pinjaman
-  // (Pinjaman Koperasi umum) dan TIDAK didanai/dicatat lewat kas atau modal
-  // Koperasi. Limit/kuota cicilan diatur lewat DB.kifayahSetting (nasabahLimit/
-  // mitraLimit), bukan lewat pool modal — lihat fungsi ber-awalan "kifayah"/"_kf"
-  // & totalPembayaranKifayah().
+  // (Pinjaman Koperasi umum) dan TIDAK didanai/dicatat lewat kas Koperasi.
+  // Minimal belanja & limit bulanan per skema diatur lewat DB.kifayahSetting.qardh/
+  // .murabahah (bisa diubah admin di menu Kifayah > Admin > Pengaturan Cicilan);
+  // dana pencairan cicilan sendiri berasal dari DB.kifayahDompet (Dompet Kifayah) —
+  // lihat fungsi ber-awalan "kifayah"/"_kf" & totalPembayaranKifayah().
   pinjamanKifayah: [],
+  // ── Dompet Kifayah (Admin): Modal / Dana kelola Kifayah — wallet TERPISAH
+  // milik admin sebagai modal kerja modul Kifayah (setoran modal awal & tambahan
+  // dari admin/Koperasi, bisa ditarik kembali). BUKAN kas Koperasi umum dan BUKAN
+  // saldo/dompet nasabah — murni pencatatan dana yang dikelola admin utk Kifayah.
+  // Lihat kifayahDompetSaldo()/kifayahAdminSetorDompet()/kifayahAdminTarikDompet().
+  kifayahDompet: { saldo: 0, riwayat: [] },
   arisanSetting: { nama: 'Arisan 2025', iuran: 200000 },
   arisanPeserta: [],
   arisanHistory: [],
@@ -14696,7 +14733,30 @@ function _dbMigrate() {
   // lewat menu Kifayah > Admin > Pengaturan. (Akad Murabahah khusus Mitra Warung
   // sudah dihapus dari checkout Kifayah — sisa field lama dibiarkan tidak terpakai
   // untuk kompatibilitas data lama, tidak dibaca lagi oleh kode manapun.)
-  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = { nasabahLimit:200000 };
+  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = {};
+  // Cicilan Kifayah — 2 skema berbeda, masing-masing dgn tenor tetap tapi minimal
+  // belanja & limit bulanan per-nasabah bisa diatur admin lewat menu Kifayah > Admin > Pengaturan.
+  if (!DB.kifayahSetting.qardh || typeof DB.kifayahSetting.qardh !== 'object') {
+    DB.kifayahSetting.qardh = { tenorOpsi: [2,3], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 };
+  }
+  // Migrasi data lama: pastikan field feeLayanan ada meski objek qardh sudah pernah dibuat sebelumnya
+  if (typeof DB.kifayahSetting.qardh.feeLayanan !== 'number' || isNaN(DB.kifayahSetting.qardh.feeLayanan)) {
+    DB.kifayahSetting.qardh.feeLayanan = 10000;
+  }
+  if (!DB.kifayahSetting.murabahah || typeof DB.kifayahSetting.murabahah !== 'object') {
+    DB.kifayahSetting.murabahah = { tenorOpsi: [4,6,8,10,12], minBelanja: 100000, limitBulanan: 400000, marginTable: {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan: 10000 };
+  }
+  // Migrasi data lama: pastikan field marginTable & feeLayanan ada meski objek murabahah sudah pernah dibuat sebelumnya
+  if (!DB.kifayahSetting.murabahah.marginTable || typeof DB.kifayahSetting.murabahah.marginTable !== 'object') {
+    DB.kifayahSetting.murabahah.marginTable = {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+  }
+  if (typeof DB.kifayahSetting.murabahah.feeLayanan !== 'number' || isNaN(DB.kifayahSetting.murabahah.feeLayanan)) {
+    DB.kifayahSetting.murabahah.feeLayanan = 10000;
+  }
+  // Dompet Kifayah (Admin): pastikan objek modal/dana kelola Kifayah ada utk data lama.
+  if (!DB.kifayahDompet || typeof DB.kifayahDompet !== 'object') DB.kifayahDompet = { saldo:0, riwayat:[] };
+  if (!Array.isArray(DB.kifayahDompet.riwayat)) DB.kifayahDompet.riwayat = [];
+  if (typeof DB.kifayahDompet.saldo !== 'number' || isNaN(DB.kifayahDompet.saldo)) DB.kifayahDompet.saldo = 0;
   if (!DB.arisanSetting||typeof DB.arisanSetting!=='object') DB.arisanSetting={ nama:'Arisan 2025', iuran:200000 };
 
   // RencoPay
@@ -15011,7 +15071,11 @@ window._ico = function(name, size) {
     doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
     download: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
     whatsapp: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>'
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    cash: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    wallet: '<path d="M19 7V5.5A2.5 2.5 0 0 0 16.5 3h-11A2.5 2.5 0 0 0 3 5.5v13A2.5 2.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V16"/><path d="M17 10.5h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3a2.5 2.5 0 0 1 0-5z"/>',
+    heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
+    bag: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'
   };
   return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0">'+(paths[name]||'')+'</svg>';
 };
@@ -18109,6 +18173,74 @@ function _isTxnKifayah(t) {
   if (t.refId && Array.isArray(DB.pinjamanKifayah) && DB.pinjamanKifayah.some(function(p){ return p.id === t.refId; })) return true;
   return false;
 }
+// ── Dompet Kifayah (Admin): Modal / Dana kelola Kifayah ───────────────────
+// Saldo dana yang tersedia bagi admin utk mengelola modul Kifayah (mis. modal
+// kerja, menalangi pembayaran ke warung, dsb). Terpisah dari kas Koperasi
+// (calcKas) dan dari saldo warung/nasabah — riwayat setor/tarik jadi audit trail.
+function kifayahDompetSaldo() {
+  return (DB.kifayahDompet && typeof DB.kifayahDompet.saldo === 'number') ? DB.kifayahDompet.saldo : 0;
+}
+
+function _kfDompetCatat(jenis, jumlah, ket, saldoLama, saldoBaru) {
+  if (!DB.kifayahDompet || typeof DB.kifayahDompet !== 'object') DB.kifayahDompet = { saldo:0, riwayat:[] };
+  if (!Array.isArray(DB.kifayahDompet.riwayat)) DB.kifayahDompet.riwayat = [];
+  DB.kifayahDompet.riwayat.unshift({
+    id: 'kfdompet' + (DB.kifayahDompet.riwayat.length + 1) + '_' + Date.now(),
+    jenis: jenis, // 'setor' | 'tarik'
+    jumlah: jumlah,
+    keterangan: ket,
+    saldoSebelum: saldoLama,
+    saldoSesudah: saldoBaru,
+    tanggal: nowISO()
+  });
+}
+
+function kifayahAdminSetorDompet() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var saldoLama = kifayahDompetSaldo();
+  var input = prompt('Setor Dana ke Dompet Kifayah\nSaldo saat ini: ' + fmt(saldoLama) + '\n\nJumlah setor (Rp):', '');
+  if (input === null) return; // dibatalkan
+  var bersih = String(input).replace(/[^0-9.]/g, '');
+  var jumlah = parseFloat(bersih);
+  if (isNaN(jumlah) || jumlah <= 0) { showToast('⚠️ Jumlah tidak valid'); return; }
+  jumlah = Math.round(jumlah);
+  var ket = prompt('Keterangan setor (untuk catatan/audit):', 'Setoran modal Kifayah oleh admin');
+  if (ket === null) return; // dibatalkan
+  if (!ket.trim()) ket = 'Setoran modal Kifayah oleh admin';
+  var saldoBaru = saldoLama + jumlah;
+  if (!confirm('Setor ' + fmt(jumlah) + ' ke Dompet Kifayah?\nSaldo akan menjadi ' + fmt(saldoBaru) + '.')) return;
+
+  DB.kifayahDompet.saldo = saldoBaru;
+  _kfDompetCatat('setor', jumlah, ket, saldoLama, saldoBaru);
+  saveDB();
+  showToast('✅ Dompet Kifayah bertambah ' + fmt(jumlah));
+  renderKifayahAdmin();
+}
+
+function kifayahAdminTarikDompet() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var saldoLama = kifayahDompetSaldo();
+  if (saldoLama <= 0) { showToast('⚠️ Saldo Dompet Kifayah kosong'); return; }
+  var input = prompt('Tarik Dana dari Dompet Kifayah\nSaldo saat ini: ' + fmt(saldoLama) + '\n\nJumlah tarik (Rp):', '');
+  if (input === null) return; // dibatalkan
+  var bersih = String(input).replace(/[^0-9.]/g, '');
+  var jumlah = parseFloat(bersih);
+  if (isNaN(jumlah) || jumlah <= 0) { showToast('⚠️ Jumlah tidak valid'); return; }
+  jumlah = Math.round(jumlah);
+  if (jumlah > saldoLama) { showToast('⚠️ Saldo tidak cukup. Maks. tarik: ' + fmt(saldoLama)); return; }
+  var ket = prompt('Keterangan tarik (untuk catatan/audit):', 'Penarikan dana Kifayah oleh admin');
+  if (ket === null) return; // dibatalkan
+  if (!ket.trim()) ket = 'Penarikan dana Kifayah oleh admin';
+  var saldoBaru = saldoLama - jumlah;
+  if (!confirm('Tarik ' + fmt(jumlah) + ' dari Dompet Kifayah?\nSaldo akan menjadi ' + fmt(saldoBaru) + '.')) return;
+
+  DB.kifayahDompet.saldo = saldoBaru;
+  _kfDompetCatat('tarik', jumlah, ket, saldoLama, saldoBaru);
+  saveDB();
+  showToast('✅ Dompet Kifayah berkurang ' + fmt(jumlah));
+  renderKifayahAdmin();
+}
+
 function calcKas() {
   // Hanya simpanan pokok + wajib yang jadi basis kas (sukarela TIDAK termasuk)
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan' && t.jenis!=='sukarela').reduce((a,b)=>a+b.jumlah,0);
@@ -18796,6 +18928,7 @@ function kifayahOpenAkunSub(subTab) {
   else if (subTab === 'pesananMasuk') renderKifayahPesananMasuk();
   else if (subTab === 'kurir') renderKifayahKurirSaya();
   else if (subTab === 'pesanan') renderKifayahPesananSaya();
+  else if (subTab === 'cicilan') renderKifayahCicilanSaya();
   else if (subTab === 'laporanKeuangan') renderKifayahLaporanKeuangan();
 }
 function kifayahBackToAkun() {
@@ -18842,6 +18975,12 @@ function _kfRenderAkunMenuBadges() {
     var kCount = (k && k.status === 'aktif') ? (DB.pesananWarung||[]).filter(function(p){ return p.status === 'diproses' && !p.kurirId; }).length : 0;
     if (kCount > 0) { kurirBadge.textContent = kCount; kurirBadge.style.display = 'inline-block'; }
     else { kurirBadge.style.display = 'none'; }
+  }
+  var cicilanBadge = document.getElementById('kfAkunCicilanBadge');
+  if (cicilanBadge) {
+    var cCount = (typeof _kfPesananCicilanAktifSaya === 'function') ? _kfPesananCicilanAktifSaya().length : 0;
+    if (cCount > 0) { cicilanBadge.textContent = cCount; cicilanBadge.style.display = 'inline-block'; }
+    else { cicilanBadge.style.display = 'none'; }
   }
 }
 
@@ -20210,9 +20349,8 @@ function kifayahOpenCart() {
   document.getElementById('kfCartFooter').style.display = 'block';
   document.getElementById('kfCartTotal').textContent = fmt(total);
   _kfCartTotalCache = total;
-  var metodeSel = document.getElementById('kfCartMetode');
   var myId = _kfMyNasabahId();
-  if (metodeSel) { metodeSel.value = 'tunai'; _kfToggleTenorField(); }
+  _kfSetMetode('tunai');
   var myNasabahCart = getNasabah(myId);
   var alamatTerakhir = (myNasabahCart && myNasabahCart.alamatKirimTerakhir) || '';
   document.getElementById('kfCartAlamat').value = alamatTerakhir;
@@ -20280,6 +20418,89 @@ function kifayahRemoveFromCart(produkId) {
   _kfUpdateCartBadge();
   kifayahOpenCart();
 }
+function _kfCicilanTipeDariMetode(metode) {
+  if (metode === 'cicilan-qardh') return 'qardh';
+  if (metode === 'cicilan-murabahah') return 'murabahah';
+  return null;
+}
+function _kfCicilanSetting(tipe) {
+  var ks = DB.kifayahSetting || {};
+  return (tipe === 'murabahah') ? (ks.murabahah || { tenorOpsi:[4,6,8,10,12], minBelanja:100000, limitBulanan:400000, marginTable:{4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan:10000 })
+       : (ks.qardh || { tenorOpsi:[2,3], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 });
+}
+// ── Formula Qardh Kifayah: tanpa margin (bebas riba), nasabah hanya membayar
+// Fee Layanan tetap (bisa diatur admin) yang termasuk dalam jumlah cicilan.
+// Total Tagihan = Harga Barang + Fee Layanan
+// Cicilan / bulan = Total Tagihan ÷ Tenor
+function _kfHitungQardh(hargaBarang, tenor) {
+  var ks = _kfCicilanSetting('qardh');
+  var fee = Number(ks.feeLayanan) || 0;
+  var totalTagihan = (hargaBarang||0) + fee;
+  var cicilanPerBulan = tenor > 0 ? Math.round(totalTagihan / tenor) : totalTagihan;
+  return {
+    hargaBarang: hargaBarang||0,
+    tenor: tenor,
+    fee: fee,
+    totalTagihan: totalTagihan,
+    cicilanPerBulan: cicilanPerBulan
+  };
+}
+// ── Formula Murabahah Kifayah (margin & fee bisa diatur admin lewat Pengaturan Cicilan) ──
+// Margin = Harga Barang × Persentase Margin (persentase per tenor, lihat DB.kifayahSetting.murabahah.marginTable)
+// Harga Jual = Harga Barang + Margin
+// Total Tagihan = Harga Jual + Fee Layanan
+// Cicilan / bulan = Total Tagihan ÷ Tenor
+function _kfHitungMurabahah(hargaBarang, tenor) {
+  var ks = _kfCicilanSetting('murabahah');
+  var marginTable = ks.marginTable || {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+  var marginPersen = Number(marginTable[tenor]) || 0;
+  var fee = Number(ks.feeLayanan) || 0;
+  var margin = Math.round((hargaBarang||0) * (marginPersen/100));
+  var hargaJual = (hargaBarang||0) + margin;
+  var totalTagihan = hargaJual + fee;
+  var cicilanPerBulan = tenor > 0 ? Math.round(totalTagihan / tenor) : totalTagihan;
+  return {
+    hargaBarang: hargaBarang||0,
+    tenor: tenor,
+    marginPersen: marginPersen,
+    margin: margin,
+    hargaJual: hargaJual,
+    fee: fee,
+    totalTagihan: totalTagihan,
+    cicilanPerBulan: cicilanPerBulan
+  };
+}
+// Total nilai pesanan cicilan (tipe tertentu) milik nasabah pada bulan berjalan —
+// dipakai utk mengecek sisa kuota terhadap limitBulanan. Pesanan yang dibatalkan
+// tidak dihitung; pesanan lain (menunggu/diproses/selesai) tetap dihitung sbg
+// eksposur cicilan yang masih berjalan.
+function _kfCicilanTerpakaiBulanIni(nasabahId, tipe) {
+  var ym = nowISO().slice(0,7);
+  return (DB.pesananWarung||[]).filter(function(p){
+    return p.pembeliId === nasabahId
+      && p.metodeBayar === 'cicilan'
+      && p.cicilan && p.cicilan.tipe === tipe
+      && p.status !== 'dibatalkan'
+      && (p.dibuatPada||'').slice(0,7) === ym;
+  }).reduce(function(s,p){ return s + (p.total||0); }, 0);
+}
+function _kfCicilanLabel(p) {
+  var tipe = (p.cicilan && p.cicilan.tipe) || 'qardh';
+  var nama = (tipe === 'murabahah') ? 'Murabahah' : 'Qardh';
+  var tenor = p.pinjamanId ? 4 : (p.cicilan ? p.cicilan.tenor : '');
+  return nama + (tenor ? ' ' + tenor + 'x' : '');
+}
+// Dipanggil oleh chip ikon Metode Pembayaran (menggantikan <select> lama)
+// supaya value tersimpan di input hidden #kfCartMetode & tampilan chip aktif ter-update.
+window._kfSetMetode = function(val) {
+  var hidden = document.getElementById('kfCartMetode');
+  if (hidden) hidden.value = val;
+  var chips = document.querySelectorAll('#kfCartMetodeChips .kf-metode-chip');
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.toggle('active', chips[i].getAttribute('data-val') === val);
+  }
+  _kfToggleTenorField();
+};
 function _kfToggleTenorField() {
   var metode = (document.getElementById('kfCartMetode')||{}).value;
   var saldoWrap = document.getElementById('kfCartSaldoWrap');
@@ -20292,6 +20513,83 @@ function _kfToggleTenorField() {
       if (angkaEl) angkaEl.textContent = fmt(saldo);
       var warnEl2 = document.getElementById('kfCartSaldoWarning');
       if (warnEl2) warnEl2.style.display = (saldo < (_kfCartTotalCache||0)) ? 'block' : 'none';
+    }
+  }
+  var tenorWrap = document.getElementById('kfCartTenorWrap');
+  var tipe = _kfCicilanTipeDariMetode(metode);
+  if (tenorWrap) {
+    tenorWrap.style.display = tipe ? 'block' : 'none';
+    if (!tipe) {
+      var biayaWrapOff = document.getElementById('kfCartBiayaWrap');
+      if (biayaWrapOff) { biayaWrapOff.style.display = 'none'; biayaWrapOff.innerHTML = ''; }
+      // Reset supaya lain kali metode cicilan dipilih lagi, opsi tenor dibangun ulang dari awal
+      var tenorSelOff = document.getElementById('kfCartTenor');
+      if (tenorSelOff) tenorSelOff.dataset.tipe = '';
+    }
+    if (tipe) {
+      var ks = _kfCicilanSetting(tipe);
+      var tenorSel = document.getElementById('kfCartTenor');
+      // PENTING: jangan membangun ulang <option> setiap kali fungsi ini dipanggil —
+      // itu membuat pilihan tenor nasabah selalu ter-reset ke opsi pertama tiap kali
+      // dropdown tenor sendiri berubah (karena onchange-nya juga memanggil fungsi ini).
+      // Hanya bangun ulang saat tipe cicilan berubah (ganti metode) atau select masih kosong.
+      if (tenorSel && (tenorSel.dataset.tipe !== tipe || !tenorSel.options.length)) {
+        var prevTenorVal = tenorSel.value;
+        tenorSel.innerHTML = (ks.tenorOpsi||[]).map(function(t){ return '<option value="'+t+'">'+t+' bulan</option>'; }).join('');
+        tenorSel.dataset.tipe = tipe;
+        // Pertahankan tenor yang sudah dipilih nasabah kalau masih valid untuk tipe ini
+        if (prevTenorVal && (ks.tenorOpsi||[]).indexOf(parseInt(prevTenorVal,10)) !== -1) {
+          tenorSel.value = prevTenorVal;
+        }
+      }
+      var myId3 = _kfMyNasabahId();
+      var terpakai = myId3 ? _kfCicilanTerpakaiBulanIni(myId3, tipe) : 0;
+      var sisaKuota = Math.max(0, (ks.limitBulanan||0) - terpakai);
+      var modalTersedia = kifayahDompetSaldo();
+      var infoEl = document.getElementById('kfCartCicilanInfo');
+      var biayaWrap = document.getElementById('kfCartBiayaWrap');
+      if (tipe === 'murabahah') {
+        var tenorTerpilih = parseInt((document.getElementById('kfCartTenor')||{}).value, 10) || (ks.tenorOpsi||[])[0];
+        var h = _kfHitungMurabahah(_kfCartTotalCache||0, tenorTerpilih);
+        if (biayaWrap) {
+          biayaWrap.style.display = 'block';
+          biayaWrap.innerHTML = '<div style="background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:14px;padding:14px">'
+            + '<div style="font-weight:800;font-size:12.5px;color:#7b2d8b;margin-bottom:10px">📿 Rincian Biaya Murabahah</div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Harga Barang</span><strong>'+fmt(h.hargaBarang)+'</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Biaya Margin ('+h.marginPersen+'%)</span><strong>'+fmt(h.margin)+'</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Harga Jual</span><strong>'+fmt(h.hargaJual)+'</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:8px"><span>Biaya Fee Layanan</span><strong>'+fmt(h.fee)+'</strong></div>'
+            + '<div style="height:1px;background:rgba(123,45,139,0.2);margin-bottom:8px"></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1c3025;margin-bottom:4px"><span>Total Tagihan</span><span>'+fmt(h.totalTagihan)+'</span></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#7b2d8b"><span>Cicilan / bulan ('+tenorTerpilih+'x)</span><span>'+fmt(h.cicilanPerBulan)+'</span></div>'
+            + '</div>';
+        }
+      } else if (tipe === 'qardh') {
+        var tenorTerpilihQ = parseInt((document.getElementById('kfCartTenor')||{}).value, 10) || (ks.tenorOpsi||[])[0];
+        var hq = _kfHitungQardh(_kfCartTotalCache||0, tenorTerpilihQ);
+        if (biayaWrap) {
+          biayaWrap.style.display = 'block';
+          biayaWrap.innerHTML = '<div style="background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:14px;padding:14px">'
+            + '<div style="font-weight:800;font-size:12.5px;color:#7b2d8b;margin-bottom:10px">🕊️ Rincian Biaya Qardh</div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Harga Barang</span><strong>'+fmt(hq.hargaBarang)+'</strong></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:8px"><span>Biaya Fee Layanan</span><strong>'+fmt(hq.fee)+'</strong></div>'
+            + '<div style="height:1px;background:rgba(123,45,139,0.2);margin-bottom:8px"></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1c3025;margin-bottom:4px"><span>Total Tagihan</span><span>'+fmt(hq.totalTagihan)+'</span></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#7b2d8b"><span>Cicilan / bulan ('+tenorTerpilihQ+'x)</span><span>'+fmt(hq.cicilanPerBulan)+'</span></div>'
+            + '</div>';
+        }
+      } else if (biayaWrap) {
+        biayaWrap.style.display = 'none';
+        biayaWrap.innerHTML = '';
+      }
+      if (infoEl) {
+        infoEl.innerHTML = 'Minimal belanja: <strong>'+fmt(ks.minBelanja||0)+'</strong><br>'
+          + 'Sisa kuota bulan ini: <strong>'+fmt(sisaKuota)+'</strong> (limit '+fmt(ks.limitBulanan||0)+'/bln)<br>'
+          + 'Modal Kifayah tersedia: <strong>'+fmt(modalTersedia)+'</strong>'
+          + (((_kfCartTotalCache||0) < (ks.minBelanja||0)) ? '<br><span style="color:#dc2626;font-weight:700">⚠️ Belanja belum memenuhi minimal</span>' : '')
+          + (((_kfCartTotalCache||0) > sisaKuota) ? '<br><span style="color:#dc2626;font-weight:700">⚠️ Melebihi sisa kuota bulan ini</span>' : '')
+          + (((_kfCartTotalCache||0) > modalTersedia) ? '<br><span style="color:#dc2626;font-weight:700">⚠️ Modal Kifayah tidak mencukupi</span>' : '');
+      }
     }
   }
 }
@@ -20307,7 +20605,10 @@ function kifayahCheckout() {
   });
   if (adaWarungTutup) { showToast('🔴 Warung sedang tutup, tidak bisa melakukan pesanan'); return; }
   var myNasabah = getNasabah(myId);
-  var metode = (document.getElementById('kfCartMetode')||{}).value || 'tunai';
+  var metodeRaw = (document.getElementById('kfCartMetode')||{}).value || 'tunai';
+  var cicilanTipe = _kfCicilanTipeDariMetode(metodeRaw);
+  var metode = cicilanTipe ? 'cicilan' : metodeRaw; // metodeBayar tersimpan generik 'cicilan', detail skema di pesanan.cicilan.tipe
+  var cicilanTenor = cicilanTipe ? parseInt((document.getElementById('kfCartTenor')||{}).value, 10) : null;
   var alamatKirim = (document.getElementById('kfCartAlamat').value||'').trim();
   if (!alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
   var kirimLat = (typeof _kfCartGpsLat === 'number') ? _kfCartGpsLat : null;
@@ -20330,6 +20631,32 @@ function kifayahCheckout() {
       return;
     }
   }
+  if (cicilanTipe) {
+    var _ksCek = _kfCicilanSetting(cicilanTipe);
+    var _namaTipe = (cicilanTipe === 'murabahah') ? 'Murabahah' : 'Qardh';
+    if (!cicilanTenor || (_ksCek.tenorOpsi||[]).indexOf(cicilanTenor) === -1) {
+      showToast('⚠️ Pilih tenor cicilan ' + _namaTipe + ' yang valid');
+      return;
+    }
+    if (totalSemua < (_ksCek.minBelanja||0)) {
+      showToast('⚠️ Minimal belanja cicilan ' + _namaTipe + ' adalah ' + fmt(_ksCek.minBelanja||0));
+      return;
+    }
+    var _terpakaiBulan = _kfCicilanTerpakaiBulanIni(myId, cicilanTipe);
+    var _sisaKuota = Math.max(0, (_ksCek.limitBulanan||0) - _terpakaiBulan);
+    if (totalSemua > _sisaKuota) {
+      showToast('⚠️ Melebihi sisa kuota cicilan ' + _namaTipe + ' bulan ini (sisa ' + fmt(_sisaKuota) + ')');
+      return;
+    }
+    // Cicilan (Qardh/Murabahah) berarti Kifayah mencairkan dana ke warung lebih dulu,
+    // nasabah membayar belakangan — dana yang dicairkan berasal dari Dompet Kifayah
+    // (modal admin), jadi checkout ditolak kalau modal tidak mencukupi total belanja.
+    var saldoDompetTersedia = kifayahDompetSaldo();
+    if (totalSemua > saldoDompetTersedia) {
+      showToast('⚠️ Modal Dompet Kifayah tidak mencukupi (tersedia ' + fmt(saldoDompetTersedia) + ')');
+      return;
+    }
+  }
   Object.keys(byWarung).forEach(function(warungId){
     var items = byWarung[warungId];
     var total = items.reduce(function(s,i){ return s+i.subtotal; }, 0);
@@ -20349,6 +20676,23 @@ function kifayahCheckout() {
       kirimLng: kirimLng,
       dibuatPada: nowISO()
     };
+    if (cicilanTipe) {
+      pesanan.cicilan = { tipe: cicilanTipe, tenor: cicilanTenor };
+      if (cicilanTipe === 'murabahah') {
+        var _hMur = _kfHitungMurabahah(total, cicilanTenor);
+        pesanan.cicilan.marginPersen = _hMur.marginPersen;
+        pesanan.cicilan.margin = _hMur.margin;
+        pesanan.cicilan.hargaJual = _hMur.hargaJual;
+        pesanan.cicilan.fee = _hMur.fee;
+        pesanan.cicilan.totalTagihan = _hMur.totalTagihan;
+        pesanan.cicilan.cicilanPerBulan = _hMur.cicilanPerBulan;
+      } else if (cicilanTipe === 'qardh') {
+        var _hQardh = _kfHitungQardh(total, cicilanTenor);
+        pesanan.cicilan.fee = _hQardh.fee;
+        pesanan.cicilan.totalTagihan = _hQardh.totalTagihan;
+        pesanan.cicilan.cicilanPerBulan = _hQardh.cicilanPerBulan;
+      }
+    }
     if (metode === 'saldo') {
       DB.transaksi.push({
         id: 'txn' + DB.nextTxnId++,
@@ -20986,7 +21330,7 @@ function _kfRenderPesananCard(sellerView, p) {
       ? '<div class="kf-rating-done">'+_kfRatingStars(p.ratingValue)+' <span>Terima kasih atas penilaian Anda</span></div>'
       : '<button class="kf-mini-action kf-rate" onclick="_kifayahOpenRatingModal(\''+p.id+'\')">⭐ Beri Rating Warung</button>';
   }
-  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh '+(p.pinjamanId?4:(p.cicilan?p.cicilan.tenor:''))+'x</span>' : '';
+  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 '+_kfCicilanLabel(p)+'</span>' : '';
   var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Kifayah</span>' : '';
   var kurirBadge = p.kurirId ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">🛵 '+(p.kurirNama||'Kurir')+'</span>' : '';
   return '<div class="kf-pesanan-card">'
@@ -21072,6 +21416,19 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   if (!p) return;
   var sudahSelesaiSebelumnya = (p.status === 'selesai');
 
+  // Cicilan (Qardh/Murabahah): sebelum pesanan ditandai "selesai" untuk pertama
+  // kalinya, cicilan ke-1 WAJIB ditarik otomatis dari Tabungan Sukarela pembeli
+  // sejumlah harga barang (p.total — TIDAK termasuk fee/margin). Kalau saldo
+  // Sukarela pembeli tidak cukup, seluruh transaksi DITOLAK (status batal diubah,
+  // saldo warung & Dompet Kifayah tidak disentuh sama sekali).
+  if (status === 'selesai' && !sudahSelesaiSebelumnya && p.metodeBayar === 'cicilan') {
+    var _saldoSukPembeli = (typeof saldoSukarelaNasabah === 'function') ? saldoSukarelaNasabah(p.pembeliId) : 0;
+    if (_saldoSukPembeli < (p.total || 0)) {
+      showToast('⚠️ Saldo Sukarela ' + (p.pembeliNama||'pembeli') + ' tidak cukup untuk Cicilan ke-1 (tersedia ' + fmt(_saldoSukPembeli) + ', dibutuhkan ' + fmt(p.total||0) + ') — pesanan tidak bisa diselesaikan');
+      return;
+    }
+  }
+
   p.status = status;
   // Kifayah melunasi lunas ke Warung: begitu pesanan berstatus "selesai" (untuk
   // pertama kalinya), nilai pesanan langsung DITAMBAHKAN ke saldo tersimpan warung
@@ -21082,6 +21439,45 @@ function kifayahUpdatePesananStatus(pesananId, status) {
       // Pastikan sudah lewat migrasi (kalau warung ini masih pakai model lama).
       saldoWarungByWarungId(wTujuan.id);
       wTujuan.saldoWarung = (wTujuan.saldoWarung || 0) + (p.total || 0);
+    }
+    // Pesanan cicilan (Qardh): dana yang baru dicairkan ke warung berasal dari
+    // Dompet Kifayah — catat sebagai pengeluaran otomatis, terpisah dari setor/tarik manual.
+    if (p.metodeBayar === 'cicilan') {
+      var _kfDompetLama = kifayahDompetSaldo();
+      var _kfDompetBaru = _kfDompetLama - (p.total || 0);
+      DB.kifayahDompet.saldo = _kfDompetBaru;
+      _kfDompetCatat('tarik', p.total || 0, 'Pencairan cicilan ke ' + (wTujuan ? wTujuan.nama : (p.warungNama||'-')) + ' — pesanan ' + p.id, _kfDompetLama, _kfDompetBaru);
+
+      // ── Cicilan ke-1 otomatis ─────────────────────────────────────────
+      // Ditarik dari Tabungan Sukarela pembeli (saldo sudah dipastikan cukup
+      // di atas), tercatat sebagai transaksi 'tarik-sukarela' berlabel Kifayah,
+      // lalu dana tsb menjadi pelunasan/pengembalian ke Dompet Kifayah sejumlah
+      // harga barang (bukan termasuk fee/margin) — mengembalikan Dompet Kifayah
+      // ke saldo semula untuk bagian pokok pesanan ini.
+      var _cicilanLbl1 = (typeof _kfCicilanLabel === 'function') ? _kfCicilanLabel(p) : 'Cicilan';
+      DB.transaksi.push({
+        id: 'txn' + DB.nextTxnId++,
+        kkId: p.pembeliId,
+        type: 'tarik-sukarela',
+        jenis: 'sukarela',
+        jumlah: p.total || 0,
+        keterangan: 'Cicilan ke-1 (' + _cicilanLbl1 + ') — Belanja Kifayah pesanan ' + p.id + (p.pembeliNama ? ' — ' + p.pembeliNama : ''),
+        tanggal: nowISO()
+      });
+      var _kfDompetLama2 = kifayahDompetSaldo();
+      var _kfDompetBaru2 = _kfDompetLama2 + (p.total || 0);
+      DB.kifayahDompet.saldo = _kfDompetBaru2;
+      _kfDompetCatat('setor', p.total || 0, 'Pelunasan Cicilan ke-1 dari Sukarela ' + (p.pembeliNama||'-') + ' — pesanan ' + p.id, _kfDompetLama2, _kfDompetBaru2);
+
+      if (!p.cicilan) p.cicilan = {};
+      p.cicilan.angsuranDibayar = 1;
+      p.cicilan.angsuran1Tanggal = nowISO();
+      p.cicilan.angsuran1Jumlah = p.total || 0;
+      // totalDibayar = akumulasi seluruh angsuran yang sudah masuk (dipakai
+      // _kfCicilanNextInfo() utk menghitung sisa tagihan angsuran berikutnya
+      // tanpa menghitung ulang harga barang yang sudah lunas di angsuran ke-1).
+      p.cicilan.totalDibayar = p.total || 0;
+      p.cicilan.riwayat = [{ no: 1, jumlah: p.total || 0, tanggal: nowISO(), sumber: 'Sukarela (otomatis)' }];
     }
   }
   // Kredit ongkir ke Saldo Kurir — hanya sekali, saat pesanan pertama kali menjadi "selesai"
@@ -21102,14 +21498,175 @@ function kifayahUpdatePesananStatus(pesananId, status) {
     }
   }
   saveDB();
-  showToast(status === 'selesai' ? (p.kurirId ? (p.ongkirCod ? '✅ Pesanan selesai diantar — Ongkir COD diterima tunai' : '✅ Pesanan selesai diantar — Saldo Warung & Saldo Kurir diperbarui') : '✅ Pesanan selesai — Saldo Warung diperbarui') : '✅ Status pesanan diperbarui');
+  var _cicilan1Msg = (status === 'selesai' && p.metodeBayar === 'cicilan') ? ' — Cicilan ke-1 (' + fmt(p.total||0) + ') otomatis dipotong dari Sukarela' : '';
+  showToast(status === 'selesai' ? ((p.kurirId ? (p.ongkirCod ? '✅ Pesanan selesai diantar — Ongkir COD diterima tunai' : '✅ Pesanan selesai diantar — Saldo Warung & Saldo Kurir diperbarui') : '✅ Pesanan selesai — Saldo Warung diperbarui') + _cicilan1Msg) : '✅ Status pesanan diperbarui');
   renderKifayahWarungSaya();
   if (typeof renderKifayahPesananMasuk === 'function') renderKifayahPesananMasuk();
   if (typeof renderKifayahKurirSaya === 'function') renderKifayahKurirSaya();
   if (typeof renderReviewPinjaman === 'function') renderReviewPinjaman();
   if (typeof rerenderPinjaman === 'function') rerenderPinjaman();
   if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
+  if (typeof _kfRenderAkunMenuBadges === 'function') _kfRenderAkunMenuBadges();
 }
+/* ---------- CICILAN SAYA (sub-menu Akun) — bayar angsuran Qardh/Murabahah Kifayah ----------
+   Angsuran ke-1 sudah otomatis lunas (harga barang, ditarik dari Sukarela) saat
+   pesanan berstatus "selesai" — lihat kifayahUpdatePesananStatus(). Menu ini
+   menangani angsuran ke-2 dst: sisa tagihan (fee+margin) disebar rata ke sisa
+   tenor, dibayar manual oleh nasabah, dan setiap pembayaran DITARIK dari Saldo
+   Sukarela lalu MENGISI KEMBALI (integrasi) Dompet Kifayah — persis mekanisme
+   yang sama dengan angsuran ke-1, supaya kas Dompet Kifayah selalu sinkron
+   dengan total dana yang sudah benar-benar diterima kembali dari nasabah. */
+function _kfCicilanNextInfo(p) {
+  if (!p || !p.cicilan) return null;
+  var tenor   = p.cicilan.tenor || 1;
+  var dibayar = p.cicilan.angsuranDibayar || 0;
+  var sisaAngsuran = tenor - dibayar;
+  if (sisaAngsuran <= 0) return { lunas: true, noAng: tenor, sisaAngsuran: 0, jumlahBayar: 0 };
+  var totalTagihan = p.cicilan.totalTagihan || 0;
+  var totalDibayar = p.cicilan.totalDibayar || 0;
+  var sisaTagihan  = Math.max(0, totalTagihan - totalDibayar);
+  var jumlahBayar  = (sisaAngsuran <= 1) ? sisaTagihan : Math.round(sisaTagihan / sisaAngsuran);
+  return {
+    lunas: false,
+    noAng: dibayar + 1,
+    tenor: tenor,
+    sisaAngsuran: sisaAngsuran,
+    sisaTagihan: sisaTagihan,
+    jumlahBayar: jumlahBayar,
+    isLast: sisaAngsuran <= 1
+  };
+}
+function _kfPesananCicilanAktifSaya() {
+  var myId = _kfMyNasabahId();
+  if (!myId) return [];
+  return (DB.pesananWarung||[]).filter(function(p){
+    return p.pembeliId === myId && p.metodeBayar === 'cicilan' && p.status === 'selesai'
+      && p.cicilan && (p.cicilan.angsuranDibayar||0) < (p.cicilan.tenor||0);
+  }).sort(function(a,b){ return (a.dibuatPada||'').localeCompare(b.dibuatPada||''); });
+}
+function renderKifayahCicilanSaya() {
+  var el = document.getElementById('kfCicilanSayaContent');
+  if (!el) return;
+  var myId = _kfMyNasabahId();
+  if (!myId) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">💳</div><div>Hanya akun nasabah yang punya cicilan Kifayah.</div></div>';
+    return;
+  }
+  var aktif = _kfPesananCicilanAktifSaya();
+  var lunas = (DB.pesananWarung||[]).filter(function(p){
+    return p.pembeliId === myId && p.metodeBayar === 'cicilan' && p.status === 'selesai'
+      && p.cicilan && (p.cicilan.angsuranDibayar||0) >= (p.cicilan.tenor||0);
+  }).sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
+
+  if (!aktif.length && !lunas.length) {
+    el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">💳</div><div>Belum ada cicilan Qardh/Murabahah.</div></div>';
+    return;
+  }
+
+  var saldoSuk = (typeof saldoSukarelaNasabah === 'function') ? saldoSukarelaNasabah(myId) : 0;
+  var html = '<div style="background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:11.5px;color:#5b3a63">'
+    + '💰 Saldo Sukarela tersedia: <strong>'+fmt(saldoSuk)+'</strong> — sumber dana pembayaran angsuran'
+    + '</div>';
+
+  if (aktif.length) {
+    html += '<div class="kf-section-title" style="padding:0 2px;margin-bottom:8px">Cicilan Aktif ('+aktif.length+')</div>';
+    html += '<div class="kf-pesanan-list">' + aktif.map(function(p){ return _kfRenderCicilanCard(p); }).join('') + '</div>';
+  }
+  if (lunas.length) {
+    html += '<div class="kf-section-title" style="padding:0 2px;margin:16px 0 8px">Sudah Lunas ('+lunas.length+')</div>';
+    html += '<div class="kf-pesanan-list">' + lunas.map(function(p){ return _kfRenderCicilanCard(p); }).join('') + '</div>';
+  }
+  el.innerHTML = html;
+}
+function _kfRenderCicilanCard(p) {
+  var info = _kfCicilanNextInfo(p);
+  var tipe = (p.cicilan && p.cicilan.tipe === 'murabahah') ? 'Murabahah' : 'Qardh';
+  var tenor = (p.cicilan && p.cicilan.tenor) || 0;
+  var dibayar = (p.cicilan && p.cicilan.angsuranDibayar) || 0;
+  var pct = tenor ? Math.round((dibayar/tenor)*100) : 0;
+  var totalTagihan = (p.cicilan && p.cicilan.totalTagihan) || 0;
+  var totalDibayar = (p.cicilan && p.cicilan.totalDibayar) || 0;
+  var isLunas = info && info.lunas;
+  var actionHtml = isLunas
+    ? '<div class="kf-rating-done" style="margin-top:8px">✅ <span>Cicilan lunas</span></div>'
+    : '<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      + '<div>'
+        + '<div style="font-size:10px;color:#6b7280">Angsuran ke-'+info.noAng+' dari '+info.tenor+'</div>'
+        + '<div style="font-size:14px;font-weight:800;color:#7b2d8b">'+fmt(info.jumlahBayar)+'</div>'
+      + '</div>'
+      + '<button class="kf-mini-action kf-accept" onclick="kifayahBayarCicilanPesanan(\''+p.id+'\')">💳 Bayar Angsuran</button>'
+    + '</div>';
+  return '<div class="kf-pesanan-card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+    + '<div style="min-width:0">'
+    + '<div style="font-weight:700;font-size:12.5px">'+(p.warungNama||'-')+' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:2px">💳 '+tipe+' '+tenor+'x</span></div>'
+    + '<div style="font-size:11px;color:#6b7280;margin:2px 0">Total Tagihan '+fmt(totalTagihan)+' · Terbayar '+fmt(totalDibayar)+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="height:6px;background:#f0eef3;border-radius:4px;margin-top:8px;overflow:hidden">'
+      + '<div style="height:100%;width:'+pct+'%;background:linear-gradient(135deg,#7b2d8b,#9b59b6);border-radius:4px"></div>'
+    + '</div>'
+    + '<div style="font-size:10px;color:#9ca3af;margin-top:3px">'+dibayar+'/'+tenor+' angsuran ('+pct+'%)</div>'
+    + actionHtml
+    + '</div>';
+}
+function kifayahBayarCicilanPesanan(pesananId) {
+  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
+  if (!p) { showToast('⚠️ Pesanan tidak ditemukan'); return; }
+  if (p.metodeBayar !== 'cicilan' || !p.cicilan) { showToast('⚠️ Pesanan ini bukan cicilan'); return; }
+  if (p.status !== 'selesai') { showToast('⚠️ Pesanan belum berstatus selesai'); return; }
+  var info = _kfCicilanNextInfo(p);
+  if (!info || info.lunas) { showToast('ℹ️ Cicilan pesanan ini sudah lunas'); return; }
+
+  var saldoSuk = (typeof saldoSukarelaNasabah === 'function') ? saldoSukarelaNasabah(p.pembeliId) : 0;
+  if (saldoSuk < info.jumlahBayar) {
+    showToast('⚠️ Saldo Sukarela tidak cukup untuk Angsuran ke-'+info.noAng+' (tersedia '+fmt(saldoSuk)+', dibutuhkan '+fmt(info.jumlahBayar)+')');
+    return;
+  }
+
+  var tipe = (p.cicilan.tipe === 'murabahah') ? 'Murabahah' : 'Qardh';
+  var konfirmasiMsg = 'Bayar Angsuran ke-'+info.noAng+' dari '+info.tenor+' ('+tipe+')\n'
+    + 'Warung: '+(p.warungNama||'-')+'\n'
+    + 'Jumlah: '+fmt(info.jumlahBayar)+'\n'
+    + 'Sumber dana: Saldo Sukarela (tersedia '+fmt(saldoSuk)+')'
+    + (info.isLast ? '\n\n⚠️ Ini adalah angsuran terakhir. Cicilan akan LUNAS.' : '');
+  if (!confirm(konfirmasiMsg)) return;
+
+  // 1) Tarik dari Sukarela pembeli
+  DB.transaksi.push({
+    id: 'txn' + DB.nextTxnId++,
+    kkId: p.pembeliId,
+    type: 'tarik-sukarela',
+    jenis: 'sukarela',
+    jumlah: info.jumlahBayar,
+    keterangan: 'Cicilan ke-'+info.noAng+' ('+tipe+') — Belanja Kifayah pesanan '+p.id+(p.pembeliNama ? ' — '+p.pembeliNama : ''),
+    tanggal: nowISO()
+  });
+  // 2) Integrasi Dompet Kifayah — dana yang diterima kembali mengisi Dompet Kifayah
+  var _lama = kifayahDompetSaldo();
+  var _baru = _lama + info.jumlahBayar;
+  DB.kifayahDompet.saldo = _baru;
+  _kfDompetCatat('setor', info.jumlahBayar, 'Pelunasan Angsuran ke-'+info.noAng+' dari Sukarela '+(p.pembeliNama||'-')+' — pesanan '+p.id, _lama, _baru);
+
+  // 3) Update progres cicilan pesanan
+  p.cicilan.angsuranDibayar = info.noAng;
+  p.cicilan.totalDibayar = (p.cicilan.totalDibayar || 0) + info.jumlahBayar;
+  if (!Array.isArray(p.cicilan.riwayat)) p.cicilan.riwayat = [];
+  p.cicilan.riwayat.push({ no: info.noAng, jumlah: info.jumlahBayar, tanggal: nowISO(), sumber: 'Sukarela' });
+  var jadiLunas = info.noAng >= info.tenor;
+  if (jadiLunas) {
+    p.cicilan.lunas = true;
+    p.cicilan.tglLunas = nowISO();
+    p.dibayarKoperasi = true; // aktifkan badge "✅ Dibayar Kifayah" di kartu pesanan
+  }
+
+  saveDB();
+  showToast(jadiLunas ? '🏆 Cicilan lunas! Angsuran ke-'+info.noAng+' berhasil dibayar.' : '✅ Angsuran ke-'+info.noAng+' berhasil dibayar dari Sukarela.');
+  renderKifayahCicilanSaya();
+  if (typeof _kfRenderSaldoBar === 'function') _kfRenderSaldoBar();
+  if (typeof renderKifayahPesananSaya === 'function') renderKifayahPesananSaya();
+}
+
 function renderKifayahPesananSaya() {
   var el = document.getElementById('kfPesananSayaContent');
   if (!el) return;
@@ -21346,8 +21903,10 @@ function renderKifayahAdmin() {
   var html = '';
   html += '<div class="kf-adm-grid">'
     + _kfAdminMenuCard('ringkasan', '&#x1F4CA;', 'Ringkasan', undefined, '#7b2d8b', '#9b59b6')
+    + _kfAdminMenuCard('dompet', '&#x1F4B0;', 'Dompet Kifayah', undefined, '#b45309', '#f59e0b')
     + _kfAdminMenuCard('warung', '&#x1F3EA;', 'Kelola Warung', warungList.length, '#0d9488', '#2dd4bf')
     + _kfAdminMenuCard('pesanan', '&#x1F9FE;', 'Semua Pesanan', pesananList.length, '#2563eb', '#60a5fa')
+    + _kfAdminMenuCard('pengaturan', '&#x2699;&#xFE0F;', 'Pengaturan Cicilan', undefined, '#4338ca', '#818cf8')
     + '<button class="kf-adm-card" style="--ac1:#be185d;--ac2:#ec4899;--acs:rgba(190,24,93,0.35)" onclick="_kifayahOpenActAsPicker()"><div class="kf-adm-icon">&#x1F575;&#xFE0F;</div><span class="kf-adm-label">Berperan sebagai Nasabah</span></button>'
     + '</div>';
   el.innerHTML = html;
@@ -21385,8 +21944,10 @@ function _renderKifayahAdminSection(key) {
 
   var titles = {
     ringkasan: '&#x1F4CA; Ringkasan Kifayah',
+    dompet: '&#x1F4B0; Dompet Kifayah',
     warung: '&#x1F3EA; Semua Warung ('+warungList.length+')',
-    pesanan: '&#x1F9FE; Semua Pesanan ('+pesananList.length+')'
+    pesanan: '&#x1F9FE; Semua Pesanan ('+pesananList.length+')',
+    pengaturan: '&#x2699;&#xFE0F; Pengaturan Cicilan'
   };
 
   var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
@@ -21408,6 +21969,22 @@ function _renderKifayahAdminSection(key) {
       + '<button onclick="kifayahAdminResetTotal()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(220,38,38,0.5);background:rgba(220,38,38,0.1);color:#dc2626;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">💣 Reset Total Kifayah</button>'
       + '<div style="font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5">Menghapus SEMUA data Kifayah: warung, produk, pesanan, kurir, saldo, dan pengaturan — mengembalikan modul Kifayah ke kondisi kosong.</div>'
       + '</div>';
+  } else if (key === 'dompet') {
+    var saldoDompet = kifayahDompetSaldo();
+    var riwayatDompet = (DB.kifayahDompet && DB.kifayahDompet.riwayat) || [];
+    html += '<div style="background:linear-gradient(135deg,#b45309,#f59e0b);border-radius:16px;padding:18px;color:#fff;margin-bottom:14px">'
+      + '<div style="font-size:11px;font-weight:700;opacity:0.85;text-transform:uppercase;letter-spacing:0.4px">Modal / Dana Kelola Kifayah</div>'
+      + '<div style="font-size:26px;font-weight:900;margin-top:4px">'+fmt(saldoDompet)+'</div>'
+      + '<div style="font-size:10.5px;opacity:0.85;margin-top:6px;line-height:1.5">Dana yang dikelola admin untuk modul Kifayah — terpisah dari kas Koperasi & saldo warung/nasabah.</div>'
+      + '</div>';
+    html += '<div style="display:flex;gap:8px;margin-bottom:16px">'
+      + '<button onclick="kifayahAdminSetorDompet()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#16a34a;color:#fff;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">&#x2795; Setor Dana</button>'
+      + '<button onclick="kifayahAdminTarikDompet()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#dc2626;color:#fff;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">&#x2796; Tarik Dana</button>'
+      + '</div>';
+    html += '<div style="font-size:10.5px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Riwayat Setor/Tarik</div>';
+    html += riwayatDompet.length
+      ? riwayatDompet.map(function(r){ return _kfDompetRiwayatRow(r); }).join('')
+      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada riwayat setor/tarik.</div>';
   } else if (key === 'warung') {
     html += warungList.length
       ? warungList.map(function(w){ return _kfAdminRenderWarungRow(w, produkList); }).join('')
@@ -21416,15 +21993,101 @@ function _renderKifayahAdminSection(key) {
     html += pesananList.length
       ? '<div class="kf-pesanan-list">' + pesananList.map(function(p){ return _kfRenderPesananCardAdmin(p); }).join('') + '</div>'
       : '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada pesanan.</div>';
+  } else if (key === 'pengaturan') {
+    html += _kfRenderPengaturanCicilan();
   }
 
   el.innerHTML = html;
+}
+
+var _KF_MURABAHAH_TENOR = [4,6,8,10,12];
+
+function _kfRenderPengaturanCicilan() {
+  var ks = DB.kifayahSetting || {};
+  var qardh = ks.qardh || { tenorOpsi:[2,3], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 };
+  var murabahah = ks.murabahah || { tenorOpsi:[4,6,8,10,12], minBelanja:100000, limitBulanan:400000, marginTable:{4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan:10000 };
+  var marginTable = murabahah.marginTable || {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+  var marginRowsHtml = _KF_MURABAHAH_TENOR.map(function(t){
+    var val = (marginTable[t] !== undefined) ? marginTable[t] : 0;
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      + '<label style="font-size:11px;flex:1;margin:0">Margin ' + t + ' bulan (%)</label>'
+      + '<input type="number" id="kfSetMargin_' + t + '" value="' + val + '" min="0" step="0.1" style="width:90px">'
+      + '</div>';
+  }).join('');
+  return '<div style="font-size:11px;color:#6b7280;margin-bottom:14px;line-height:1.5">Atur minimal belanja & limit cicilan per-nasabah per bulan untuk masing-masing skema. Tenor tersedia: Qardh 2–3 bulan, Murabahah 4/6/8/10/12 bulan.</div>'
+    + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:14px;margin-bottom:12px">'
+    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">🕊️ Cicilan Qardh (tenor 2–3 bulan)</div>'
+    + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Minimal Belanja (Rp)</label><input type="number" id="kfSetQardhMin" value="'+(qardh.minBelanja||0)+'" min="0" step="1000"></div>'
+    + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Limit per Nasabah / Bulan (Rp)</label><input type="number" id="kfSetQardhLimit" value="'+(qardh.limitBulanan||0)+'" min="0" step="1000"></div>'
+    + '<div class="field" style="margin-bottom:0"><label style="font-size:11px">Fee Layanan / Transaksi (Rp)</label><input type="number" id="kfSetQardhFee" value="'+(qardh.feeLayanan!==undefined?qardh.feeLayanan:10000)+'" min="0" step="1000"></div>'
+    + '<div style="font-size:10px;color:#9ca3af;line-height:1.5;margin-top:8px">Qardh tanpa margin — nasabah hanya membayar Fee Layanan, termasuk dalam Total Tagihan. Cicilan/bln = (Harga Barang + Fee) ÷ Tenor.</div>'
+    + '</div>'
+    + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:14px;margin-bottom:16px">'
+    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">📿 Cicilan Murabahah (tenor 4/6/8/10/12 bulan)</div>'
+    + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Minimal Belanja (Rp)</label><input type="number" id="kfSetMurabahahMin" value="'+(murabahah.minBelanja||0)+'" min="0" step="1000"></div>'
+    + '<div class="field" style="margin-bottom:12px"><label style="font-size:11px">Limit per Nasabah / Bulan (Rp)</label><input type="number" id="kfSetMurabahahLimit" value="'+(murabahah.limitBulanan||0)+'" min="0" step="1000"></div>'
+    + '<div class="field" style="margin-bottom:12px"><label style="font-size:11px">Fee Layanan / Transaksi (Rp)</label><input type="number" id="kfSetMurabahahFee" value="'+(murabahah.feeLayanan!==undefined?murabahah.feeLayanan:10000)+'" min="0" step="1000"></div>'
+    + '<div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.4px;font-weight:800;margin-bottom:8px">Margin Tetap per Tenor</div>'
+    + marginRowsHtml
+    + '<div style="font-size:10px;color:#9ca3af;line-height:1.5;margin-top:2px">Rumus: Margin = Harga Barang × %Margin. Harga Jual = Harga Barang + Margin. Total Tagihan = Harga Jual + Fee. Cicilan/bln = Total Tagihan ÷ Tenor.</div>'
+    + '</div>'
+    + '<button class="btn btn-primary btn-block" onclick="kifayahAdminSimpanPengaturan()">💾 Simpan Pengaturan</button>';
+}
+
+function kifayahAdminSimpanPengaturan() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var qMin = parseFloat((document.getElementById('kfSetQardhMin')||{}).value);
+  var qLimit = parseFloat((document.getElementById('kfSetQardhLimit')||{}).value);
+  var qFee = parseFloat((document.getElementById('kfSetQardhFee')||{}).value);
+  var mMin = parseFloat((document.getElementById('kfSetMurabahahMin')||{}).value);
+  var mLimit = parseFloat((document.getElementById('kfSetMurabahahLimit')||{}).value);
+  var mFee = parseFloat((document.getElementById('kfSetMurabahahFee')||{}).value);
+  var nilaiUtama = [qMin,qLimit,qFee,mMin,mLimit,mFee];
+  if (nilaiUtama.some(function(v){ return isNaN(v) || v < 0; })) {
+    showToast('⚠️ Nilai pengaturan tidak valid');
+    return;
+  }
+  var marginTableBaru = {};
+  for (var i = 0; i < _KF_MURABAHAH_TENOR.length; i++) {
+    var t = _KF_MURABAHAH_TENOR[i];
+    var mv = parseFloat((document.getElementById('kfSetMargin_' + t)||{}).value);
+    if (isNaN(mv) || mv < 0) { showToast('⚠️ Margin tenor ' + t + ' bulan tidak valid'); return; }
+    marginTableBaru[t] = mv;
+  }
+  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = {};
+  if (!DB.kifayahSetting.qardh) DB.kifayahSetting.qardh = { tenorOpsi:[2,3] };
+  if (!DB.kifayahSetting.murabahah) DB.kifayahSetting.murabahah = { tenorOpsi:[4,6,8,10,12] };
+  DB.kifayahSetting.qardh.minBelanja = Math.round(qMin);
+  DB.kifayahSetting.qardh.limitBulanan = Math.round(qLimit);
+  DB.kifayahSetting.qardh.feeLayanan = Math.round(qFee);
+  DB.kifayahSetting.qardh.tenorOpsi = [2,3];
+  DB.kifayahSetting.murabahah.minBelanja = Math.round(mMin);
+  DB.kifayahSetting.murabahah.limitBulanan = Math.round(mLimit);
+  DB.kifayahSetting.murabahah.feeLayanan = Math.round(mFee);
+  DB.kifayahSetting.murabahah.marginTable = marginTableBaru;
+  DB.kifayahSetting.murabahah.tenorOpsi = [4,6,8,10,12];
+  saveDB();
+  showToast('✅ Pengaturan cicilan Kifayah disimpan');
+  renderKifayahAdmin();
 }
 
 function _kfAdminStatCard(value, label) {
   return '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px 10px;text-align:center">'
     + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+value+'</div>'
     + '<div style="font-size:10px;color:#6b7280;margin-top:2px">'+label+'</div>'
+    + '</div>';
+}
+
+function _kfDompetRiwayatRow(r) {
+  var isSetor = r.jenis === 'setor';
+  var tgl = '';
+  try { tgl = new Date(r.tanggal).toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); } catch(e){ tgl = r.tanggal || ''; }
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f3f7">'
+    + '<div style="min-width:0;padding-right:8px">'
+    + '<div style="font-size:12px;font-weight:700;color:#2d2438">'+(r.keterangan||(isSetor?'Setor Dana':'Tarik Dana'))+'</div>'
+    + '<div style="font-size:10.5px;color:#9ca3af">'+tgl+'</div>'
+    + '</div>'
+    + '<div style="font-size:13px;font-weight:800;color:'+(isSetor?'#16a34a':'#dc2626')+';flex-shrink:0;white-space:nowrap">'+(isSetor?'+':'-')+fmt(r.jumlah)+'</div>'
     + '</div>';
 }
 
@@ -21559,7 +22222,10 @@ function kifayahAdminResetTotal() {
   DB.pesananWarung = [];
   DB.kurir = [];
   DB.pinjamanKifayah = [];
-  DB.kifayahSetting = { nasabahLimit: 200000 };
+  DB.kifayahSetting = {
+    qardh: { tenorOpsi: [2,3], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 },
+    murabahah: { tenorOpsi: [4,6,8,10,12], minBelanja: 100000, limitBulanan: 400000, marginTable: {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan: 10000 }
+  };
   DB.nextWarungId = 1;
   DB.nextProdukId = 1;
   DB.nextPesananId = 1;
@@ -21629,7 +22295,7 @@ function kifayahAdminHapusWarung(warungId) {
 
 function _kfRenderPesananCardAdmin(p) {
   var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
-  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh'+(p.pinjamanId?' 4x':(p.cicilan?' '+p.cicilan.tenor+'x':''))+'</span>' : '';
+  var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 '+_kfCicilanLabel(p)+'</span>' : '';
   var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Kifayah</span>' : '';
   var bisaBatal = (p.status !== 'selesai' && p.status !== 'dibatalkan');
   return '<div class="kf-pesanan-card">'
