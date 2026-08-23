@@ -14609,11 +14609,31 @@ function _dbMigrate() {
   // Migrasi: pastikan tiap aset punya array dokumen (arsip dokumen asli)
   (DB.aset||[]).forEach(function(a){ if (!Array.isArray(a.dokumen)) a.dokumen = []; });
   if (typeof DB.nextPengurusId !== 'number' || DB.nextPengurusId < 1) DB.nextPengurusId = _maxId(DB.pengurusList, 'peng') + 1;
-  // Migrasi Kifayah Marketplace: pastikan counter & field ada
-  if (typeof DB.nextWarungId  !== 'number' || DB.nextWarungId  < 1) DB.nextWarungId  = 1;
-  if (typeof DB.nextProdukId  !== 'number' || DB.nextProdukId  < 1) DB.nextProdukId  = 1;
-  if (typeof DB.nextPesananId !== 'number' || DB.nextPesananId < 1) DB.nextPesananId = 1;
-  if (typeof DB.nextKurirId  !== 'number' || DB.nextKurirId  < 1) DB.nextKurirId  = 1;
+  // Migrasi Kifayah Marketplace: pastikan counter & field ada.
+  // PENTING: counter ini di-reset ke MAX ID yang sudah ada (bukan cuma dicek >=1),
+  // supaya kalau counter ketinggalan/reset akibat sinkronisasi cloud antar-device,
+  // ia tidak membuat ID baru yang BENTROK dengan pesanan/warung/produk/kurir yang
+  // sudah ada. ID bentrok inilah penyebab bug "Terima Pesanan" mengubah status
+  // pesanan LAMA (Array.find mengambil kecocokan pertama, bukan pesanan yang baru
+  // diklik) — lihat kifayahUpdatePesananStatus().
+  if (typeof DB.nextWarungId  !== 'number' || DB.nextWarungId  <= _maxId(DB.warung,       'warung-'))  DB.nextWarungId  = _maxId(DB.warung,       'warung-')  + 1;
+  if (typeof DB.nextProdukId  !== 'number' || DB.nextProdukId  <= _maxId(DB.produkWarung, 'produk-'))  DB.nextProdukId  = _maxId(DB.produkWarung, 'produk-')  + 1;
+  if (typeof DB.nextPesananId !== 'number' || DB.nextPesananId <= _maxId(DB.pesananWarung,'pesanan-')) DB.nextPesananId = _maxId(DB.pesananWarung,'pesanan-') + 1;
+  if (typeof DB.nextKurirId   !== 'number' || DB.nextKurirId   <= _maxId(DB.kurir,        'kurir-'))   DB.nextKurirId   = _maxId(DB.kurir,        'kurir-')   + 1;
+  // Perbaikan data lama: kalau ternyata SUDAH ada 2+ pesanan dengan id yang sama persis
+  // (akibat bug di atas sebelum diperbaiki), beri id baru yang unik ke duplikatnya
+  // (entri pertama tetap dipertahankan) supaya tidak ada lagi salah-sasaran saat update status.
+  (function _kfFixDuplicatePesananId() {
+    var seen = {};
+    (DB.pesananWarung || []).forEach(function(p) {
+      if (!p || !p.id) return;
+      if (seen[p.id]) {
+        p.id = 'pesanan-' + (DB.nextPesananId++);
+      } else {
+        seen[p.id] = true;
+      }
+    });
+  })();
   // Mitra Warung sekarang butuh persetujuan admin terpisah (statusMitra: 'bukan'|'menunggu'|'aktif'|'ditolak').
   // Warung LAMA (sudah ada sebelum revisi ini, belum punya field statusMitra sama sekali) di-grandfather
   // jadi 'aktif' otomatis supaya pemilik warung yang sudah berjualan tidak tiba-tiba kehilangan akses Mitra.
