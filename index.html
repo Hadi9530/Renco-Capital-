@@ -186,6 +186,30 @@ document.addEventListener('DOMContentLoaded', function() {
   const SUPA_URL = 'https://cwtoqrxakgaawqgyxhjz.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dG9xcnhha2dhYXdxZ3l4aGp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5OTUxOTcsImV4cCI6MjA5NDU3MTE5N30.iScQwnctIfjdmYfhTtm2FA3ekrOTxk0pMyrcXTH0VGU';
 
+  // ── MODE LOKAL (ANTI-TIMPA DATA PRODUKSI) ──────────────────────────────
+  // File ini (index.html) sering dibuka langsung dari komputer/HP (file://
+  // atau lewat dev-server localhost) untuk testing/edit SEBELUM di-deploy,
+  // TAPI memakai project Supabase yang SAMA PERSIS dengan website yang
+  // sudah live (lihat SUPA_URL di atas). Tanpa guard ini, sekadar
+  // login+edit di file lokal bisa ter-upload (_doSync/_doSyncMaster) dan
+  // MENIMPA data asli yang sedang dipakai website deployed.
+  //
+  // Deteksi "lokal": dibuka via file:// ATAU host localhost/127.0.0.1/dev
+  // server tanpa domain publik. Saat true: BOLEH tetap membaca (pull) data
+  // cloud apa adanya untuk keperluan lihat/testing, TAPI semua jalur push
+  // (upload/upsert) ke Supabase diblokir total — perubahan hanya tersimpan
+  // di localStorage perangkat ini, tidak pernah menimpa data di cloud.
+  const _RENCO_IS_LOCAL = (function() {
+    try {
+      var h = location.hostname;
+      return location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || h === '' || h === '0.0.0.0';
+    } catch(e) { return false; }
+  })();
+  window._RENCO_IS_LOCAL = _RENCO_IS_LOCAL;
+  if (_RENCO_IS_LOCAL) {
+    console.warn('[RENCO☁] MODE LOKAL terdeteksi — boleh membaca data cloud, TAPI upload/push ke cloud DIBLOKIR agar tidak menimpa data website yang sudah deploy.');
+  }
+
   // Guard: supabase harus sudah loaded (tidak async)
   if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
     console.error('[RENCO☁] supabase.js belum termuat — sync dinonaktifkan.');
@@ -489,15 +513,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       payload._savedAt  = new Date().toISOString();
       payload._clientId = _getClientId();
-      const { error } = await _supa
-        .from(TBL)
-        .upsert({ id:'main', payload, saved_at: new Date().toISOString() },
-                { onConflict: 'id' });
+      // ── GUARD MODE LOKAL: jangan pernah push ke cloud dari file lokal ──
+      var error = null;
+      if (_RENCO_IS_LOCAL) {
+        console.warn('[RENCO☁] MODE LOKAL — upload dibatalkan, perubahan hanya tersimpan di localStorage perangkat ini (tidak menimpa data website deployed).');
+        _showSync('success', '📴 Lokal (tidak sync ke cloud)');
+      } else {
+        var _res = await _supa
+          .from(TBL)
+          .upsert({ id:'main', payload, saved_at: new Date().toISOString() },
+                  { onConflict: 'id' });
+        error = _res.error;
+      }
       if (error) {
         console.error('[RENCO☁] Save error:', error.message);
         _showSync('error', error.message.slice(0,40));
         _syncPending = true;
-      } else {
+      } else if (!_RENCO_IS_LOCAL) {
         // FIX: tanpa baris ini, _lastCloudSavedAt tidak pernah diperbarui setelah
         // device ini sendiri berhasil upload. Akibatnya, pre-upload check di save
         // berikutnya (baris ~219) selalu menganggap cloud "berubah oleh device
@@ -1533,14 +1565,22 @@ document.addEventListener('DOMContentLoaded', function() {
       _stampMasterClaim(payload);
 
       // ── STEP 3: Push ke cloud ──────────────────────────────────────────────
-      const { error } = await _supa
-        .from(TBL)
-        .upsert({ id:'main', payload, saved_at: new Date().toISOString() },
-                { onConflict: 'id' });
+      // GUARD MODE LOKAL: jangan pernah push dari file lokal (lihat _RENCO_IS_LOCAL)
+      var error = null;
+      if (_RENCO_IS_LOCAL) {
+        console.warn('[RENCO☁] MODE LOKAL — upload Master dibatalkan, tidak menimpa data website deployed.');
+        _showSync('success', '📴 Lokal (tidak sync ke cloud)');
+      } else {
+        var _res = await _supa
+          .from(TBL)
+          .upsert({ id:'main', payload, saved_at: new Date().toISOString() },
+                  { onConflict: 'id' });
+        error = _res.error;
+      }
       if (error) {
         _showSync('error', error.message.slice(0, 40));
         _syncPending = true;
-      } else {
+      } else if (!_RENCO_IS_LOCAL) {
         _syncPending  = false;
         _cloudLoaded  = true;
         _hasUnsyncedLocalEdit = false; // edit lokal sudah dikonfirmasi ter-upload
@@ -12534,8 +12574,8 @@ window.deletePengurus = function(id) {
     <div class="modal-body">
       <!-- Tab switcher: pilih sumber pinjaman, tapi tetap 1 modal & 1 tombol Bayar per jenis -->
       <div id="cicilanTabSwitch" style="display:flex;gap:6px;margin-bottom:16px;background:rgba(0,0,0,0.04);padding:4px;border-radius:12px">
-        <button type="button" id="cicilanTabBtnKop" onclick="cicilanSwitchTab('kop')" style="flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;background:#4361ee;color:white;transition:.15s">🏦 Koperasi Renco</button>
-        <button type="button" id="cicilanTabBtnRc" onclick="cicilanSwitchTab('rc')" style="flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;background:transparent;color:var(--text-soft);transition:.15s">🕌 Renco Capital</button>
+        <button type="button" id="cicilanTabBtnKop" onclick="cicilanSwitchTab('kop')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;line-height:1;text-align:center;white-space:nowrap;cursor:pointer;font-family:inherit;background:#4361ee;color:white;transition:.15s">🏦 Koperasi Renco</button>
+        <button type="button" id="cicilanTabBtnRc" onclick="cicilanSwitchTab('rc')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 4px;border:none;border-radius:9px;font-size:11.5px;font-weight:800;line-height:1;text-align:center;white-space:nowrap;cursor:pointer;font-family:inherit;background:transparent;color:var(--text-soft);transition:.15s">🕌 Renco Capital</button>
       </div>
 
       <!-- BLOK: Koperasi Renco (pinjaman biasa) -->
@@ -26459,14 +26499,22 @@ window._rpPushResetToCloud = async function(jenis) {
     payload._resetJenis = jenis;
     payload._savedAt  = new Date().toISOString();
 
-    var { error } = await supa
-      .from('renco_db_snapshot')
-      .upsert({ id:'main', payload, saved_at: new Date().toISOString() }, { onConflict:'id' });
+    // GUARD MODE LOKAL: jangan pernah push reset dari file lokal
+    var error = null;
+    if (window._RENCO_IS_LOCAL) {
+      console.warn('[RENCO☁] MODE LOKAL — push reset dibatalkan, tidak menimpa data website deployed.');
+      if (typeof showToast==='function') showToast('📴 Reset lokal saja (mode lokal, tidak sync ke cloud)');
+    } else {
+      var _res = await supa
+        .from('renco_db_snapshot')
+        .upsert({ id:'main', payload, saved_at: new Date().toISOString() }, { onConflict:'id' });
+      error = _res.error;
+    }
 
     if (error) {
       console.error('[RENCO☁] Push reset gagal:', error.message);
       if (typeof showToast==='function') showToast('⚠️ Reset lokal OK, tapi gagal sync cloud: ' + error.message.slice(0,50));
-    } else {
+    } else if (!window._RENCO_IS_LOCAL) {
       console.log('[RENCO☁] Reset berhasil dipush ke cloud');
       if (typeof showToast==='function') showToast('☁️ Data reset berhasil disinkronkan ke semua perangkat');
     }
@@ -26552,14 +26600,22 @@ window._rpResetCloud_Semua = async function() {
     payload._resetBy    = (window.AUTH && window.AUTH.user && window.AUTH.user.username) || 'admin';
     payload._savedAt    = new Date().toISOString();
 
-    var { error } = await supa
-      .from('renco_db_snapshot')
-      .upsert({ id:'main', payload, saved_at: new Date().toISOString() }, { onConflict:'id' });
+    // GUARD MODE LOKAL: jangan pernah push reset dari file lokal
+    var error = null;
+    if (window._RENCO_IS_LOCAL) {
+      console.warn('[RENCO☁] MODE LOKAL — push reset dibatalkan, tidak menimpa data website deployed.');
+      setStatus('📴 Reset lokal saja (mode lokal, tidak sync ke cloud).', '#b07a00');
+    } else {
+      var _res = await supa
+        .from('renco_db_snapshot')
+        .upsert({ id:'main', payload, saved_at: new Date().toISOString() }, { onConflict:'id' });
+      error = _res.error;
+    }
 
     if (error) {
       setStatus('⚠️ Reset lokal OK, gagal sync cloud: ' + error.message.slice(0,60), '#dc2626');
       console.error('[RENCO☁] Cloud reset error:', error);
-    } else {
+    } else if (!window._RENCO_IS_LOCAL) {
       setStatus('✅ Berhasil! Semua perangkat akan reset saat refresh.', '#2d6a4f');
       console.log('[RENCO☁] Cloud reset success');
       setTimeout(function(){
