@@ -957,6 +957,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Refresh hanya terjadi saat user aktif berpindah tab atau menekan tombol refresh manual
     // Ini mencegah tampilan yang sedang dikerjakan tiba-tiba berubah
 
+    // ── Badge notifikasi Kifayah (Pesanan Masuk Warung & Pesanan Siap Antar
+    // Kurir) — supaya kurir/pemilik warung langsung dapat notif saat ada
+    // pesanan baru dari device/user lain, tanpa perlu buka-tutup tab manual ──
+    try { if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge(); } catch(e) {}
+
     console.log('[RENCO☁] Re-render semua halaman selesai');
   }
 
@@ -8762,7 +8767,7 @@ var _LOGIN_INFO_CONTENT = {
         _liProduk('&#x1F512;', 'Simpanan Berjangka (BERKAH)', 'Simpanan berjangka syariah dengan jangka waktu dan bagi hasil yang disepakati di awal.') +
         _liProduk('&#x1F91D;', 'Pinjaman Koperasi', 'Pinjaman anggota dengan skema angsuran yang tercatat rapi di riwayat transaksi.') +
         _liProduk('&#x1F54C;', 'Pembiayaan Syariah (Renco Capital)', 'Pembiayaan berbasis akad syariah untuk kebutuhan produktif maupun konsumtif anggota.') +
-        _liProduk('&#x1F6D2;', 'KIFAYAH — Warung Mitra', 'Marketplace warung anggota dengan skema pembayaran cicilan terintegrasi.') +
+        _liProduk('&#x1F6D2;', 'KIFAYAH — Warung Nasabah', 'Marketplace warung anggota dengan skema pembayaran cicilan terintegrasi.') +
         _liProduk('&#x1F3ED;', 'Serba Usaha', 'Unit usaha produktif untuk memenuhi kebutuhan anggota dan mengembangkan ekonomi keluarga.') +
       '</div>'
   },
@@ -10872,6 +10877,12 @@ window.deletePengurus = function(id) {
     }
     .kf-search-row input { width:100%; box-sizing:border-box; padding:10px 14px 10px 36px; border-radius:12px; border:1.5px solid #e5e7eb; font-size:13px; font-family:inherit; }
     .kf-search-row input:focus { border-color:#7b2d8b; outline:none; }
+    .kf-gps-shortcut-btn { flex-shrink:0; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; color:#7b2d8b; }
+    .kf-gps-shortcut-btn.kf-gps-on { border-color:#16a34a; background:#f0fdf4; }
+    .kf-gps-shortcut-btn.kf-gps-off { border-color:#dc2626; background:#fef2f2; }
+    .kf-gps-shortcut-btn .kf-gps-dot { position:absolute; top:4px; right:4px; width:8px; height:8px; border-radius:50%; background:#9ca3af; }
+    .kf-gps-shortcut-btn.kf-gps-on .kf-gps-dot { background:#16a34a; }
+    .kf-gps-shortcut-btn.kf-gps-off .kf-gps-dot { background:#dc2626; }
     .kf-cart-btn { position:relative; width:42px; height:42px; border-radius:12px; border:1.5px solid #e5e7eb; background:#fff; font-size:18px; cursor:pointer; flex-shrink:0; }
     /* Tab detail & rating pada setiap kartu warung di daftar — dibuat compact & minimalis */
     .kf-warung-detail-btn {
@@ -10927,6 +10938,8 @@ window.deletePengurus = function(id) {
     /* Tombol compact "Kelola Warung" (menyatukan semua fungsi kelola warung) */
     .kf-kelola-warung-btn { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px; border-radius:12px; border:1.5px solid rgba(123,45,139,0.22); background:rgba(123,45,139,0.06); color:#7b2d8b; font-size:12.5px; font-weight:700; font-family:inherit; cursor:pointer; margin-bottom:12px; transition:background 0.15s ease; }
     .kf-kelola-warung-btn:active { background:rgba(123,45,139,0.14); }
+    .kf-kelola-warung-icon-btn { display:flex; align-items:center; justify-content:center; width:38px; height:38px; flex-shrink:0; border-radius:11px; border:1.5px solid rgba(123,45,139,0.22); background:rgba(123,45,139,0.06); color:#7b2d8b; cursor:pointer; transition:background 0.15s ease; align-self:center; }
+    .kf-kelola-warung-icon-btn:active { background:rgba(123,45,139,0.14); }
     .kf-wmenu-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
     .kf-wmenu-item { display:flex; flex-direction:column; align-items:center; gap:6px; background:#faf7fb; border:1px solid #f0eef3; border-radius:14px; padding:12px 4px 10px; cursor:pointer; font-family:inherit; transition:transform 0.15s ease, background 0.15s ease; text-align:center; }
     .kf-wmenu-item:active { transform:scale(0.95); background:#f3ecf6; }
@@ -11105,6 +11118,9 @@ window.deletePengurus = function(id) {
             <span class="kf-search-icon">🔎</span>
             <input type="text" id="kfSearchInput" placeholder="Cari warung atau produk..." oninput="renderKifayahBelanja()">
           </div>
+          <button type="button" class="kf-gps-shortcut-btn" id="kfGpsShortcutBtn" onclick="kifayahAktifkanGPS()" title="Aktifkan GPS Lokasi">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.2A7 7 0 0 1 19 9.8C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg><span class="kf-gps-dot"></span>
+          </button>
         </div>
         <!-- Hero Banner Slide: promosi Kifayah Marketplace Lokal -->
         <div class="kf-hero-slide-wrap" id="kfHeroSlideWrap">
@@ -11165,7 +11181,7 @@ window.deletePengurus = function(id) {
         <div id="kfWarungSayaContent"></div>
         <!-- Daftar Warung (Direktori) -->
         <div id="kfWarungDirektoriWrap">
-          <div class="kf-section-title" style="margin-top:14px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-0.15em" aria-hidden="true"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg> Warung Mitra</div>
+          <div class="kf-section-title" style="margin-top:14px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-0.15em" aria-hidden="true"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg> Warung Nasabah</div>
           <div class="kf-warung-grid" id="kfWarungListGrid"></div>
           <div class="kf-empty" id="kfWarungListEmpty" style="display:none">
             <div style="font-size:38px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-0.15em" aria-hidden="true"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg></div>
@@ -11215,11 +11231,7 @@ window.deletePengurus = function(id) {
           <button class="kf-akun-menu-item" onclick="kifayahOpenAkunSub('kurir')">
             <span class="kf-akun-menu-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6.5" cy="18.5" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="18.5" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 16.5V9.5h7l3.5 4v3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13.5 9.5H10M3 12.5h3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
             <span class="kf-akun-menu-label">Kurir Saya</span>
-            <span class="kf-akun-menu-arrow">›</span>
-          </button>
-          <button class="kf-akun-menu-item" onclick="kifayahOpenAkunSub('cicilan')">
-            <span class="kf-akun-menu-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9.5h19" stroke="currentColor" stroke-width="1.6"/><path d="M6 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-            <span class="kf-akun-menu-label">Cicilan</span>
+            <span class="kf-pending-count" id="kfAkunKurirBadge" style="display:none;margin-right:4px"></span>
             <span class="kf-akun-menu-arrow">›</span>
           </button>
           <button class="kf-akun-menu-item" onclick="kifayahOpenAkunSub('laporanKeuangan')">
@@ -11286,15 +11298,6 @@ window.deletePengurus = function(id) {
           <span class="kf-sub-title">Pesanan Saya</span>
         </div>
         <div id="kfPesananSayaContent"></div>
-      </div>
-
-      <!-- CICILAN (sekarang sub-menu Akun) -->
-      <div class="kf-panel" id="kfPanel-cicilan">
-        <div class="kf-sub-header">
-          <button class="kf-sub-back" onclick="kifayahBackToAkun()">‹ Akun</button>
-          <span class="kf-sub-title">Cicilan</span>
-        </div>
-        <div id="kfCicilanContent"></div>
       </div>
 
       <!-- LAPORAN KEUANGAN (sekarang sub-menu Akun) -->
@@ -11423,26 +11426,21 @@ window.deletePengurus = function(id) {
               <span>Total</span><span id="kfCartTotal" style="color:#7b2d8b">Rp 0</span>
             </div>
             <div class="field" style="margin-bottom:10px">
+              <label>Alamat Pengiriman <span id="kfCartAlamatHint" style="display:none;font-weight:600;color:#7b2d8b;font-size:10.5px">· dari pesanan sebelumnya</span></label>
+              <input type="text" id="kfCartAlamat" placeholder="Alamat lengkap tujuan antar" oninput="_kfOnCartAlamatEdited()">
+              <button type="button" class="btn btn-outline btn-block btn-sm" id="kfCartGpsBtn" style="margin-top:6px" onclick="kifayahAmbilLokasiPengiriman()">📍 Gunakan Lokasi Saya Sekarang</button>
+              <div id="kfCartGpsStatus" style="font-size:12px;color:var(--forest-mid,#5a6b5a);margin-top:6px;line-height:1.4"></div>
+            </div>
+            <div class="field" style="margin-bottom:10px">
               <label>Metode Pembayaran</label>
               <select id="kfCartMetode" onchange="_kfToggleTenorField()">
-                <option value="tunai">💵 Tunai (langsung lunas)</option>
+                <option value="tunai">💵 Tunai (Bayar di Tempat)</option>
                 <option value="saldo">💰 Saldo Kifayah (Simpanan Sukarela)</option>
-                <option value="cicilan">💳 Cicilan (angsuran bulanan)</option>
               </select>
             </div>
             <div class="field" id="kfCartSaldoWrap" style="display:none;margin-bottom:10px;font-size:11.5px;color:#6b7280">
               Saldo Kifayah tersedia: <strong id="kfCartSaldoAngka">Rp 0</strong>
               <div id="kfCartSaldoWarning" style="display:none;color:#dc2626;font-weight:700;margin-top:3px">⚠️ Saldo tidak mencukupi untuk pesanan ini</div>
-            </div>
-            <div class="field" id="kfCartTenorWrap" style="display:none;margin-bottom:10px">
-              <div style="background:rgba(67,97,238,0.06);border:1.5px solid rgba(67,97,238,0.18);border-radius:12px;padding:10px 12px;font-size:11px;color:#374151;line-height:1.5" id="kfCartTenorInfoTeks">
-                🤲 <strong>Akad Qardh Koperasi Renco</strong> — pinjaman kebajikan tanpa bunga/margin. Tenor tetap <strong>4 bulan</strong>.
-              </div>
-              <div class="field" id="kfCartTenorPilihWrap" style="margin-top:8px;margin-bottom:0">
-                <label style="font-size:10.5px">Pilih Tenor</label>
-                <select id="kfCartTenorPilih" onchange="_kfToggleTenorField()"></select>
-              </div>
-              <div id="kfCartCicilanWarning" style="display:none;color:#dc2626;font-weight:700;margin-top:6px;font-size:11px"></div>
             </div>
             <button class="btn btn-primary btn-block" onclick="kifayahCheckout()">Buat Pesanan</button>
           </div>
@@ -11494,6 +11492,11 @@ window.deletePengurus = function(id) {
           <div class="field"><label>Deskripsi</label><input type="text" id="kfWarungDeskripsi" placeholder="Ceritakan warung Anda"></div>
           <div class="field"><label>Kontak (WhatsApp)</label><input type="text" id="kfWarungKontak" placeholder="08xxxxxxxxxx"></div>
           <div class="field"><label>Alamat</label><input type="text" id="kfWarungAlamat" placeholder="Lokasi warung / area layanan"></div>
+          <div class="field">
+            <label>Titik Lokasi (GPS)</label>
+            <button type="button" class="btn btn-outline btn-block btn-sm" id="kfGpsBtn" onclick="kifayahAmbilLokasiGPS()">📍 Gunakan Lokasi Saya Sekarang</button>
+            <div id="kfGpsStatus" style="font-size:12px;color:var(--forest-mid,#5a6b5a);margin-top:6px;line-height:1.4"></div>
+          </div>
           <button class="btn btn-primary btn-block" onclick="kifayahSubmitWarung()">Simpan Warung</button>
         </div>
       </div>
@@ -14477,20 +14480,13 @@ let DB = {
   nasabah: [],
   transaksi: [],
   pinjaman: [],
-  // ── Buku Modal Kifayah: pinjaman Qardh khusus Belanja Kifayah, TERPISAH dari
-  // DB.pinjaman (Pinjaman Koperasi umum). Mekanisme: koperasi memberi modal
-  // pinjaman ke Kifayah (per-nasabah, akad Qardh) lalu Kifayah mengembalikan
-  // dana tsb ke koperasi lewat cicilan. Dicatat di sini agar pembukuan Kifayah
-  // tidak tercampur dengan Pinjaman Koperasi biasa (tab Pinjaman, Kelola Pinjaman,
-  // Laporan, dsb) — lihat fungsi-fungsi ber-awalan "kifayah"/"_kf" & totalPembayaranKifayah().
+  // ── Buku Cicilan Kifayah: pinjaman Qardh/Murabahah khusus Belanja Kifayah,
+  // buku INTERNAL milik Kifayah sendiri — sepenuhnya TERPISAH dari DB.pinjaman
+  // (Pinjaman Koperasi umum) dan TIDAK didanai/dicatat lewat kas atau modal
+  // Koperasi. Limit/kuota cicilan diatur lewat DB.kifayahSetting (nasabahLimit/
+  // mitraLimit), bukan lewat pool modal — lihat fungsi ber-awalan "kifayah"/"_kf"
+  // & totalPembayaranKifayah().
   pinjamanKifayah: [],
-  // ── Modal Investasi Koperasi → Kifayah: Koperasi kini berperan HANYA sebagai
-  // investor/pemodal bagi Kifayah, bukan penanggung kas cicilan Kifayah secara
-  // langsung. Modal disetor sekali (bisa ditambah/ditarik lewat riwayat di
-  // `history`), lalu Kifayah mengelola kas & limit cicilannya sendiri dari
-  // pool ini (lihat calcKasKifayah()/checkKasLimitKifayah()) — TERPISAH dari
-  // kas simpanan/pinjaman Koperasi (calcKas()/checkKasLimit()).
-  kifayahModal: { total: 0, history: [] },
   arisanSetting: { nama: 'Arisan 2025', iuran: 200000 },
   arisanPeserta: [],
   arisanHistory: [],
@@ -14656,14 +14652,11 @@ function _dbMigrate() {
   // Pastikan objek setting ada
   if (!DB.shuSetting || typeof DB.shuSetting !== 'object') DB.shuSetting = { pctSHU:70, pctNasabah:40, pctPengurus:20, pctCadangan:20, pctSosial:10, pctPendidikan:10 };
   if (!DB.kasSettings|| typeof DB.kasSettings!== 'object') DB.kasSettings= { rasioMaks:80, limitPerNasabah:0, multiplierSimpanan:0 };
-  // Migrasi: pastikan Modal Kifayah (investasi Koperasi → Kifayah) ada & konsisten
-  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
-  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
-  if (typeof DB.kifayahModal.total !== 'number') {
-    DB.kifayahModal.total = DB.kifayahModal.history.reduce(function(a,h){ return a + (h.tipe==='tarik' ? -h.jumlah : h.jumlah); }, 0);
-  }
-  // Pengaturan Kifayah: limit cicilan Qardh (Nasabah) & Murabahah (Mitra Warung), margin, dan biaya transaksi Mitra — semua bisa diubah admin lewat menu Kifayah > Admin > Pengaturan.
-  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = { nasabahLimit:200000, mitraLimit:500000, mitraMarginPercent:2, mitraFeeFlat:0 };
+  // Pengaturan Kifayah: limit cicilan Qardh untuk semua nasabah, bisa diubah admin
+  // lewat menu Kifayah > Admin > Pengaturan. (Akad Murabahah khusus Mitra Warung
+  // sudah dihapus dari checkout Kifayah — sisa field lama dibiarkan tidak terpakai
+  // untuk kompatibilitas data lama, tidak dibaca lagi oleh kode manapun.)
+  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = { nasabahLimit:200000 };
   if (!DB.arisanSetting||typeof DB.arisanSetting!=='object') DB.arisanSetting={ nama:'Arisan 2025', iuran:200000 };
 
   // RencoPay
@@ -18079,78 +18072,16 @@ function _isTxnKifayah(t) {
 function calcKas() {
   // Hanya simpanan pokok + wajib yang jadi basis kas (sukarela TIDAK termasuk)
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan' && t.jenis!=='sukarela').reduce((a,b)=>a+b.jumlah,0);
-  // Pinjaman Koperasi umum (Pinjaman Kifayah kini punya buku & kas SENDIRI —
-  // lihat calcKasKifayah() — Koperasi hanya berperan sebagai investor/pemodal,
-  // jadi cicilan Kifayah yang masih berjalan TIDAK lagi mengurangi kas Koperasi
-  // di sini setiap saat; yang mengurangi kas Koperasi hanyalah MODAL yang sudah
-  // disetor ke Kifayah, dicatat sekali sebagai alokasi tetap/terkunci).
+  // Pinjaman Kifayah (DB.pinjamanKifayah) adalah buku internal Kifayah sendiri —
+  // TIDAK didanai/dicatat lewat kas Koperasi, jadi tidak ikut dihitung di sini.
   const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((a,b)=>a+(b.sisaPokok||0),0);
-  const totalKifayah = totalPembayaranKifayah(); // ditampilkan utk info, TIDAK dipakai mengurangi kasAvailable Koperasi
-  const modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
+  const totalKifayah = totalPembayaranKifayah(); // ditampilkan utk info saja, TIDAK memengaruhi kas Koperasi
   const ks = getKasSettings();
   const kasMaks = Math.floor(totalSimpanan * ks.rasioMaks / 100);
-  const kasAvailable = Math.max(0, kasMaks - totalPinjaman - modalKifayah);
-  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, ((totalPinjaman + modalKifayah) / totalSimpanan) * 100) : 0;
-  const limitMaks = Math.max(0, kasMaks - totalPinjaman - modalKifayah);
-  return { totalSimpanan, totalPinjaman, totalKifayah, modalKifayah, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
-}
-
-// ========== KAS KIFAYAH (pool terpisah — Koperasi = investor/pemodal) ==========
-// Kas Kifayah TIDAK lagi bersumber dari kas Koperasi (simpanan/kasMaks Koperasi).
-// Sumbernya HANYA modal yang sudah disetor Koperasi (DB.kifayahModal.total),
-// dikurangi sisa pokok cicilan Qardh Kifayah yang masih aktif (revolving: begitu
-// nasabah mencicil, sisaPokok mengecil & kas Kifayah otomatis pulih/bisa dipakai lagi).
-function calcKasKifayah() {
-  const modalTotal = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
-  const totalOutstanding = totalPembayaranKifayah(); // sisa pokok Qardh Kifayah aktif
-  const kasAvailable = Math.max(0, modalTotal - totalOutstanding);
-  const kasUsedPct = modalTotal > 0 ? Math.min(100, (totalOutstanding / modalTotal) * 100) : 0;
-  return { modalTotal, totalOutstanding, kasAvailable, kasUsedPct };
-}
-
-// Setor/tarik modal Koperasi → Kifayah. Dicatat sebagai riwayat (audit trail),
-// walau modelnya "modal awal tetap" — admin tetap bisa menambah/menyesuaikan
-// modal di kemudian hari lewat menu ini kalau memang dibutuhkan.
-function kifayahModalSetor(jumlah, catatan) {
-  jumlah = Math.round(Number(jumlah) || 0);
-  if (jumlah <= 0) return false;
-  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
-  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
-  DB.kifayahModal.history.push({ tanggal: new Date().toISOString(), tipe: 'setor', jumlah: jumlah, catatan: catatan || '' });
-  DB.kifayahModal.total = (DB.kifayahModal.total || 0) + jumlah;
-  saveDB();
-  return true;
-}
-function kifayahModalTarik(jumlah, catatan) {
-  jumlah = Math.round(Number(jumlah) || 0);
-  if (jumlah <= 0) return false;
-  if (!DB.kifayahModal || typeof DB.kifayahModal !== 'object') DB.kifayahModal = { total: 0, history: [] };
-  if (!Array.isArray(DB.kifayahModal.history)) DB.kifayahModal.history = [];
-  var kk = calcKasKifayah();
-  if (jumlah > kk.kasAvailable) return false; // tidak boleh menarik modal yang sedang dipakai (outstanding)
-  DB.kifayahModal.history.push({ tanggal: new Date().toISOString(), tipe: 'tarik', jumlah: jumlah, catatan: catatan || '' });
-  DB.kifayahModal.total = Math.max(0, (DB.kifayahModal.total || 0) - jumlah);
-  saveDB();
-  return true;
-}
-
-// Cek apakah cicilan/Qardh Kifayah baru diizinkan — dicek terhadap pool modal
-// Kifayah SENDIRI (calcKasKifayah), BUKAN terhadap kas Koperasi (checkKasLimit).
-function checkKasLimitKifayah(kkId, jumlahBaru) {
-  const { kasAvailable } = calcKasKifayah();
-  const errors = [];
-  if (jumlahBaru > kasAvailable) {
-    errors.push(`Modal Kifayah tidak cukup. Maks. cicilan baru: ${fmt(kasAvailable)}`);
-  }
-  const ks = getKasSettings();
-  if (ks.limitPerNasabah > 0) {
-    const sudahPinjam = totalPinjamanAktifKK(kkId);
-    const sisaQuota = Math.max(0, ks.limitPerNasabah - sudahPinjam);
-    if (jumlahBaru > sisaQuota) {
-      errors.push(`Melebihi batas per nasabah. Sisa kuota: ${fmt(sisaQuota)}`);
-    }
-  }
-  return errors;
+  const kasAvailable = Math.max(0, kasMaks - totalPinjaman);
+  const kasUsedPct = totalSimpanan > 0 ? Math.min(100, (totalPinjaman / totalSimpanan) * 100) : 0;
+  const limitMaks = Math.max(0, kasMaks - totalPinjaman);
+  return { totalSimpanan, totalPinjaman, totalKifayah, kasMaks, kasAvailable, kasUsedPct, limitMaks, ks };
 }
 
 function renderKasHealth() {
@@ -18753,6 +18684,10 @@ var _kfEditWarungMode = false;
 var _kfEditKurirMode = false;
 var _kfEditProdukId = null;
 var _kfLogoB64 = null;
+var _kfGpsLat = null;       // titik lokasi (GPS) warung yang sedang diedit/dibuat
+var _kfGpsLng = null;
+var _kfCartGpsLat = null;   // titik lokasi (GPS) alamat pengiriman pesanan yang sedang di-checkout
+var _kfCartGpsLng = null;
 var _kfFotoProdukB64 = null;
 var _kfActingAsId = null;   // id nasabah yang sedang "diperankan" admin di Kifayah (null = tidak ada)
 var _kfActingAsNama = '';   // nama nasabah tsb, untuk ditampilkan di banner
@@ -18799,7 +18734,6 @@ function kifayahTab(tab, btnEl) {
   else if (tab === 'warungSaya') { renderKifayahWarungSaya(); if (typeof _kfWarungHeroSlideRender === 'function') _kfWarungHeroSlideRender(); }
   else if (tab === 'akun') { if (typeof _kfRenderAkunHeader === 'function') _kfRenderAkunHeader(); }
   else if (tab === 'pesanan') renderKifayahPesananSaya();
-  else if (tab === 'cicilan') renderKifayahCicilan();
   else if (tab === 'laporanKeuangan') renderKifayahLaporanKeuangan();
   else if (tab === 'admin') { _kfAdminView = null; renderKifayahAdmin(); }
 }
@@ -18822,7 +18756,6 @@ function kifayahOpenAkunSub(subTab) {
   else if (subTab === 'pesananMasuk') renderKifayahPesananMasuk();
   else if (subTab === 'kurir') renderKifayahKurirSaya();
   else if (subTab === 'pesanan') renderKifayahPesananSaya();
-  else if (subTab === 'cicilan') renderKifayahCicilan();
   else if (subTab === 'laporanKeuangan') renderKifayahLaporanKeuangan();
 }
 function kifayahBackToAkun() {
@@ -18852,15 +18785,24 @@ function _kfRenderAkunHeader() {
   }
   _kfRenderAkunMenuBadges();
 }
-// Badge jumlah "Pesanan Masuk" (menunggu konfirmasi) di menu Akun — dipanggil setiap
-// kali tab Akun dibuka/direfresh, juga oleh _kfUpdatePesananBadge() global.
+// Badge jumlah "Pesanan Masuk" (menunggu konfirmasi) & "Kurir Saya" (pesanan siap
+// diambil) di menu Akun — dipanggil setiap kali tab Akun dibuka/direfresh, juga
+// oleh _kfUpdatePesananBadge() global (mis. tiap kali ada pesanan baru/checkout).
 function _kfRenderAkunMenuBadges() {
   var badge = document.getElementById('kfAkunPesananMasukBadge');
-  if (!badge) return;
-  var w = (typeof _kfMyWarung === 'function') ? _kfMyWarung() : null;
-  var count = w ? (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id && p.status === 'menunggu'; }).length : 0;
-  if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
-  else { badge.style.display = 'none'; }
+  if (badge) {
+    var w = (typeof _kfMyWarung === 'function') ? _kfMyWarung() : null;
+    var count = w ? (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id && p.status === 'menunggu'; }).length : 0;
+    if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+    else { badge.style.display = 'none'; }
+  }
+  var kurirBadge = document.getElementById('kfAkunKurirBadge');
+  if (kurirBadge) {
+    var k = (typeof _kfMyKurir === 'function') ? _kfMyKurir() : null;
+    var kCount = (k && k.status === 'aktif') ? (DB.pesananWarung||[]).filter(function(p){ return p.status === 'diproses' && !p.kurirId; }).length : 0;
+    if (kCount > 0) { kurirBadge.textContent = kCount; kurirBadge.style.display = 'inline-block'; }
+    else { kurirBadge.style.display = 'none'; }
+  }
 }
 
 /* ---------- BERPERAN SEBAGAI NASABAH (khusus Admin) ---------- */
@@ -18976,28 +18918,6 @@ function _kfIsKurir(nasabahId) {
 function _kfOngkirFlat() {
   var ks = DB.kifayahSetting || {};
   return Number(ks.ongkirFlat) || 3000;
-}
-// Tenor cicilan Kifayah yang berlaku untuk nasabah tsb pada transaksi saat ini, dibaca dari
-// dropdown #kfCartTenorPilih (opsinya diisi ulang oleh _kfToggleTenorField sesuai peran).
-// Mitra Warung (akad Murabahah): 4/6/8/10/12 bulan. Nasabah biasa (akad Qardh): 3/4 bulan.
-function _kfTenorCicilanUntuk(nasabahId) {
-  var sel = document.getElementById('kfCartTenorPilih');
-  var v = sel ? parseInt(sel.value, 10) : 4;
-  if (_kfIsMitraWarung(nasabahId)) {
-    return [4,6,8,10,12].indexOf(v) !== -1 ? v : 4;
-  }
-  return [3,4].indexOf(v) !== -1 ? v : 4;
-}
-// Batas/kuota cicilan Kifayah yang berlaku untuk nasabah tsb — limit tetap (bukan berbasis
-// simpanan lagi), diambil dari DB.kifayahSetting yang bisa diatur admin lewat menu Kifayah > Admin > Pengaturan.
-function _kfKuotaCicilan(nasabahId) {
-  var sudahPinjam = totalPinjamanAktifKK(nasabahId);
-  var ks = DB.kifayahSetting || {};
-  var batas = _kfIsMitraWarung(nasabahId)
-    ? (Number(ks.mitraLimit) || 500000)
-    : (Number(ks.nasabahLimit) || 200000);
-  var sisaKuota = Math.max(0, batas - sudahPinjam);
-  return { batas: batas, sudahPinjam: sudahPinjam, sisaKuota: sisaKuota };
 }
 // Saldo Kifayah = Saldo Simpanan Sukarela nasabah (satu sumber dana yang sama)
 function saldoKifayahNasabah(nasabahId) {
@@ -19225,40 +19145,77 @@ function renderKifayahKurirSaya() {
     .slice(0, 20);
   var ongkir = _kfOngkirFlat();
 
+  function _kfRuteMapsUrl(p) {
+    var w = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
+    var punyaAsal = w && typeof w.lat === 'number' && typeof w.lng === 'number';
+    var punyaTujuan = typeof p.kirimLat === 'number' && typeof p.kirimLng === 'number';
+    if (punyaAsal && punyaTujuan) {
+      return 'https://www.google.com/maps/dir/?api=1&origin=' + w.lat + ',' + w.lng + '&destination=' + p.kirimLat + ',' + p.kirimLng;
+    }
+    if (punyaTujuan) {
+      return 'https://www.google.com/maps?q=' + p.kirimLat + ',' + p.kirimLng;
+    }
+    return null;
+  }
+  function _kfAlamatKirimHtml(p) {
+    return '<div style="font-size:11px;color:#6b7280;margin:2px 0">📍 '+(p.alamatKirim||'Alamat belum diisi')+'</div>';
+  }
+  function _kfOngkirLineHtml(p) {
+    if (p.metodeBayar === 'tunai') {
+      return '<div style="font-size:11.5px;font-weight:700;color:#b45309">Ongkir: '+fmt(ongkir)+' <span style="font-size:9.5px;font-weight:800;background:#fef3c7;color:#b45309;border-radius:6px;padding:1px 5px;margin-left:2px">💵 COD — tunai dari pembeli</span></div>';
+    }
+    return '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">Ongkir: '+fmt(ongkir)+' <span style="font-size:9.5px;font-weight:700;color:#9ca3af">(masuk Saldo Kurir)</span></div>';
+  }
   function cardTersedia(p) {
     var itemsHtml = (p.items||[]).map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
+    var rute = _kfRuteMapsUrl(p);
     return '<div class="kf-pesanan-card">'
       + '<div style="font-weight:700;font-size:12.5px">'+(p.warungNama||'-')+' → '+(p.pembeliNama||'-')+'</div>'
       + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
-      + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">Ongkir: '+fmt(ongkir)+'</div>'
-      + '<div style="margin-top:8px"><button class="kf-mini-action kf-accept" onclick="kifayahKurirAmbilPesanan(\''+p.id+'\')">🛵 Ambil &amp; Antar</button></div>'
+      + _kfAlamatKirimHtml(p)
+      + _kfOngkirLineHtml(p)
+      + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'
+      +   '<button class="kf-mini-action kf-accept" onclick="kifayahKurirAmbilPesanan(\''+p.id+'\')">🛵 Ambil &amp; Antar</button>'
+      +   (rute ? '<a class="kf-mini-action" style="text-decoration:none;text-align:center" href="'+rute+'" target="_blank" rel="noopener">🗺️ Rute</a>' : '')
+      + '</div>'
       + '</div>';
   }
   function cardDiantar(p) {
     var itemsHtml = (p.items||[]).map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
+    var rute = _kfRuteMapsUrl(p);
     return '<div class="kf-pesanan-card">'
       + '<div style="font-weight:700;font-size:12.5px">'+(p.warungNama||'-')+' → '+(p.pembeliNama||'-')+'</div>'
       + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
-      + '<div style="font-size:11.5px;font-weight:700;color:#7b2d8b">Ongkir: '+fmt(ongkir)+'</div>'
-      + '<div style="margin-top:8px"><button class="kf-mini-action kf-accept" onclick="kifayahKurirSelesaikanPesanan(\''+p.id+'\')">✅ Selesai Diantar</button></div>'
+      + _kfAlamatKirimHtml(p)
+      + _kfOngkirLineHtml(p)
+      + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'
+      +   '<button class="kf-mini-action kf-accept" onclick="kifayahKurirSelesaikanPesanan(\''+p.id+'\')">✅ Selesai Diantar</button>'
+      +   (rute ? '<a class="kf-mini-action" style="text-decoration:none;text-align:center" href="'+rute+'" target="_blank" rel="noopener">🗺️ Rute</a>' : '')
+      + '</div>'
       + '</div>';
   }
   function cardRiwayat(p) {
     var itemsHtml = (p.items||[]).map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
+    var ongkirLabel = p.ongkirCod
+      ? '<div style="font-size:11.5px;font-weight:700;color:#b45309">💵 Ongkir '+fmt(ongkir)+' diterima tunai (COD)</div>'
+      : '<div style="font-size:11.5px;font-weight:700;color:#16a34a">✅ Ongkir '+fmt(ongkir)+' masuk Saldo Kurir</div>';
     return '<div class="kf-pesanan-card">'
       + '<div style="font-weight:700;font-size:12.5px">'+(p.warungNama||'-')+' → '+(p.pembeliNama||'-')+'</div>'
       + '<div style="font-size:11px;color:#6b7280;margin:2px 0">'+itemsHtml+'</div>'
-      + '<div style="font-size:11.5px;font-weight:700;color:#16a34a">✅ Ongkir diterima '+fmt(ongkir)+'</div>'
+      + ongkirLabel
       + '</div>';
   }
 
   el.innerHTML =
     '<div class="kf-akun-header" style="margin-bottom:12px">'
     + '<div class="kf-akun-header-icon">🛵</div>'
-    + '<div><div class="kf-akun-header-title">'+k.nama+'</div>'
+    + '<div style="flex:1"><div class="kf-akun-header-title">'+k.nama+'</div>'
     + '<span class="kf-akun-header-badge">🛵 Kurir · '+(k.kendaraan||'Motor')+'</span></div>'
+    + '<button class="kf-mini-btn" title="Edit Profil Kurir" onclick="kifayahOpenKurirForm(true)" style="flex-shrink:0;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.18);color:#fff;border:none">'
+    +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 4.5L19.5 8.5L8.5 19.5H4.5V15.5L15.5 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.5 6.5L17.5 10.5" stroke="currentColor" stroke-width="1.8"/></svg>'
+    +   'Edit Profil'
+    + '</button>'
     + '</div>'
-    + '<div style="text-align:right;margin-bottom:10px"><button class="kf-mini-btn" title="Edit Profil Kurir" onclick="kifayahOpenKurirForm(true)">✏️ Edit Profil</button></div>'
     + '<div style="font-weight:800;font-size:13px;color:#4a1458;margin:10px 0 6px">📦 Pesanan Tersedia ('+tersedia.length+')</div>'
     + (tersedia.length ? tersedia.map(cardTersedia).join('') : '<div class="kf-empty" style="padding:16px 10px"><div style="font-size:28px">📭</div><div>Belum ada pesanan yang perlu diantar</div></div>')
     + '<div style="font-weight:800;font-size:13px;color:#4a1458;margin:16px 0 6px">🛵 Sedang Diantar ('+sedangDiantar.length+')</div>'
@@ -20000,7 +19957,9 @@ function _kifayahShowWarungDetail(warungId) {
     + '</div>'
     + '<div class="kf-detail-rating-block">'+ratingHtml+'</div>'
     + (w.deskripsi ? '<div class="info-row"><span class="info-icon">📝</span><div class="info-text"><div class="info-label">Deskripsi</div><div class="info-val">'+w.deskripsi+'</div></div></div>' : '')
-    + '<div class="info-row"><span class="info-icon">🏠</span><div class="info-text"><div class="info-label">Alamat Warung</div><div class="info-val">'+(w.alamat||'-')+'</div></div></div>'
+    + '<div class="info-row"><span class="info-icon">🏠</span><div class="info-text"><div class="info-label">Alamat Warung</div><div class="info-val">'+(w.alamat||'-')
+    +   ((typeof w.lat === 'number' && typeof w.lng === 'number') ? ' · <a href="https://www.google.com/maps?q='+w.lat+','+w.lng+'" target="_blank" rel="noopener">📍 Lihat di Peta</a>' : '')
+    + '</div></div></div>'
     + '<div class="info-row"><span class="info-icon">📱</span><div class="info-text"><div class="info-label">No. HP / WhatsApp</div><div class="info-val">'+kontakHtml+'</div></div></div>'
     + '<div class="info-row"><span class="info-icon">🛍️</span><div class="info-text"><div class="info-label">Jumlah Produk</div><div class="info-val">'+jumlahProduk+' produk tersedia</div></div></div>';
 
@@ -20133,8 +20092,10 @@ function _kfUpdateCartBadge() {
 }
 
 /* Badge notifikasi di tab header "KIFAYAH": jumlah pesanan masuk yang
-   masih berstatus "menunggu" untuk warung milik user yang sedang login.
-   Dipanggil dari mana pun cart badge di-refresh supaya selalu terkini. */
+   masih berstatus "menunggu" untuk warung milik user yang sedang login,
+   ditambah jumlah pesanan siap-antar (status "diproses" & belum ada kurir)
+   jika user terdaftar sebagai kurir aktif. Dipanggil dari mana pun cart
+   badge di-refresh supaya selalu terkini. */
 function _kfUpdatePesananBadge() {
   var tab = document.getElementById('modeTabKifayah');
   if (!tab) return;
@@ -20144,6 +20105,12 @@ function _kfUpdatePesananBadge() {
   if (w) {
     count = (DB.pesananWarung || []).filter(function(p) {
       return p.warungId === w.id && p.status === 'menunggu';
+    }).length;
+  }
+  var kurirSelf = (typeof _kfMyKurir === 'function') ? _kfMyKurir() : null;
+  if (kurirSelf && kurirSelf.status === 'aktif') {
+    count += (DB.pesananWarung || []).filter(function(p) {
+      return p.status === 'diproses' && !p.kurirId;
     }).length;
   }
   if (count > 0) {
@@ -20204,17 +20171,69 @@ function kifayahOpenCart() {
   document.getElementById('kfCartTotal').textContent = fmt(total);
   _kfCartTotalCache = total;
   var metodeSel = document.getElementById('kfCartMetode');
-  var cicilanOpt = metodeSel ? metodeSel.querySelector('option[value="cicilan"]') : null;
   var myId = _kfMyNasabahId();
-  var eligible = myId && _kfNasabahAktif(myId);
-  if (cicilanOpt) {
-    cicilanOpt.disabled = !eligible;
-    cicilanOpt.textContent = eligible
-      ? (_kfIsMitraWarung(myId) ? '💳 Cicilan Murabahah (tenor 4-12 bulan)' : '💳 Cicilan Qardh (tenor 3-4 bulan)')
-      : '💳 Cicilan — khusus anggota aktif';
-  }
   if (metodeSel) { metodeSel.value = 'tunai'; _kfToggleTenorField(); }
+  var myNasabahCart = getNasabah(myId);
+  var alamatTerakhir = (myNasabahCart && myNasabahCart.alamatKirimTerakhir) || '';
+  document.getElementById('kfCartAlamat').value = alamatTerakhir;
+  _kfCartGpsLat = (myNasabahCart && typeof myNasabahCart.gpsKirimTerakhirLat === 'number') ? myNasabahCart.gpsKirimTerakhirLat : null;
+  _kfCartGpsLng = (myNasabahCart && typeof myNasabahCart.gpsKirimTerakhirLng === 'number') ? myNasabahCart.gpsKirimTerakhirLng : null;
+  var hintEl = document.getElementById('kfCartAlamatHint');
+  if (hintEl) hintEl.style.display = alamatTerakhir ? 'inline' : 'none';
+  _kfRenderCartGpsStatus();
   openModal('modalKfCart');
+}
+function _kfOnCartAlamatEdited() {
+  // Kalau pembeli mengubah alamat secara manual, sembunyikan label "dari pesanan
+  // sebelumnya" supaya tidak menyesatkan — teks yang tampil sekarang alamat baru.
+  var hintEl = document.getElementById('kfCartAlamatHint');
+  if (hintEl) hintEl.style.display = 'none';
+}
+function kifayahAmbilLokasiPengiriman() {
+  if (!navigator.geolocation) {
+    showToast('⚠️ Perangkat/browser ini tidak mendukung GPS');
+    return;
+  }
+  if (!_kfGpsKonteksAman()) {
+    var statusElHttps2 = document.getElementById('kfCartGpsStatus');
+    if (statusElHttps2) statusElHttps2.textContent = '🔒 ' + _kfPesanKonteksTidakAman();
+    showToast(_kfPesanKonteksTidakAman());
+    return;
+  }
+  var btn = document.getElementById('kfCartGpsBtn');
+  var statusEl = document.getElementById('kfCartGpsStatus');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mencari lokasi...'; }
+  if (statusEl) statusEl.textContent = 'Mengambil titik GPS, mohon izinkan akses lokasi...';
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      _kfCartGpsLat = pos.coords.latitude;
+      _kfCartGpsLng = pos.coords.longitude;
+      if (btn) { btn.disabled = false; btn.innerHTML = '📍 Perbarui Lokasi Saya'; }
+      _kfRenderCartGpsStatus();
+      showToast('✅ Lokasi pengiriman berhasil diambil');
+    },
+    function (err) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '📍 Gunakan Lokasi Saya Sekarang'; }
+      var pesan = 'Gagal mengambil lokasi';
+      if (err && err.code === 1) pesan = 'Izin lokasi ditolak — aktifkan akses lokasi di pengaturan browser';
+      else if (err && err.code === 2) pesan = 'Lokasi tidak tersedia saat ini';
+      else if (err && err.code === 3) pesan = 'Waktu pencarian lokasi habis, coba lagi';
+      if (statusEl) statusEl.textContent = '⚠️ ' + pesan;
+      showToast('⚠️ ' + pesan);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+function _kfRenderCartGpsStatus() {
+  var statusEl = document.getElementById('kfCartGpsStatus');
+  if (!statusEl) return;
+  if (typeof _kfCartGpsLat === 'number' && typeof _kfCartGpsLng === 'number') {
+    var mapsUrl = 'https://www.google.com/maps?q=' + _kfCartGpsLat + ',' + _kfCartGpsLng;
+    statusEl.innerHTML = '✅ Titik tersimpan: ' + _kfCartGpsLat.toFixed(5) + ', ' + _kfCartGpsLng.toFixed(5)
+      + ' — <a href="' + mapsUrl + '" target="_blank" rel="noopener">Lihat di Peta</a>';
+  } else {
+    statusEl.textContent = 'Belum ada titik lokasi tersimpan — kurir akan mengandalkan alamat teks saja.';
+  }
 }
 function kifayahRemoveFromCart(produkId) {
   _kfCart = _kfCart.filter(function(c){ return c.produkId !== produkId; });
@@ -20223,51 +20242,6 @@ function kifayahRemoveFromCart(produkId) {
 }
 function _kfToggleTenorField() {
   var metode = (document.getElementById('kfCartMetode')||{}).value;
-  var wrap = document.getElementById('kfCartTenorWrap');
-  if (wrap) wrap.style.display = (metode === 'cicilan') ? 'block' : 'none';
-  if (metode === 'cicilan') {
-    var myId = _kfMyNasabahId();
-    var isMitra = _kfIsMitraWarung(myId);
-    var ks = DB.kifayahSetting || {};
-    // Bangun ulang opsi tenor sesuai peran — Nasabah (Qardh): 3/4 bulan. Mitra Warung (Murabahah): 4/6/8/10/12 bulan.
-    var sel = document.getElementById('kfCartTenorPilih');
-    if (sel) {
-      var tenorOpts = isMitra ? [4,6,8,10,12] : [3,4];
-      var prevVal = parseInt(sel.value, 10);
-      sel.innerHTML = tenorOpts.map(function(t){ return '<option value="'+t+'">'+t+' bulan</option>'; }).join('');
-      sel.value = (tenorOpts.indexOf(prevVal) !== -1) ? String(prevVal) : String(tenorOpts[tenorOpts.length-1]);
-    }
-    var infoTeks = document.getElementById('kfCartTenorInfoTeks');
-    if (infoTeks) {
-      if (isMitra) {
-        var marginPct = Number(ks.mitraMarginPercent)||0;
-        var feeFlat = Number(ks.mitraFeeFlat)||0;
-        infoTeks.innerHTML = '🤝 <strong>Akad Murabahah Koperasi Renco</strong> — tenor bisa dipilih <strong>4–12 bulan</strong>. '
-          + 'Margin <strong>' + marginPct + '%</strong>' + (feeFlat>0 ? ' + biaya transaksi <strong>' + fmt(feeFlat) + '</strong>' : '')
-          + ' akan ditambahkan ke total pinjaman. Pengajuan menunggu persetujuan admin. Angsuran dibayar lewat tab Pembayaran → <strong>Koperasi Renco</strong>.';
-      } else {
-        infoTeks.innerHTML = '🤲 <strong>Akad Qardh Koperasi Renco</strong> — pinjaman kebajikan tanpa bunga/margin. Tenor bisa dipilih <strong>3 atau 4 bulan</strong>. '
-          + 'Pengajuan menunggu persetujuan admin. Angsuran dibayar lewat tab Pembayaran → <strong>Koperasi Renco</strong>.';
-      }
-    }
-    var warnEl = document.getElementById('kfCartCicilanWarning');
-    if (warnEl) {
-      if (!myId || !_kfNasabahAktif(myId)) {
-        warnEl.textContent = '⚠️ Cicilan hanya untuk anggota koperasi berstatus aktif.';
-        warnEl.style.display = 'block';
-      } else {
-        var kuota = _kfKuotaCicilan(myId);
-        if ((_kfCartTotalCache||0) > kuota.sisaKuota) {
-          warnEl.textContent = isMitra
-            ? '⚠️ Melebihi limit cicilan Mitra Warung (maks ' + fmt(kuota.batas) + '). Sisa kuota: ' + fmt(kuota.sisaKuota)
-            : '⚠️ Melebihi limit cicilan Qardh (maks ' + fmt(kuota.batas) + '). Sisa kuota: ' + fmt(kuota.sisaKuota);
-          warnEl.style.display = 'block';
-        } else {
-          warnEl.style.display = 'none';
-        }
-      }
-    }
-  }
   var saldoWrap = document.getElementById('kfCartSaldoWrap');
   if (saldoWrap) {
     saldoWrap.style.display = (metode === 'saldo') ? 'block' : 'none';
@@ -20280,30 +20254,6 @@ function _kfToggleTenorField() {
       if (warnEl2) warnEl2.style.display = (saldo < (_kfCartTotalCache||0)) ? 'block' : 'none';
     }
   }
-}
-function _kfTambahBulanISO(iso, bulan) {
-  var d = new Date(iso);
-  d.setMonth(d.getMonth() + (parseInt(bulan, 10) || 0));
-  return d.toISOString();
-}
-/* Bangun jadwal angsuran cicilan: dibagi rata per bulan, sisa pembulatan
-   dibebankan ke angsuran terakhir supaya total tetap pas. */
-function _kfBuatJadwalCicilan(total, tenor, mulaiISO) {
-  tenor = Math.max(1, parseInt(tenor, 10) || 1);
-  var perBulan = Math.floor(total / tenor);
-  var jadwal = [];
-  var terkumpul = 0;
-  for (var i = 1; i <= tenor; i++) {
-    var jumlah = (i === tenor) ? (total - terkumpul) : perBulan;
-    terkumpul += jumlah;
-    jadwal.push({
-      ke: i,
-      jatuhTempo: _kfTambahBulanISO(mulaiISO, i),
-      jumlah: jumlah,
-      status: 'belum'
-    });
-  }
-  return jadwal;
 }
 function kifayahCheckout() {
   if (!_kfCart.length) return;
@@ -20318,6 +20268,10 @@ function kifayahCheckout() {
   if (adaWarungTutup) { showToast('🔴 Warung sedang tutup, tidak bisa melakukan pesanan'); return; }
   var myNasabah = getNasabah(myId);
   var metode = (document.getElementById('kfCartMetode')||{}).value || 'tunai';
+  var alamatKirim = (document.getElementById('kfCartAlamat').value||'').trim();
+  if (!alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
+  var kirimLat = (typeof _kfCartGpsLat === 'number') ? _kfCartGpsLat : null;
+  var kirimLng = (typeof _kfCartGpsLng === 'number') ? _kfCartGpsLng : null;
   // Kelompokkan item keranjang per warung — 1 pesanan per warung
   var byWarung = {};
   _kfCart.forEach(function(c){
@@ -20336,32 +20290,6 @@ function kifayahCheckout() {
       return;
     }
   }
-  // Cicilan Kifayah = akad Qardh Koperasi Renco — hanya untuk anggota koperasi berstatus aktif
-  if (metode === 'cicilan') {
-    if (!_kfNasabahAktif(myId)) {
-      showToast('🚫 Cicilan hanya untuk anggota koperasi berstatus aktif');
-      return;
-    }
-    if (typeof isNasabahBlacklist === 'function' && isNasabahBlacklist(myId)) {
-      showToast('🚫 Nasabah berstatus BLACKLIST — belanja cicilan ditolak');
-      return;
-    }
-    var kuotaCek = _kfKuotaCicilan(myId);
-    if (totalSemua > kuotaCek.sisaKuota) {
-      showToast(_kfIsMitraWarung(myId)
-        ? '🚫 Melebihi limit cicilan Mitra Warung (maks ' + fmt(kuotaCek.batas) + '). Sisa kuota Qardh: ' + fmt(kuotaCek.sisaKuota)
-        : '🚫 Melebihi batas 80% simpanan. Sisa kuota Qardh: ' + fmt(kuotaCek.sisaKuota));
-      return;
-    }
-    // Cek juga terhadap pool Modal Kifayah (bukan kas Koperasi) supaya nasabah
-    // tidak diberi harapan pesanan diterima padahal nanti dibatalkan otomatis
-    // saat admin menandai pesanan "Selesai" (lihat kifayahUpdatePesananStatus).
-    var modalKfCek = typeof checkKasLimitKifayah === 'function' ? checkKasLimitKifayah(myId, totalSemua) : [];
-    if (modalKfCek.length > 0) {
-      showToast('🚫 ' + modalKfCek[0]);
-      return;
-    }
-  }
   Object.keys(byWarung).forEach(function(warungId){
     var items = byWarung[warungId];
     var total = items.reduce(function(s,i){ return s+i.subtotal; }, 0);
@@ -20376,49 +20304,11 @@ function kifayahCheckout() {
       total: total,
       status: 'menunggu',
       metodeBayar: metode,
+      alamatKirim: alamatKirim,
+      kirimLat: kirimLat,
+      kirimLng: kirimLng,
       dibuatPada: nowISO()
     };
-    if (metode === 'cicilan') {
-      // Ajukan sebagai pinjaman Qardh sungguhan di Koperasi Renco — bebas margin,
-      // berstatus "pengajuan" menunggu persetujuan admin, sama seperti pengajuan
-      // Qardh biasa dari menu Pinjaman. Tenor: Nasabah biasa terkunci 4 bulan;
-      // Mitra Warung (punya warung sendiri) bisa memilih 4/6/8/10/12 bulan.
-      var tenorCicilan = _kfTenorCicilanUntuk(myId);
-      var isMitraCheckout = _kfIsMitraWarung(myId);
-      var ksCheckout = DB.kifayahSetting || {};
-      // Nasabah biasa = akad Qardh (pinjaman kebajikan, tanpa markup). Mitra Warung = akad
-      // Murabahah: harga barang ditambah margin (%) dan biaya transaksi (flat), keduanya diatur admin.
-      var marginPctCheckout = isMitraCheckout ? (Number(ksCheckout.mitraMarginPercent)||0) : 0;
-      var feeFlatCheckout = isMitraCheckout ? (Number(ksCheckout.mitraFeeFlat)||0) : 0;
-      var marginNominalCheckout = isMitraCheckout ? Math.round(total * marginPctCheckout / 100) : 0;
-      var totalPinjamanCheckout = total + marginNominalCheckout + feeFlatCheckout;
-      var pin = {
-        id: 'pinkf' + DB.nextPinKifayahId++,
-        kkId: myId, jumlah: totalPinjamanCheckout, bunga: 0, tenor: tenorCicilan, akad: isMitraCheckout ? 'murabahah' : 'qardh',
-        tujuan: 'Belanja Kifayah — ' + (w ? w.nama : '-'),
-        biayaAdmin: feeFlatCheckout, adminJenis: isMitraCheckout ? 'biaya-mitra' : 'none',
-        pokokBarang: total, marginPercent: marginPctCheckout, marginNominal: marginNominalCheckout,
-        sisaPokok: 0, status: 'pengajuan', tanggal: pesanan.dibuatPada, cicilan: [],
-        // Penanda: pinjaman ini lahir dari transaksi Kifayah cicilan. Mekanismenya
-        // koperasi memberi modal pinjaman ke Kifayah, lalu Kifayah mengembalikan
-        // dana tsb ke koperasi lewat cicilan — dicatat di buku TERPISAH
-        // (DB.pinjamanKifayah), bukan di DB.pinjaman (Pinjaman Koperasi umum),
-        // supaya pembukuan Kifayah khusus untuk pembayaran Kifayah saja & tidak
-        // tampil di tab Pinjaman koperasi biasa. Kas koperasi dihitung lewat
-        // totalPembayaranKifayah() & calcKas() supaya tidak terpotong dua kali.
-        // Kuota pinjaman pribadi nasabah (totalPinjamanAktifKK) TETAP menghitung
-        // pinjaman ini seperti biasa (gabungan kedua buku).
-        asalKifayah: true
-      };
-      DB.pinjamanKifayah.push(pin);
-      DB.transaksi.push({
-        id: 'txn' + DB.nextTxnId++,
-        kkId: myId, type: 'pinjaman', jumlah: totalPinjamanCheckout,
-        keterangan: 'Pengajuan pinjaman ' + (isMitraCheckout ? 'Murabahah' : 'Qardh') + ' — Belanja Kifayah (' + (w ? w.nama : '-') + ')',
-        tanggal: pesanan.dibuatPada, statusTxn: 'pending', refId: pin.id
-      });
-      pesanan.pinjamanId = pin.id;
-    }
     if (metode === 'saldo') {
       DB.transaksi.push({
         id: 'txn' + DB.nextTxnId++,
@@ -20438,14 +20328,18 @@ function kifayahCheckout() {
       if (pr) pr.stok = Math.max(0, (Number(pr.stok)||0) - i.qty);
     });
   });
+  if (myNasabah) {
+    myNasabah.alamatKirimTerakhir = alamatKirim;
+    myNasabah.gpsKirimTerakhirLat = kirimLat;
+    myNasabah.gpsKirimTerakhirLng = kirimLng;
+  }
   _kfCart = [];
   _kfUpdateCartBadge();
   saveDB();
   closeModal('modalKfCart');
-  showToast(metode === 'cicilan' ? ('📝 Pengajuan ' + (_kfIsMitraWarung(myId) ? 'Murabahah' : 'Qardh') + ' dikirim — menunggu persetujuan admin') : (metode === 'saldo' ? '✅ Pesanan dibuat — dibayar dari Saldo Kifayah' : '✅ Pesanan berhasil dibuat!'));
+  showToast(metode === 'saldo' ? '✅ Pesanan dibuat — dibayar dari Saldo Kifayah' : '✅ Pesanan berhasil dibuat!');
   renderKifayahBelanja();
   if (_kfActiveTab === 'pesanan') renderKifayahPesananSaya();
-  if (_kfActiveTab === 'cicilan') renderKifayahCicilan();
 }
 
 /* ---------- WARUNG SAYA (kelola toko sendiri) ---------- */
@@ -20484,21 +20378,10 @@ function renderKifayahWarungSaya() {
     + '<div style="font-size:11.5px;color:#6b7280">'+(w.kategori||'-')+' · '+produkSaya.length+' produk</div>'
     + '<div style="font-size:11px;color:'+(w.status==='aktif'?'#16a34a':'#dc2626')+';font-weight:700;margin-top:2px">● '+(w.status==='aktif'?'Buka':'Tutup')+'</div>'
     + '</div>'
+    + '<button type="button" class="kf-kelola-warung-icon-btn" onclick="kifayahOpenKelolaWarungMenu()" title="Kelola Warung"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h9M17 6h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="13.5" cy="6" r="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M4 12h3M11 12h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="7.5" cy="12" r="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M4 18h9M17 18h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="13.5" cy="18" r="2.2" stroke="currentColor" stroke-width="1.7"/></svg></button>'
     + '</div>'
-
-    + '<button class="kf-kelola-warung-btn" onclick="kifayahOpenKelolaWarungMenu()">⚙️ Kelola Warung</button>'
 
     + _kfRenderMitraStatusBlock(w)
-
-    + '<div class="kf-section-title">📊 Ringkasan Toko</div>'
-    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
-    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
-    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+produkSaya.length+'</div>'
-    + '<div style="font-size:10px;color:#6b7280">Produk</div></div>'
-    + '<div style="flex:1;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px;text-align:center">'
-    + '<div style="font-size:16px;font-weight:800;color:#7b2d8b">'+pesananSemua.length+'</div>'
-    + '<div style="font-size:10px;color:#6b7280">Pesanan</div></div>'
-    + '</div>'
 
     + (pendingCount ? '<div class="kf-warung-pesanan-cta" onclick="kifayahOpenAkunSub(\'pesananMasuk\')" style="display:flex;align-items:center;justify-content:space-between;background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px 14px;margin-bottom:14px;cursor:pointer">'
         + '<span style="font-size:12.5px;font-weight:700;color:#4a1458">📥 Pesanan Masuk Menunggu Konfirmasi</span>'
@@ -20613,9 +20496,6 @@ function kifayahToggleWarungStatus() {
 // menu "⚙️ Kelola Warung" (lihat kifayahOpenKelolaWarungMenu()).
 function _kfRenderMitraStatusBlock(w) {
   var st = w.statusMitra || 'bukan';
-  if (st === 'aktif') {
-    return '<div style="background:rgba(123,45,139,0.08);border:1.5px solid rgba(123,45,139,0.25);border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:11.5px;font-weight:800;color:#7b2d8b">🤝 Mitra Warung Aktif — cicilan Murabahah tenor 4–12 bulan</div>';
-  }
   if (st === 'menunggu') {
     return '<div style="background:rgba(180,83,9,0.08);border:1.5px solid rgba(180,83,9,0.25);border-radius:12px;padding:9px 12px;margin-bottom:12px;font-size:11.5px;font-weight:800;color:#b45309">⏳ Pengajuan jadi Mitra Warung — menunggu persetujuan admin</div>';
   }
@@ -20639,12 +20519,13 @@ function kifayahOpenKelolaWarungMenu() {
   var items = [];
   items.push({ icon:'✏️', label:'Edit Profil Warung', onclick:'kifayahOpenWarungForm(true)', keepOpen:false });
   items.push({
-    icon: (w.status === 'aktif') ? '⏸️' : '▶️',
+    icon: (w.status === 'aktif')
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10.5" width="16" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15" r="1.4" fill="currentColor"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg>',
     label: (w.status === 'aktif') ? 'Tutup Warung' : 'Buka Warung',
     onclick: 'kifayahToggleWarungStatus()', keepOpen:false
   });
   items.push({ icon:'📦', label:'Kelola Barang', onclick:'kifayahBukaKelolaBarangDalamModal()', keepOpen:true });
-  items.push({ icon:'➕', label:'Tambah Barang', onclick:'kifayahOpenProdukForm()', keepOpen:false });
   if (st === 'bukan' || st === 'ditolak') {
     items.push({ icon:'🤝', label:'Ajukan Jadi Mitra', onclick:'kifayahAjukanMitra()', keepOpen:false });
   }
@@ -20696,6 +20577,9 @@ function kifayahOpenWarungForm(isEdit) {
   document.getElementById('kfWarungDeskripsi').value = w ? (w.deskripsi||'') : '';
   document.getElementById('kfWarungKontak').value = w ? (w.kontak||'') : '';
   document.getElementById('kfWarungAlamat').value = w ? (w.alamat||'') : '';
+  _kfGpsLat = (w && typeof w.lat === 'number') ? w.lat : null;
+  _kfGpsLng = (w && typeof w.lng === 'number') ? w.lng : null;
+  _kfRenderGpsStatus();
   _kfRenderLogoPreview();
   document.getElementById('modalKfWarungFormTitle').innerHTML = isEdit ? '✏️ Edit Warung' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-0.15em" aria-hidden="true"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg> Buat Warung Saya';
   openModal('modalKfWarungForm');
@@ -20746,6 +20630,142 @@ function kifayahUploadLogo() {
   };
   inp.click();
 }
+/* ---------- Pintasan GPS Browser: aktifkan & cek status akses lokasi ---------- */
+// Cek konteks aman (HTTPS) — browser MEMBLOKIR total akses GPS di halaman yang
+// dibuka lewat http:// biasa atau file lokal, TIDAK PEDULI izin lokasi sudah
+// diaktifkan di pengaturan HP/browser sekalipun. Ini penyebab paling umum GPS
+// terlihat "tidak mau aktif" walau sudah diizinkan — jadi dicek & dijelaskan
+// terpisah dari kasus izin ditolak supaya pesannya tidak menyesatkan.
+function _kfGpsKonteksAman() {
+  if (typeof window.isSecureContext === 'boolean') return window.isSecureContext;
+  // Fallback untuk browser lama: anggap aman kalau https:, atau localhost/127.0.0.1.
+  var h = location.hostname;
+  return location.protocol === 'https:' || h === 'localhost' || h === '127.0.0.1';
+}
+function _kfPesanKonteksTidakAman() {
+  return '🔒 GPS diblokir browser karena halaman ini belum dibuka lewat HTTPS. Izin lokasi di HP tidak berpengaruh selama alamatnya masih http:// — buka aplikasi lewat https:// (atau minta admin mengaktifkan HTTPS di hosting) baru GPS bisa dipakai.';
+}
+function kifayahAktifkanGPS() {
+  if (!navigator.geolocation) {
+    showToast('⚠️ Perangkat/browser ini tidak mendukung GPS');
+    return;
+  }
+  if (!_kfGpsKonteksAman()) {
+    _kfSetGpsShortcutStatus('off');
+    showToast(_kfPesanKonteksTidakAman());
+    return;
+  }
+  showToast('📍 Meminta izin akses lokasi...');
+  navigator.geolocation.getCurrentPosition(
+    function () {
+      _kfSetGpsShortcutStatus('on');
+      showToast('✅ GPS aktif — lokasi berhasil diakses');
+    },
+    function (err) {
+      if (err && err.code === 1) {
+        _kfSetGpsShortcutStatus('off');
+        showToast('⚠️ Izin lokasi ditolak — aktifkan lewat pengaturan browser/HP (Setelan > Lokasi > izinkan untuk browser ini)');
+      } else if (err && err.code === 2) {
+        _kfSetGpsShortcutStatus('off');
+        showToast('⚠️ GPS tidak aktif di perangkat — nyalakan Lokasi/GPS di pengaturan HP');
+      } else {
+        _kfSetGpsShortcutStatus('off');
+        showToast('⚠️ Gagal mengaktifkan GPS, coba lagi');
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+function _kfSetGpsShortcutStatus(state) {
+  var btn = document.getElementById('kfGpsShortcutBtn');
+  if (btn) {
+    btn.classList.remove('kf-gps-on', 'kf-gps-off');
+    btn.classList.add(state === 'on' ? 'kf-gps-on' : 'kf-gps-off');
+  }
+  var txt = document.getElementById('kfAkunGpsStatusText');
+  if (txt) {
+    txt.textContent = state === 'on' ? '✅ Aktif' : '⚠️ Nonaktif';
+    txt.style.color = state === 'on' ? '#16a34a' : '#dc2626';
+  }
+}
+function _kfCekStatusGpsAwal() {
+  if (!_kfGpsKonteksAman()) {
+    // Bukan HTTPS: GPS pasti diblokir browser berapa pun izinnya di HP — tandai
+    // langsung sebagai nonaktif tanpa perlu tanya Permissions API dulu.
+    var txtNA = document.getElementById('kfAkunGpsStatusText');
+    if (txtNA) { txtNA.textContent = '🔒 Butuh HTTPS'; txtNA.style.color = '#dc2626'; }
+    var btnNA = document.getElementById('kfGpsShortcutBtn');
+    if (btnNA) { btnNA.classList.remove('kf-gps-on'); btnNA.classList.add('kf-gps-off'); }
+    return;
+  }
+  if (!navigator.permissions || !navigator.permissions.query) return;
+  navigator.permissions.query({ name: 'geolocation' }).then(function (res) {
+    if (res.state === 'granted') _kfSetGpsShortcutStatus('on');
+    else if (res.state === 'denied') _kfSetGpsShortcutStatus('off');
+    else {
+      var txt = document.getElementById('kfAkunGpsStatusText');
+      if (txt) { txt.textContent = 'Belum diaktifkan'; txt.style.color = '#9ca3af'; }
+    }
+    res.onchange = function () {
+      if (res.state === 'granted') _kfSetGpsShortcutStatus('on');
+      else if (res.state === 'denied') _kfSetGpsShortcutStatus('off');
+    };
+  }).catch(function () {});
+}
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _kfCekStatusGpsAwal);
+  } else {
+    _kfCekStatusGpsAwal();
+  }
+}
+
+function kifayahAmbilLokasiGPS() {
+  if (!navigator.geolocation) {
+    showToast('⚠️ Perangkat/browser ini tidak mendukung GPS');
+    return;
+  }
+  if (!_kfGpsKonteksAman()) {
+    var statusElHttps = document.getElementById('kfGpsStatus');
+    if (statusElHttps) statusElHttps.textContent = '🔒 ' + _kfPesanKonteksTidakAman();
+    showToast(_kfPesanKonteksTidakAman());
+    return;
+  }
+  var btn = document.getElementById('kfGpsBtn');
+  var statusEl = document.getElementById('kfGpsStatus');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mencari lokasi...'; }
+  if (statusEl) statusEl.textContent = 'Mengambil titik GPS, mohon izinkan akses lokasi...';
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      _kfGpsLat = pos.coords.latitude;
+      _kfGpsLng = pos.coords.longitude;
+      if (btn) { btn.disabled = false; btn.innerHTML = '📍 Perbarui Lokasi Saya'; }
+      _kfRenderGpsStatus();
+      showToast('✅ Lokasi berhasil diambil');
+    },
+    function (err) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '📍 Gunakan Lokasi Saya Sekarang'; }
+      var pesan = 'Gagal mengambil lokasi';
+      if (err && err.code === 1) pesan = 'Izin lokasi ditolak — aktifkan akses lokasi di pengaturan browser';
+      else if (err && err.code === 2) pesan = 'Lokasi tidak tersedia saat ini';
+      else if (err && err.code === 3) pesan = 'Waktu pencarian lokasi habis, coba lagi';
+      if (statusEl) statusEl.textContent = '⚠️ ' + pesan;
+      showToast('⚠️ ' + pesan);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+function _kfRenderGpsStatus() {
+  var statusEl = document.getElementById('kfGpsStatus');
+  if (!statusEl) return;
+  if (typeof _kfGpsLat === 'number' && typeof _kfGpsLng === 'number') {
+    var mapsUrl = 'https://www.google.com/maps?q=' + _kfGpsLat + ',' + _kfGpsLng;
+    statusEl.innerHTML = '✅ Titik tersimpan: ' + _kfGpsLat.toFixed(5) + ', ' + _kfGpsLng.toFixed(5)
+      + ' — <a href="' + mapsUrl + '" target="_blank" rel="noopener">Lihat di Peta</a>';
+  } else {
+    statusEl.textContent = 'Belum ada titik lokasi tersimpan.';
+  }
+}
 function kifayahSubmitWarung() {
   var nama = (document.getElementById('kfWarungNama').value||'').trim();
   if (!nama) { showToast('⚠️ Nama warung wajib diisi'); return; }
@@ -20757,6 +20777,8 @@ function kifayahSubmitWarung() {
     deskripsi: (document.getElementById('kfWarungDeskripsi').value||'').trim(),
     kontak: (document.getElementById('kfWarungKontak').value||'').trim(),
     alamat: (document.getElementById('kfWarungAlamat').value||'').trim(),
+    lat: (typeof _kfGpsLat === 'number') ? _kfGpsLat : null,
+    lng: (typeof _kfGpsLng === 'number') ? _kfGpsLng : null,
     logo: _kfLogoB64
   };
   if (_kfEditWarungMode) {
@@ -20925,7 +20947,7 @@ function _kfRenderPesananCard(sellerView, p) {
       : '<button class="kf-mini-action kf-rate" onclick="_kifayahOpenRatingModal(\''+p.id+'\')">⭐ Beri Rating Warung</button>';
   }
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh '+(p.pinjamanId?4:(p.cicilan?p.cicilan.tenor:''))+'x</span>' : '';
-  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Koperasi</span>' : '';
+  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Kifayah</span>' : '';
   var kurirBadge = p.kurirId ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">🛵 '+(p.kurirNama||'Kurir')+'</span>' : '';
   return '<div class="kf-pesanan-card">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
@@ -21010,107 +21032,37 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   if (!p) return;
   var sudahSelesaiSebelumnya = (p.status === 'selesai');
 
-  // Pembayaran Kifayah: saat pesanan yang dibeli via cicilan (Qardh) ditandai "Selesai",
-  // Koperasi otomatis melunasi ke Warung Nasabah memakai Kas yang tersedia.
-  // Kalau Kas tidak mencukupi, pesanan (dan pengajuan Qardh-nya) dibatalkan otomatis.
-  if (status === 'selesai' && p.metodeBayar === 'cicilan' && p.pinjamanId) {
-    var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === p.pinjamanId; });
-    if (!pin) {
-      showToast('⚠️ Data pinjaman Qardh untuk pesanan ini tidak ditemukan');
-      return;
-    }
-    if (pin.status === 'pengajuan') {
-      // Dicek terhadap MODAL KIFAYAH (pool investasi Koperasi), bukan kas
-      // umum Koperasi — Koperasi kini hanya berperan sebagai investor/pemodal.
-      var kasErrors = typeof checkKasLimitKifayah === 'function' ? checkKasLimitKifayah(pin.kkId, pin.jumlah) : [];
-      if (kasErrors.length > 0) {
-        // Modal Kifayah tidak cukup -> tolak pengajuan Qardh & batalkan pesanan otomatis
-        pin.status = 'ditolak';
-        pin.alasanTolak = 'Dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung (' + kasErrors[0] + ')';
-        pin.tanggalDitolak = nowISO();
-        if (Array.isArray(DB.transaksi)) {
-          var txnPendingTolak = DB.transaksi.find(function(t){ return t.refId === pin.id && t.statusTxn === 'pending'; });
-          if (txnPendingTolak) txnPendingTolak.statusTxn = 'gagal';
-        }
-        p.status = 'dibatalkan';
-        p.catatanBatal = 'Dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung';
-        saveDB();
-        showToast('❌ Pesanan dibatalkan otomatis — Modal Kifayah tidak mencukupi untuk membayar Warung');
-        renderKifayahWarungSaya();
-        if (typeof renderKifayahPesananMasuk === 'function') renderKifayahPesananMasuk();
-        if (typeof _kfUpdatePesananBadge === 'function') _kfUpdatePesananBadge();
-        return;
-      }
-      // Kas mencukupi -> setujui & cairkan pinjaman otomatis (Koperasi melunasi ke Warung)
-      pin.status = 'aktif';
-      pin.sisaPokok = pin.jumlah;
-      pin.tanggalDisetujui = nowISO();
-      if (!DB.transaksi) DB.transaksi = [];
-      var txnPendingOk = DB.transaksi.find(function(t){ return t.refId === pin.id && t.statusTxn === 'pending'; });
-      if (txnPendingOk) {
-        txnPendingOk.statusTxn = 'aktif';
-        txnPendingOk.keterangan = 'Pencairan pinjaman Qardh — Pembayaran Kifayah otomatis ke Warung';
-        txnPendingOk.tanggalDisetujui = nowISO();
-      } else {
-        DB.transaksi.push({
-          id: 'txn' + (DB.nextTxnId++),
-          kkId: pin.kkId, type: 'pinjaman', jumlah: pin.jumlah,
-          keterangan: 'Pencairan pinjaman Qardh — Pembayaran Kifayah otomatis ke Warung',
-          tanggal: nowISO(), refId: pin.id
-        });
-      }
-      p.dibayarKoperasi = true;
-      p.tanggalDibayarKoperasi = nowISO();
-    }
-    // Kalau pin.status sudah 'aktif' (sudah disetujui admin sebelumnya), Kas sudah
-    // diperhitungkan sejak persetujuan itu — tinggal lanjut menandai pesanan selesai.
-  }
-
   p.status = status;
-  // Koperasi melunasi lunas ke Warung: begitu pesanan berstatus "selesai" (untuk
+  // Kifayah melunasi lunas ke Warung: begitu pesanan berstatus "selesai" (untuk
   // pertama kalinya), nilai pesanan langsung DITAMBAHKAN ke saldo tersimpan warung
   // (w.saldoWarung) — bukan dihitung ulang dari riwayat pesanan setiap kali dibuka.
-  // Nilai yang sama JUGA dicatat ke buku "Pembayaran Kifayah" tersendiri (DB.pembayaranKifayah,
-  // BUKAN buku PHU) — HANYA untuk metode cicilan (Qardh). Modal Kifayah yang tersedia
-  // sudah dikurangi lewat sisa pokok pinjaman Qardh terkait (lihat totalPembayaranKifayah()
-  // & calcKasKifayah()) — TERPISAH dari kas Koperasi (calcKas()) — jadi buku ini murni
-  // catatan riwayat, bukan sumber hitung kas kedua.
   if (status === 'selesai' && !sudahSelesaiSebelumnya) {
     var wTujuan = (DB.warung||[]).find(function(x){ return x.id === p.warungId; });
     if (wTujuan) {
       // Pastikan sudah lewat migrasi (kalau warung ini masih pakai model lama).
       saldoWarungByWarungId(wTujuan.id);
       wTujuan.saldoWarung = (wTujuan.saldoWarung || 0) + (p.total || 0);
-
-      if (p.metodeBayar === 'cicilan') {
-        if (!DB.pembayaranKifayah) DB.pembayaranKifayah = [];
-        DB.pembayaranKifayah.push({
-          id: uid(),
-          jumlah: p.total || 0,
-          keterangan: 'Pembayaran Kifayah — ' + wTujuan.nama + (p.pembeliNama ? ' (pembeli: ' + p.pembeliNama + ')' : ''),
-          warungId: wTujuan.id,
-          warungNama: wTujuan.nama,
-          pembeliId: p.pembeliId,
-          pembeliNama: p.pembeliNama,
-          pesananId: p.id,
-          pinjamanId: p.pinjamanId,
-          tanggal: nowISO().slice(0, 10),
-          createdAt: nowISO()
-        });
-      }
     }
   }
   // Kredit ongkir ke Saldo Kurir — hanya sekali, saat pesanan pertama kali menjadi "selesai"
   // dan ada kurir yang mengantarkannya (p.kurirId diisi oleh kifayahKurirAmbilPesanan()).
+  // PENGECUALIAN: pesanan COD (metodeBayar === 'tunai') — pembeli membayar ongkir TUNAI
+  // langsung ke kurir saat barang diterima, jadi ongkir TIDAK ikut dikreditkan ke Saldo
+  // Kurir di aplikasi (kalau tetap dikreditkan, kurir akan menerima ongkir 2x: sekali
+  // tunai di tangan, sekali lagi sebagai saldo yang bisa dicairkan).
   if (status === 'selesai' && !sudahSelesaiSebelumnya && p.kurirId) {
     var kTujuan = (DB.kurir||[]).find(function(x){ return x.id === p.kurirId; });
     if (kTujuan) {
-      var ongkirNilai = _kfOngkirFlat();
-      kTujuan.saldoKurir = (kTujuan.saldoKurir || 0) + ongkirNilai;
+      if (p.metodeBayar === 'tunai') {
+        p.ongkirCod = true; // penanda: ongkir sudah diterima tunai langsung oleh kurir
+      } else {
+        var ongkirNilai = _kfOngkirFlat();
+        kTujuan.saldoKurir = (kTujuan.saldoKurir || 0) + ongkirNilai;
+      }
     }
   }
   saveDB();
-  showToast(status === 'selesai' ? (p.kurirId ? '✅ Pesanan selesai diantar — Saldo Warung & Saldo Kurir diperbarui' : '✅ Pesanan selesai — Saldo Warung diperbarui') : '✅ Status pesanan diperbarui');
+  showToast(status === 'selesai' ? (p.kurirId ? (p.ongkirCod ? '✅ Pesanan selesai diantar — Ongkir COD diterima tunai' : '✅ Pesanan selesai diantar — Saldo Warung & Saldo Kurir diperbarui') : '✅ Pesanan selesai — Saldo Warung diperbarui') : '✅ Status pesanan diperbarui');
   renderKifayahWarungSaya();
   if (typeof renderKifayahPesananMasuk === 'function') renderKifayahPesananMasuk();
   if (typeof renderKifayahKurirSaya === 'function') renderKifayahKurirSaya();
@@ -21135,170 +21087,6 @@ function renderKifayahPesananSaya() {
   el.innerHTML = '<div class="kf-pesanan-list">' + pesanan.map(function(p){ return _kfRenderPesananCard(false, p); }).join('') + '</div>';
 }
 
-/* ---------- CICILAN (pembayaran angsuran belanja Kifayah) ---------- */
-function _kfFmtTgl(iso) {
-  try { return new Date(iso).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}); }
-  catch(e) { return '-'; }
-}
-function renderKifayahCicilan() {
-  var el = document.getElementById('kfCicilanContent');
-  if (!el) return;
-  var myId = _kfMyNasabahId();
-  if (!myId) { el.innerHTML = '<div class="kf-empty"><div style="font-size:38px">💳</div><div>Hanya akun nasabah yang punya cicilan.</div></div>'; return; }
-
-  var html = '';
-
-  // 1) Cicilan milik SAYA sebagai PEMBELI — kewajiban bayar (akad Qardh Koperasi Renco)
-  var cicilanSaya = (DB.pesananWarung||[]).filter(function(p){ return p.pembeliId === myId && p.metodeBayar === 'cicilan' && (p.pinjamanId || p.cicilan); })
-    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
-
-  html += '<div class="kf-section-title">💳 Cicilan Belanja Saya</div>';
-  if (!cicilanSaya.length) {
-    html += '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada pembelian dengan skema cicilan.</div>';
-  } else {
-    html += cicilanSaya.map(function(p){ return p.pinjamanId ? _kfRenderCicilanCardQardh(p) : _kfRenderCicilanCard(p, true); }).join('');
-  }
-
-  el.innerHTML = html;
-}
-// Kartu cicilan LEGACY (jadwal internal Kifayah, sebelum terintegrasi ke Qardh) — tetap dipertahankan
-// agar riwayat pesanan lama masih bisa ditampilkan.
-function _kfRenderCicilanCard(p, isPembeliView) {
-  var c = p.cicilan;
-  var terbayar = c.jadwal.filter(function(j){ return j.status === 'lunas'; }).length;
-  var sisaTagihan = c.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(s,j){ return s+j.jumlah; }, 0);
-  var next = c.jadwal.find(function(j){ return j.status !== 'lunas'; });
-  var progressPct = Math.round((terbayar / c.jadwal.length) * 100);
-  var jadwalHtml = c.jadwal.map(function(j){
-    var lunas = j.status === 'lunas';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f1f7;font-size:11px">'
-      + '<span style="color:#6b7280">Angsuran ke-'+j.ke+' · jatuh tempo '+_kfFmtTgl(j.jatuhTempo)+'</span>'
-      + '<span style="font-weight:700;color:'+(lunas?'#16a34a':'#dc2626')+'">'+(lunas?'✅ Lunas':fmt(j.jumlah))+'</span>'
-      + '</div>';
-  }).join('');
-  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
-    + '<div style="min-width:0">'
-    + '<div style="font-weight:700;font-size:12.5px">'+(isPembeliView ? p.warungNama : p.pembeliNama)+'</div>'
-    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
-    + '</div>'
-    + '<div class="kf-status-badge" style="background:'+(c.lunas?'#dcfce7':'#f4e9f7')+';color:'+(c.lunas?'#16a34a':'#7b2d8b')+'">'+(c.lunas?'Lunas':terbayar+'/'+c.jadwal.length+' bayar')+'</div>'
-    + '</div>'
-    + '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
-    + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
-    + '</div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:8px">'
-    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa: '+fmt(sisaTagihan)+'</span>'
-    + '</div>'
-    + jadwalHtml
-    + (isPembeliView && next ? '<button class="btn btn-primary btn-block" style="margin-top:10px" onclick="kifayahBayarAngsuran(\''+p.id+'\','+next.ke+')">Bayar Angsuran ke-'+next.ke+' ('+fmt(next.jumlah)+')</button>' : '')
-    + '</div>';
-}
-// Kartu cicilan BARU — terhubung ke pinjaman Qardh Koperasi Renco sungguhan (DB.pinjaman).
-// Pembayaran angsurannya dilakukan lewat tab Pembayaran → Koperasi Renco (mekanisme Qardh biasa).
-function _kfRenderCicilanCardQardh(p) {
-  var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === p.pinjamanId; });
-  if (!pin) {
-    return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
-      + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+'</div>'
-      + '<div style="font-size:11px;color:#dc2626;margin-top:4px">⚠️ Data pinjaman Qardh tidak ditemukan.</div></div>';
-  }
-  var STATUS_LBL = { pengajuan:'⏳ Menunggu Persetujuan', aktif:'Berjalan', menunggak:'Menunggak', lunas:'✅ Lunas', ditolak:'❌ Ditolak' };
-  var STATUS_BG  = { pengajuan:'#fef3c7', aktif:'#f4e9f7', menunggak:'#fee2e2', lunas:'#dcfce7', ditolak:'#f3f4f6' };
-  var STATUS_FG  = { pengajuan:'#b45309', aktif:'#7b2d8b', menunggak:'#dc2626', lunas:'#16a34a', ditolak:'#6b7280' };
-  var terbayar = (pin.cicilan||[]).length;
-  var progressPct = pin.tenor ? Math.round((terbayar / pin.tenor) * 100) : 0;
-  var sisaPokok = (pin.status === 'pengajuan') ? pin.jumlah : (typeof pin.sisaPokok === 'number' ? pin.sisaPokok : pin.jumlah);
-  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
-    + '<div style="min-width:0">'
-    + '<div style="font-weight:700;font-size:12.5px">'+p.warungNama+'</div>'
-    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
-    + '<div style="font-size:9.5px;font-weight:700;color:#4361ee;margin-top:3px">🤲 Akad Qardh · Tenor '+(pin.tenor||4)+' bulan</div>'
-    + '</div>'
-    + '<div class="kf-status-badge" style="background:'+(STATUS_BG[pin.status]||'#f4e9f7')+';color:'+(STATUS_FG[pin.status]||'#7b2d8b')+'">'+(STATUS_LBL[pin.status]||pin.status)+'</div>'
-    + '</div>'
-    + (pin.status === 'aktif' || pin.status === 'menunggak' || pin.status === 'lunas' ? (
-        '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
-        + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
-        + '</div>'
-      ) : '')
-    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:8px">'
-    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa pokok: '+fmt(sisaPokok)+'</span>'
-    + '</div>'
-    + (pin.status === 'pengajuan'
-        ? '<div style="font-size:11px;color:#9ca3af">📝 Pengajuan sedang ditinjau admin koperasi.</div>'
-        : (pin.status === 'ditolak'
-            ? '<div style="font-size:11px;color:#dc2626">Pengajuan Qardh ditolak admin.</div>'
-            : (pin.status !== 'lunas'
-                ? '<button class="btn btn-primary btn-block" style="margin-top:4px" onclick="kifayahBayarPinjamanTerkait(\''+pin.id+'\')">Bayar Angsuran di Koperasi Renco</button>'
-                : '')))
-    + '</div>';
-}
-// Membuka modal "Catat/Bayar Angsuran" milik Koperasi Renco langsung untuk
-// pinjaman Qardh yang terkait dengan pembelian Kifayah ini — menggantikan
-// switchPembayaranSubTab('cicilan') yang sebelumnya tidak berfungsi saat
-// dipanggil dari dalam layar Kifayah (kontainer #pembayaranSubContent hanya
-// ada di layar menu Pembayaran, bukan di Kifayah).
-function kifayahBayarPinjamanTerkait(pinjamanId) {
-  var pin = (DB.pinjamanKifayah||[]).find(function(x){ return x.id === pinjamanId; });
-  if (!pin) { showToast('⚠️ Data pinjaman Qardh tidak ditemukan'); return; }
-  if (typeof openModal !== 'function') { showToast('⚠️ Modul pembayaran koperasi tidak tersedia'); return; }
-  // Isi dropdown HANYA dengan pinjaman Kifayah ini (bukan seluruh Pinjaman Koperasi)
-  // supaya buku Kifayah tidak tercampur dengan daftar Pinjaman Koperasi umum.
-  if (typeof cicilanSwitchTab === 'function') cicilanSwitchTab('kop');
-  var el = document.getElementById('cicilanPinjaman');
-  if (el) {
-    var kk = typeof getNasabah === 'function' ? getNasabah(pin.kkId) : (DB.nasabah||[]).find(function(a){return a.id===pin.kkId;});
-    el.innerHTML = '<option value="' + pin.id + '">' + (kk ? kk.nama : '?') + ' — ' + fmt(pin.sisaPokok) + '</option>';
-  }
-  var inpCicilan = document.getElementById('cicilanJumlah');
-  if (inpCicilan) { inpCicilan.value = ''; inpCicilan.readOnly = false; inpCicilan.style.background = ''; inpCicilan.style.color = ''; inpCicilan.style.cursor = ''; }
-  var notice = document.getElementById('cicilanAdjustNotice');
-  if (notice) notice.style.display = 'none';
-  openModal('modalCicilan');
-  if (typeof onCicilanPinjamanChange === 'function') onCicilanPinjamanChange();
-}
-function _renderKifayahPembayaranTab() {
-  var myId = (typeof _kfMyNasabahId === 'function') ? _kfMyNasabahId() : null;
-  if (!myId) {
-    return '<div class="kf-empty" style="padding:32px 20px;text-align:center;color:#9ca3af">'
-      + '<div style="font-size:38px;margin-bottom:8px">🛍️</div>'
-      + '<div>Hanya akun nasabah yang punya cicilan belanja Kifayah.</div></div>';
-  }
-  var saldo = saldoKifayahNasabah(myId);
-  var cicilanSaya = (DB.pesananWarung||[]).filter(function(p){ return p.pembeliId === myId && p.metodeBayar === 'cicilan' && (p.pinjamanId || p.cicilan); })
-    .sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
-
-  var html = '<div class="kf-saldo-bar' + (saldo<0?' kf-saldo-minus':'') + '" style="margin:0 4px 14px">'
-    + '<div class="kf-saldo-info">'
-    + '<div class="kf-saldo-label">Saldo Kifayah (Simpanan Sukarela)</div>'
-    + '<div class="kf-saldo-nilai">' + fmt(saldo) + '</div>'
-    + '</div></div>';
-  html += '<div class="kf-section-title" style="padding:0 4px">🛍️ Cicilan Belanja Kifayah</div>';
-  if (!cicilanSaya.length) {
-    html += '<div style="font-size:12px;color:#9ca3af;padding:8px 4px 16px">Belum ada pembelian dengan skema cicilan di warung mitra.</div>';
-  } else {
-    html += '<div style="padding:0 4px">' + cicilanSaya.map(function(p){ return p.pinjamanId ? _kfRenderCicilanCardQardh(p) : _kfRenderCicilanCard(p, true); }).join('') + '</div>';
-  }
-  return html;
-}
-function kifayahBayarAngsuran(pesananId, ke) {
-  var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
-  if (!p || !p.cicilan) return;
-  var j = p.cicilan.jadwal.find(function(x){ return x.ke === ke; });
-  if (!j || j.status === 'lunas') return;
-  if (!confirm('Konfirmasi pembayaran angsuran ke-'+ke+' sebesar '+fmt(j.jumlah)+'?')) return;
-  j.status = 'lunas';
-  j.dibayarPada = nowISO();
-  p.cicilan.lunas = p.cicilan.jadwal.every(function(x){ return x.status === 'lunas'; });
-  saveDB();
-  showToast('✅ Angsuran ke-'+ke+' berhasil dibayar');
-  renderKifayahCicilan();
-  var scPay = document.getElementById('pembayaranSubContent');
-  if (scPay && window._rencoActivePembayaranSub === 'kifayah') scPay.innerHTML = _renderKifayahPembayaranTab();
-}
-
 /* ---------- LAPORAN KEUANGAN (rekap penjualan warung sendiri) ---------- */
 var _kfLaporanBulan = 'semua'; // 'semua' atau 'YYYY-MM'
 
@@ -21318,29 +21106,43 @@ function renderKifayahLaporanKeuangan() {
   var el = document.getElementById('kfLaporanKeuanganContent');
   if (!el) return;
   var w = _kfMyWarung();
-  if (!w) {
+  var k = _kfMyKurir();
+  if (!w && !k) {
     el.innerHTML = '<div class="kf-empty-cta">'
       + '<div style="font-size:44px">📊</div>'
       + '<div style="font-weight:800;font-size:15px;margin:8px 0 4px;color:#1f2937">Belum Ada Laporan</div>'
-      + '<div style="font-size:12.5px;color:#6b7280">Buat warung dan mulai berjualan untuk melihat laporan keuangan di sini.</div>'
+      + '<div style="font-size:12.5px;color:#6b7280">Buat warung dan mulai berjualan, atau daftar jadi kurir, untuk melihat laporan keuangan di sini.</div>'
       + '</div>';
     return;
   }
-  var semuaPesananAll = (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; });
+  var semuaPesananAll = w ? (DB.pesananWarung||[]).filter(function(p){ return p.warungId === w.id; }) : [];
+  var semuaPesananKurirAll = k ? (DB.pesananWarung||[]).filter(function(p){ return p.kurirId === k.id; }) : [];
 
-  // ===== Daftar bulan yang tersedia (untuk selector & arsip) =====
+  // ===== Daftar bulan yang tersedia (gabungan pesanan warung & pesanan yang diantar kurir) =====
   var bulanSet = {};
   semuaPesananAll.forEach(function(p){
     var ym = (p.dibuatPada||'').slice(0,7);
     if (ym) bulanSet[ym] = true;
   });
+  semuaPesananKurirAll.forEach(function(p){
+    var ym = (p.dibuatPada||'').slice(0,7);
+    if (ym) bulanSet[ym] = true;
+  });
   var daftarBulan = Object.keys(bulanSet).sort(function(a,b){ return b.localeCompare(a); });
+  var bulanSetWarung = {};
+  semuaPesananAll.forEach(function(p){ var ym=(p.dibuatPada||'').slice(0,7); if (ym) bulanSetWarung[ym]=true; });
+  var daftarBulanWarung = Object.keys(bulanSetWarung).sort(function(a,b){ return b.localeCompare(a); });
+  var bulanSetKurir = {};
+  semuaPesananKurirAll.forEach(function(p){ var ym=(p.dibuatPada||'').slice(0,7); if (ym) bulanSetKurir[ym]=true; });
+  var daftarBulanKurir = Object.keys(bulanSetKurir).sort(function(a,b){ return b.localeCompare(a); });
 
   // Kalau bulan yang tadinya dipilih sudah tidak ada datanya, kembali ke 'semua'.
   if (_kfLaporanBulan !== 'semua' && daftarBulan.indexOf(_kfLaporanBulan) === -1) _kfLaporanBulan = 'semua';
 
   var semuaPesanan = (_kfLaporanBulan === 'semua') ? semuaPesananAll
     : semuaPesananAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === _kfLaporanBulan; });
+  var semuaPesananKurir = (_kfLaporanBulan === 'semua') ? semuaPesananKurirAll
+    : semuaPesananKurirAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === _kfLaporanBulan; });
 
   // ===== Selector bulan (chip scroll horizontal) =====
   var html = '<div class="kf-kat-scroll" style="margin:0 4px 12px">'
@@ -21350,10 +21152,10 @@ function renderKifayahLaporanKeuangan() {
       }).join('')
     + '</div>';
 
+  if (w) {
+
   var selesai = semuaPesanan.filter(function(p){ return p.status === 'selesai'; });
   var pendapatan = selesai.reduce(function(s,p){ return s+(p.total||0); }, 0);
-  var piutangCicilan = semuaPesanan.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan && !p.cicilan.lunas; })
-    .reduce(function(s,p){ return s + p.cicilan.jadwal.filter(function(j){ return j.status!=='lunas'; }).reduce(function(s2,j){ return s2+j.jumlah; },0); }, 0);
 
   // Produk terlaris (berdasarkan qty terjual di seluruh pesanan pada rentang bulan terpilih, tidak hanya selesai)
   var qtyPerProduk = {};
@@ -21367,16 +21169,11 @@ function renderKifayahLaporanKeuangan() {
 
   html += '<div class="kf-section-title" style="padding:0 4px;margin-bottom:6px">'+_kfBulanLabel(_kfLaporanBulan)+'</div>';
 
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+  html += '<div style="margin-bottom:14px">'
     + '<div style="background:linear-gradient(135deg,#7b2d8b,#9b59b6);border-radius:14px;padding:12px;color:#fff">'
     + '<div style="font-size:10px;opacity:0.85">💰 Total Pendapatan</div>'
     + '<div style="font-size:16px;font-weight:800;margin-top:2px">'+fmt(pendapatan)+'</div>'
     + '<div style="font-size:9.5px;opacity:0.75;margin-top:2px">'+selesai.length+' pesanan selesai</div>'
-    + '</div>'
-    + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:12px">'
-    + '<div style="font-size:10px;color:#6b7280">⏳ Piutang Cicilan</div>'
-    + '<div style="font-size:16px;font-weight:800;margin-top:2px;color:'+(piutangCicilan>0?'#dc2626':'#374151')+'">'+fmt(piutangCicilan)+'</div>'
-    + '<div style="font-size:9.5px;color:#9ca3af;margin-top:2px">belum tertagih</div>'
     + '</div>'
     + '</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -21400,10 +21197,10 @@ function renderKifayahLaporanKeuangan() {
       }).join('') + '</div>'
       : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada penjualan.</div>');
 
-  // ===== Arsip Bulanan: rekap ringkas tiap bulan, tampil saat 'Semua Bulan' dipilih =====
-  if (_kfLaporanBulan === 'semua' && daftarBulan.length) {
-    html += '<div class="kf-section-title" style="margin-top:16px">🗂️ Arsip Bulanan</div>';
-    html += '<div style="display:flex;flex-direction:column;gap:8px">' + daftarBulan.map(function(ym){
+  // ===== Arsip Bulanan Warung: rekap ringkas tiap bulan, tampil saat 'Semua Bulan' dipilih =====
+  if (_kfLaporanBulan === 'semua' && daftarBulanWarung.length) {
+    html += '<div class="kf-section-title" style="margin-top:16px">🗂️ Arsip Bulanan — Warung</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px">' + daftarBulanWarung.map(function(ym){
       var pBulan = semuaPesananAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === ym; });
       var selesaiBulan = pBulan.filter(function(p){ return p.status === 'selesai'; });
       var pendapatanBulan = selesaiBulan.reduce(function(s,p){ return s+(p.total||0); }, 0);
@@ -21421,11 +21218,76 @@ function renderKifayahLaporanKeuangan() {
     }).join('') + '</div>';
   }
 
+  } // end if (w)
+
+  // ══════════════════════════════════════════════════
+  // LAPORAN KURIR — rekap ongkir & pengantaran milik kurir yang login
+  // ══════════════════════════════════════════════════
+  if (k) {
+    var ongkirFlat = _kfOngkirFlat();
+    var selesaiKurir = semuaPesananKurir.filter(function(p){ return p.status === 'selesai'; });
+    var kurirCod = selesaiKurir.filter(function(p){ return p.ongkirCod; });
+    var kurirSaldo = selesaiKurir.filter(function(p){ return !p.ongkirCod; });
+    var totalOngkirKurir = selesaiKurir.length * ongkirFlat;
+    var totalOngkirTunai = kurirCod.length * ongkirFlat;
+    var totalOngkirSaldo = kurirSaldo.length * ongkirFlat;
+    var saldoKurirSaatIni = saldoKurirByKurirId(k.id);
+
+    html += '<div class="kf-section-title" style="padding:0 4px;margin:'+(w?'20px':'0')+' 0 6px">🛵 Laporan Kurir — '+_kfBulanLabel(_kfLaporanBulan)+'</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+      + '<div style="background:linear-gradient(135deg,#0d9488,#2dd4bf);border-radius:14px;padding:12px;color:#fff">'
+      + '<div style="font-size:10px;opacity:0.85">🛵 Total Ongkir Diterima</div>'
+      + '<div style="font-size:16px;font-weight:800;margin-top:2px">'+fmt(totalOngkirKurir)+'</div>'
+      + '<div style="font-size:9.5px;opacity:0.75;margin-top:2px">'+selesaiKurir.length+' pesanan diantar</div>'
+      + '</div>'
+      + '<div style="background:#f5faf9;border:1.5px solid #e6f4f1;border-radius:14px;padding:12px">'
+      + '<div style="font-size:10px;color:#6b7280">💼 Saldo Kurir Tersedia</div>'
+      + '<div style="font-size:16px;font-weight:800;margin-top:2px;color:#0d9488">'+fmt(saldoKurirSaatIni)+'</div>'
+      + '<div style="font-size:9.5px;color:#9ca3af;margin-top:2px">siap dipindahkan</div>'
+      + '</div>'
+      + '</div>';
+
+    html += '<div style="display:flex;gap:8px;margin-bottom:14px">'
+      + '<div style="flex:1;background:#f5faf9;border:1.5px solid #e6f4f1;border-radius:12px;padding:10px;text-align:center">'
+      + '<div style="font-size:15px;font-weight:800;color:#0d9488">'+kurirSaldo.length+'</div>'
+      + '<div style="font-size:10px;color:#6b7280">Masuk Saldo Kurir</div>'
+      + '<div style="font-size:10px;color:#9ca3af">'+fmt(totalOngkirSaldo)+'</div>'
+      + '</div>'
+      + '<div style="flex:1;background:#f5faf9;border:1.5px solid #e6f4f1;border-radius:12px;padding:10px;text-align:center">'
+      + '<div style="font-size:15px;font-weight:800;color:#b45309">'+kurirCod.length+'</div>'
+      + '<div style="font-size:10px;color:#6b7280">Tunai (COD)</div>'
+      + '<div style="font-size:10px;color:#9ca3af">'+fmt(totalOngkirTunai)+'</div>'
+      + '</div>'
+      + '</div>';
+
+    // ===== Arsip Bulanan Kurir =====
+    if (_kfLaporanBulan === 'semua' && daftarBulanKurir.length) {
+      html += '<div class="kf-section-title" style="margin-top:16px">🗂️ Arsip Bulanan — Kurir</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:8px">' + daftarBulanKurir.map(function(ym){
+        var pBulan = semuaPesananKurirAll.filter(function(p){ return (p.dibuatPada||'').slice(0,7) === ym; });
+        var selesaiBulan = pBulan.filter(function(p){ return p.status === 'selesai'; });
+        var ongkirBulan = selesaiBulan.length * ongkirFlat;
+        return '<div class="kf-myproduk-item" style="cursor:pointer" onclick="_kfSetLaporanBulan(\''+ym+'\')">'
+          + '<div class="kf-produk-noimg-sm">🗓️</div>'
+          + '<div style="flex:1;min-width:0">'
+          +   '<div style="font-size:12.5px;font-weight:700;color:#1f2937">'+_kfBulanLabel(ym)+'</div>'
+          +   '<div style="font-size:10.5px;color:#9ca3af">'+pBulan.length+' pesanan · '+selesaiBulan.length+' diantar</div>'
+          + '</div>'
+          + '<div style="text-align:right">'
+          +   '<div style="font-size:12.5px;font-weight:800;color:#0d9488">'+fmt(ongkirBulan)+'</div>'
+          +   '<span style="font-size:11px;color:var(--text-soft)">Lihat ›</span>'
+          + '</div>'
+          + '</div>';
+      }).join('') + '</div>';
+    }
+  }
+
   el.innerHTML = html;
 }
 
 /* ---------- ADMIN KIFAYAH (oversight & moderasi lintas warung) ---------- */
-var _kfAdminView = null; // null = tampilkan menu grid; atau 'ringkasan'|'warung'|'pesanan'|'cicilan'
+var _kfAdminView = null; // null = tampilkan menu grid; atau 'ringkasan'|'warung'|'pesanan'
 
 function renderKifayahAdmin() {
   var el = document.getElementById('kfAdminContent');
@@ -21440,15 +21302,12 @@ function renderKifayahAdmin() {
   var warungList = DB.warung || [];
   var produkList = DB.produkWarung || [];
   var pesananList = DB.pesananWarung || [];
-  var cicilanList = pesananList.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan; });
 
   var html = '';
   html += '<div class="kf-adm-grid">'
     + _kfAdminMenuCard('ringkasan', '&#x1F4CA;', 'Ringkasan', undefined, '#7b2d8b', '#9b59b6')
     + _kfAdminMenuCard('warung', '&#x1F3EA;', 'Kelola Warung', warungList.length, '#0d9488', '#2dd4bf')
     + _kfAdminMenuCard('pesanan', '&#x1F9FE;', 'Semua Pesanan', pesananList.length, '#2563eb', '#60a5fa')
-    + _kfAdminMenuCard('cicilan', '&#x1F4B3;', 'Semua Cicilan', cicilanList.length, '#b45309', '#f59e0b')
-    + _kfAdminMenuCard('pengaturan', '&#x2699;&#xFE0F;', 'Pengaturan Kifayah', undefined, '#475569', '#94a3b8')
     + '<button class="kf-adm-card" style="--ac1:#be185d;--ac2:#ec4899;--acs:rgba(190,24,93,0.35)" onclick="_kifayahOpenActAsPicker()"><div class="kf-adm-icon">&#x1F575;&#xFE0F;</div><span class="kf-adm-label">Berperan sebagai Nasabah</span></button>'
     + '</div>';
   el.innerHTML = html;
@@ -21482,19 +21341,12 @@ function _renderKifayahAdminSection(key) {
   var warungList = (DB.warung||[]).slice().sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
   var produkList = DB.produkWarung || [];
   var pesananList = (DB.pesananWarung||[]).slice().sort(function(a,b){ return (b.dibuatPada||'').localeCompare(a.dibuatPada||''); });
-  var cicilanList = pesananList.filter(function(p){ return p.metodeBayar === 'cicilan' && p.cicilan; });
   var totalOmzet = pesananList.filter(function(p){ return p.status === 'selesai'; }).reduce(function(s,p){ return s+(p.total||0); }, 0);
-  var cicilanOutstanding = cicilanList.reduce(function(s,p){
-    var sisa = p.cicilan.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(ss,j){ return ss+j.jumlah; }, 0);
-    return s + sisa;
-  }, 0);
 
   var titles = {
     ringkasan: '&#x1F4CA; Ringkasan Kifayah',
     warung: '&#x1F3EA; Semua Warung ('+warungList.length+')',
-    pesanan: '&#x1F9FE; Semua Pesanan ('+pesananList.length+')',
-    cicilan: '&#x1F4B3; Semua Cicilan ('+cicilanList.length+')',
-    pengaturan: '&#x2699;&#xFE0F; Pengaturan Kifayah'
+    pesanan: '&#x1F9FE; Semua Pesanan ('+pesananList.length+')'
   };
 
   var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
@@ -21509,34 +21361,12 @@ function _renderKifayahAdminSection(key) {
       + _kfAdminStatCard(pesananList.length, 'Total Pesanan')
       + _kfAdminStatCard(fmt(totalOmzet), 'Omzet (Selesai)')
       + '</div>';
-    html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">'
-      + '<span style="font-size:11.5px;color:#6b7280">⏳ Sisa Tagihan Cicilan (semua warung)</span>'
-      + '<span style="font-size:13px;font-weight:800;color:'+(cicilanOutstanding>0?'#dc2626':'#374151')+'">'+fmt(cicilanOutstanding)+'</span>'
-      + '</div>';
-    // ── Kas Kifayah: pool modal investasi dari Koperasi, terpisah dari kas Koperasi ──
-    (function(){
-      var kk = typeof calcKasKifayah === 'function' ? calcKasKifayah() : { modalTotal:0, totalOutstanding:0, kasAvailable:0, kasUsedPct:0 };
-      var barColor = kk.kasUsedPct >= 100 ? 'linear-gradient(90deg,#e63946,#ff6b6b)' : (kk.kasUsedPct >= 80 ? 'linear-gradient(90deg,#f4a922,#ffd166)' : 'linear-gradient(90deg,#7b2d8b,#9b59b6)');
-      html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px;margin-top:10px">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-        + '<span style="font-size:11.5px;font-weight:800;color:#7b2d8b">💼 Modal Kifayah (dari Koperasi)</span>'
-        + '<span style="font-size:11px;color:#9ca3af">'+Math.round(kk.kasUsedPct)+'% terpakai</span>'
-        + '</div>'
-        + '<div style="background:#f0eef3;border-radius:99px;height:7px;overflow:hidden;margin-bottom:8px">'
-        + '<div style="height:100%;border-radius:99px;background:'+barColor+';width:'+Math.min(100,kk.kasUsedPct)+'%"></div>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">'
-        + '<div><div style="font-size:12px;font-weight:800;color:#374151">'+fmt(kk.modalTotal)+'</div><div style="font-size:9px;color:#9ca3af">Modal Total</div></div>'
-        + '<div><div style="font-size:12px;font-weight:800;color:#dc2626">'+fmt(kk.totalOutstanding)+'</div><div style="font-size:9px;color:#9ca3af">Terpakai (Cicilan Aktif)</div></div>'
-        + '<div><div style="font-size:12px;font-weight:800;color:#16a34a">'+fmt(kk.kasAvailable)+'</div><div style="font-size:9px;color:#9ca3af">Tersedia</div></div>'
-        + '</div>'
-        + '<div style="font-size:10px;color:#9ca3af;margin-top:8px;line-height:1.5">Koperasi berperan sebagai investor/pemodal — kas ini terpisah dari kas Koperasi. Kelola modal di tab Pengaturan.</div>'
-        + '</div>';
-    })();
     html += '<div style="margin-top:16px;padding-top:14px;border-top:1.5px dashed #f0eef3">'
       + '<div style="font-size:10.5px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">⚠️ Zona Berbahaya</div>'
       + '<button onclick="kifayahAdminHapusSemuaTransaksi()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(220,38,38,0.3);background:rgba(220,38,38,0.06);color:#dc2626;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">🗑️ Hapus Semua Transaksi Kifayah</button>'
-      + '<div style="font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5">Menghapus seluruh riwayat pesanan & cicilan Kifayah. Pinjaman Qardh yang sudah disetujui/aktif tidak ikut terhapus.</div>'
+      + '<div style="font-size:10px;color:#9ca3af;margin-top:6px;margin-bottom:12px;line-height:1.5">Menghapus seluruh riwayat pesanan Kifayah.</div>'
+      + '<button onclick="kifayahAdminResetTotal()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid rgba(220,38,38,0.5);background:rgba(220,38,38,0.1);color:#dc2626;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit">💣 Reset Total Kifayah</button>'
+      + '<div style="font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5">Menghapus SEMUA data Kifayah: warung, produk, pesanan, kurir, saldo, dan pengaturan — mengembalikan modul Kifayah ke kondisi kosong.</div>'
       + '</div>';
   } else if (key === 'warung') {
     html += warungList.length
@@ -21546,92 +21376,9 @@ function _renderKifayahAdminSection(key) {
     html += pesananList.length
       ? '<div class="kf-pesanan-list">' + pesananList.map(function(p){ return _kfRenderPesananCardAdmin(p); }).join('') + '</div>'
       : '<div style="font-size:12px;color:#9ca3af;padding:8px 0 16px">Belum ada pesanan.</div>';
-  } else if (key === 'cicilan') {
-    html += cicilanList.length
-      ? cicilanList.map(function(p){ return _kfRenderCicilanCardAdmin(p); }).join('')
-      : '<div style="font-size:12px;color:#9ca3af;padding:8px 0">Belum ada transaksi cicilan.</div>';
-  } else if (key === 'pengaturan') {
-    var ksAdm = DB.kifayahSetting || {};
-    var kkModal = typeof calcKasKifayah === 'function' ? calcKasKifayah() : { modalTotal:0, totalOutstanding:0, kasAvailable:0 };
-    var modalHist = (DB.kifayahModal && DB.kifayahModal.history || []).slice().reverse().slice(0, 8);
-    html += '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:12px;padding:12px;margin-bottom:16px">'
-      + '<div style="font-size:11.5px;font-weight:800;color:#7b2d8b;margin-bottom:8px">💼 Modal Investasi Koperasi → Kifayah</div>'
-      + '<div style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:10px">Koperasi berperan sebagai investor/pemodal Kifayah. Modal disetor sekali (bisa ditambah di kemudian hari), lalu Kifayah mengelola kas cicilannya sendiri dari pool ini — terpisah dari kas Koperasi.</div>'
-      + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px"><span style="color:#6b7280">Modal saat ini</span><span style="font-weight:800;color:#374151">'+fmt(kkModal.modalTotal)+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px"><span style="color:#6b7280">Tersedia (belum terpakai)</span><span style="font-weight:800;color:#16a34a">'+fmt(kkModal.kasAvailable)+'</span></div>'
-      + '<div class="field"><label>Jumlah (Rp)</label><input type="number" id="kfModalJumlah" min="0" step="50000" placeholder="0"></div>'
-      + '<div class="field"><label>Catatan (opsional)</label><input type="text" id="kfModalCatatan" placeholder="mis. Setoran modal awal"></div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      + '<button class="btn btn-primary" onclick="kifayahAdminSetorModal()">➕ Setor Modal</button>'
-      + '<button class="btn" onclick="kifayahAdminTarikModal()">➖ Tarik Modal</button>'
-      + '</div>'
-      + (modalHist.length ? '<div style="margin-top:12px;padding-top:10px;border-top:1.5px dashed #f0eef3">'
-          + modalHist.map(function(h){
-              var d = new Date(h.tanggal);
-              var tglF = isNaN(d) ? '-' : d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
-              return '<div style="display:flex;justify-content:space-between;font-size:10.5px;padding:4px 0;color:#6b7280">'
-                + '<span>'+tglF+(h.catatan?' · '+h.catatan:'')+'</span>'
-                + '<span style="font-weight:700;color:'+(h.tipe==='tarik'?'#dc2626':'#16a34a')+'">'+(h.tipe==='tarik'?'-':'+')+fmt(h.jumlah)+'</span>'
-                + '</div>';
-            }).join('')
-          + '</div>' : '')
-      + '</div>';
-    html += '<div style="font-size:11px;color:#6b7280;margin-bottom:12px;line-height:1.5">Atur limit cicilan, margin, dan biaya transaksi Kifayah. Perubahan berlaku untuk pengajuan baru.</div>'
-      + '<div class="field"><label>Limit Cicilan Qardh — Nasabah (Rp)</label><input type="number" id="kfSetNasabahLimit" min="0" step="10000" value="'+(ksAdm.nasabahLimit!=null?ksAdm.nasabahLimit:200000)+'"></div>'
-      + '<div class="field"><label>Limit Cicilan Murabahah — Mitra Warung (Rp)</label><input type="number" id="kfSetMitraLimit" min="0" step="10000" value="'+(ksAdm.mitraLimit!=null?ksAdm.mitraLimit:500000)+'"></div>'
-      + '<div class="field"><label>Margin Murabahah Mitra Warung (%)</label><input type="number" id="kfSetMitraMargin" min="0" step="0.5" value="'+(ksAdm.mitraMarginPercent!=null?ksAdm.mitraMarginPercent:2)+'"></div>'
-      + '<div class="field"><label>Biaya Transaksi Mitra Warung (Rp, flat per pengajuan)</label><input type="number" id="kfSetMitraFee" min="0" step="1000" value="'+(ksAdm.mitraFeeFlat!=null?ksAdm.mitraFeeFlat:0)+'"></div>'
-      + '<button class="btn btn-primary btn-block" onclick="kifayahAdminSimpanSetting()">💾 Simpan Pengaturan</button>';
   }
 
   el.innerHTML = html;
-}
-// Setor/tarik Modal Kifayah (Koperasi = investor/pemodal) dari panel admin Pengaturan.
-function kifayahAdminSetorModal() {
-  if (typeof isAdmin !== 'function' || !isAdmin()) return;
-  var inp = document.getElementById('kfModalJumlah');
-  var catInp = document.getElementById('kfModalCatatan');
-  var jumlah = Math.round(parseFloat(inp && inp.value) || 0);
-  if (jumlah <= 0) { showToast('⚠️ Masukkan jumlah setoran modal'); return; }
-  if (!confirm('Setor modal ' + fmt(jumlah) + ' dari Koperasi ke Kifayah?')) return;
-  var ok = kifayahModalSetor(jumlah, catInp ? catInp.value.trim() : '');
-  if (ok) {
-    showToast('✅ Modal Kifayah bertambah ' + fmt(jumlah));
-    renderKifayahAdmin();
-  } else {
-    showToast('❌ Gagal menyetor modal');
-  }
-}
-function kifayahAdminTarikModal() {
-  if (typeof isAdmin !== 'function' || !isAdmin()) return;
-  var inp = document.getElementById('kfModalJumlah');
-  var catInp = document.getElementById('kfModalCatatan');
-  var jumlah = Math.round(parseFloat(inp && inp.value) || 0);
-  if (jumlah <= 0) { showToast('⚠️ Masukkan jumlah penarikan modal'); return; }
-  if (!confirm('Tarik modal ' + fmt(jumlah) + ' dari Kifayah kembali ke Koperasi?')) return;
-  var ok = kifayahModalTarik(jumlah, catInp ? catInp.value.trim() : '');
-  if (ok) {
-    showToast('✅ Modal Kifayah berkurang ' + fmt(jumlah));
-    renderKifayahAdmin();
-  } else {
-    showToast('❌ Modal yang sedang terpakai (outstanding) tidak bisa ditarik');
-  }
-}
-// Simpan pengaturan limit/margin/biaya transaksi Kifayah (admin).
-function kifayahAdminSimpanSetting() {
-  if (typeof isAdmin !== 'function' || !isAdmin()) return;
-  if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = {};
-  var nl = document.getElementById('kfSetNasabahLimit');
-  var ml = document.getElementById('kfSetMitraLimit');
-  var mm = document.getElementById('kfSetMitraMargin');
-  var mf = document.getElementById('kfSetMitraFee');
-  DB.kifayahSetting.nasabahLimit = Math.max(0, parseFloat(nl && nl.value) || 0);
-  DB.kifayahSetting.mitraLimit = Math.max(0, parseFloat(ml && ml.value) || 0);
-  DB.kifayahSetting.mitraMarginPercent = Math.max(0, parseFloat(mm && mm.value) || 0);
-  DB.kifayahSetting.mitraFeeFlat = Math.max(0, parseFloat(mf && mf.value) || 0);
-  saveDB();
-  showToast('✅ Pengaturan Kifayah disimpan');
-  renderKifayahAdmin();
 }
 
 function _kfAdminStatCard(value, label) {
@@ -21646,11 +21393,9 @@ function _kfAdminRenderWarungRow(w, produkList) {
   var nb = (typeof getNasabah === 'function') ? getNasabah(w.nasabahId) : null;
   var logo = w.logo ? '<img src="'+w.logo+'" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0">' : '<div style="width:40px;height:40px;border-radius:10px;background:#f4f1f7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-0.15em" aria-hidden="true"><path d="M4 9.5L5.2 4h13.6L20 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5a2.3 2.3 0 0 0 4.4 1 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4 0 2.3 2.3 0 0 0 4.4-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11v8.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 21v-5a2 2 0 0 1 4 0v5" stroke="currentColor" stroke-width="1.6"/></svg></div>';
   var st = w.statusMitra || 'bukan';
-  var mitraLine = st === 'aktif'
-    ? '<div style="font-size:10px;font-weight:700;color:#7b2d8b;margin-top:2px">🤝 Mitra Warung Aktif</div>'
-    : (st === 'menunggu'
-      ? '<div style="font-size:10px;font-weight:700;color:#b45309;margin-top:2px">⏳ Menunggu persetujuan Mitra</div>'
-      : (st === 'ditolak' ? '<div style="font-size:10px;font-weight:700;color:#9ca3af;margin-top:2px">Pengajuan Mitra ditolak</div>' : ''));
+  var mitraLine = st === 'menunggu'
+    ? '<div style="font-size:10px;font-weight:700;color:#b45309;margin-top:2px">⏳ Menunggu persetujuan Mitra</div>'
+    : (st === 'ditolak' ? '<div style="font-size:10px;font-weight:700;color:#9ca3af;margin-top:2px">Pengajuan Mitra ditolak</div>' : '');
   var mitraActions = st === 'menunggu'
     ? '<button class="kf-mini-btn" title="Setujui jadi Mitra" onclick="kifayahAdminSetStatusMitra(\''+w.id+'\',\'aktif\')">✅</button>'
       + '<button class="kf-mini-btn" title="Tolak pengajuan Mitra" onclick="kifayahAdminSetStatusMitra(\''+w.id+'\',\'ditolak\')">🚫</button>'
@@ -21728,6 +21473,63 @@ function kifayahAdminHapusSemuaTransaksi() {
   showToast('🗑️ ' + total + ' transaksi Kifayah berhasil dihapus');
   renderKifayahAdmin();
 }
+// Reset TOTAL modul Kifayah (admin) — menghapus SELURUH data marketplace Kifayah:
+// warung, produk, pesanan, kurir, pinjaman Qardh internal (DB.pinjamanKifayah), dan
+// pengaturan (DB.kifayahSetting). Saldo Kifayah nasabah (Simpanan Sukarela) TIDAK ikut
+// terhapus karena itu bagian dari pembukuan Koperasi umum (DB.transaksi), bukan data
+// marketplace — hanya transaksi 'tarik-sukarela' yang tercatat sebagai belanja Kifayah
+// yang dibersihkan, supaya saldo sukarela nasabah tetap akurat.
+function kifayahAdminResetTotal() {
+  if (typeof isAdmin !== 'function' || !isAdmin()) return;
+  var jmlWarung  = (DB.warung||[]).length;
+  var jmlProduk  = (DB.produkWarung||[]).length;
+  var jmlPesanan = (DB.pesananWarung||[]).length;
+  var jmlKurir   = (DB.kurir||[]).length;
+  var jmlPinjaman= (DB.pinjamanKifayah||[]).length;
+
+  if (!jmlWarung && !jmlProduk && !jmlPesanan && !jmlKurir && !jmlPinjaman) {
+    showToast('Tidak ada data Kifayah untuk direset');
+    return;
+  }
+
+  var pesan1 = '💣 Reset TOTAL modul Kifayah?\n\n'
+    + 'Ini akan menghapus PERMANEN:\n'
+    + '• ' + jmlWarung + ' warung & profil mitra\n'
+    + '• ' + jmlProduk + ' produk\n'
+    + '• ' + jmlPesanan + ' pesanan/riwayat transaksi\n'
+    + '• ' + jmlKurir + ' pendaftaran kurir\n'
+    + '• ' + jmlPinjaman + ' pinjaman Qardh internal Kifayah\n'
+    + '• Pengaturan Kifayah (limit, ongkir) dikembalikan ke default\n\n'
+    + 'Saldo Simpanan Sukarela nasabah TIDAK ikut terhapus.\n\n'
+    + 'Tindakan ini TIDAK BISA dibatalkan. Lanjutkan?';
+  if (!confirm(pesan1)) return;
+
+  var input = prompt('Ketik "RESET KIFAYAH" (persis) untuk mengonfirmasi:');
+  if (input !== 'RESET KIFAYAH') { showToast('❌ Reset dibatalkan'); return; }
+
+  // Hapus transaksi Saldo Kifayah (tarik-sukarela) & pengajuan pinjaman Qardh terkait belanja Kifayah
+  DB.transaksi = (DB.transaksi||[]).filter(function(t){
+    var terkaitBelanjaKifayah = (t.type === 'tarik-sukarela' && typeof t.keterangan === 'string' && t.keterangan.indexOf('Belanja Kifayah') === 0);
+    var terkaitPinjamanKifayah = (t.type === 'pinjaman' && typeof t.refId === 'string' && t.refId.indexOf('pinkf') === 0);
+    return !(terkaitBelanjaKifayah || terkaitPinjamanKifayah);
+  });
+
+  DB.warung = [];
+  DB.produkWarung = [];
+  DB.pesananWarung = [];
+  DB.kurir = [];
+  DB.pinjamanKifayah = [];
+  DB.kifayahSetting = { nasabahLimit: 200000 };
+  DB.nextWarungId = 1;
+  DB.nextProdukId = 1;
+  DB.nextPesananId = 1;
+  DB.nextKurirId = 1;
+  DB.nextPinKifayahId = 1;
+
+  saveDB();
+  showToast('💣 Modul Kifayah berhasil direset total');
+  _kifayahAdminBackToMenu();
+}
 // Koreksi manual Saldo Warung oleh admin — untuk membetulkan saldo yang keliru
 // (mis. akibat bug lama, migrasi data, atau selisih pencairan manual di luar sistem).
 // Perubahan dicatat sebagai transaksi 'koreksi-saldo-warung' agar tetap ada jejak audit.
@@ -21788,7 +21590,7 @@ function kifayahAdminHapusWarung(warungId) {
 function _kfRenderPesananCardAdmin(p) {
   var itemsHtml = p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ');
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:9px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 Qardh'+(p.pinjamanId?' 4x':(p.cicilan?' '+p.cicilan.tenor+'x':''))+'</span>' : '';
-  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Koperasi</span>' : '';
+  var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:9px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Kifayah</span>' : '';
   var bisaBatal = (p.status !== 'selesai' && p.status !== 'dibatalkan');
   return '<div class="kf-pesanan-card">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
@@ -21813,28 +21615,6 @@ function kifayahAdminBatalkanPesanan(pesananId) {
   saveDB();
   showToast('✅ Pesanan dibatalkan oleh admin');
   renderKifayahAdmin();
-}
-
-function _kfRenderCicilanCardAdmin(p) {
-  var c = p.cicilan;
-  var terbayar = c.jadwal.filter(function(j){ return j.status === 'lunas'; }).length;
-  var sisaTagihan = c.jadwal.filter(function(j){ return j.status !== 'lunas'; }).reduce(function(s,j){ return s+j.jumlah; }, 0);
-  var progressPct = Math.round((terbayar / c.jadwal.length) * 100);
-  return '<div class="kf-pesanan-card" style="margin-bottom:10px">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
-    + '<div style="min-width:0">'
-    + '<div style="font-weight:700;font-size:12.5px">'+p.pembeliNama+' → '+p.warungNama+'</div>'
-    + '<div style="font-size:11px;color:#6b7280">'+p.items.map(function(i){ return i.nama+' ×'+i.qty; }).join(', ')+'</div>'
-    + '</div>'
-    + '<div class="kf-status-badge" style="background:'+(c.lunas?'#dcfce7':'#f4e9f7')+';color:'+(c.lunas?'#16a34a':'#7b2d8b')+'">'+(c.lunas?'Lunas':terbayar+'/'+c.jadwal.length+' bayar')+'</div>'
-    + '</div>'
-    + '<div style="background:#f4f1f7;border-radius:99px;height:6px;overflow:hidden;margin-bottom:8px">'
-    + '<div style="height:100%;border-radius:99px;background:linear-gradient(90deg,#7b2d8b,#9b59b6);width:'+progressPct+'%"></div>'
-    + '</div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280">'
-    + '<span>Total: '+fmt(p.total)+'</span><span>Sisa: '+fmt(sisaTagihan)+'</span>'
-    + '</div>'
-    + '</div>';
 }
 
 // ========== RENCO PAY MODULE ==========
@@ -29457,11 +29237,6 @@ function keuanganTab(tab, el) {
           '<span class="psub-label">Renco Capital</span>' +
           '<span class="psub-sub">Tagihan Pinjaman</span>' +
         '</button>' +
-        '<button id="psub-kifayah" class="pembayaran-subtab" data-psub="kifayah" onclick="switchPembayaranSubTab(\'kifayah\')">' +
-          '<span class="psub-icon">🛍️</span>' +
-          '<span class="psub-label">Kifayah</span>' +
-          '<span class="psub-sub">Cicilan Belanja</span>' +
-        '</button>' +
       '</div>' +
       '<div id="pembayaranSubContent"></div>';
     setTimeout(function(){
@@ -30577,7 +30352,7 @@ function hapusTxnRiwayat(id) {
   const t = DB.transaksi.find(x=>x.id===id);
   if (!t) return;
   const kk = getNasabah(t.kkId);
-  if (!confirm(`Hapus transaksi "${kk?kk.nama:'?'} — ${t.keterangan||t.type} (${fmt(t.jumlah)})"?\n\nTidak bisa dibatalkan.`)) return;
+  if (!confirm(`Hapus transaksi "${kk?kk.nama:'?'} — ${t.keterangan||t.type} (${fmt(t.jumlah)})"?\n\nTidak bisa dibatalkan.` + (typeof _pesanDampakHapusTxn === 'function' ? _pesanDampakHapusTxn(t) : ''))) return;
   DB.transaksi = DB.transaksi.filter(x=>x.id!==id);
   _tombstoneTxn(id);
   saveDB(); renderHome(); rerenderRiwayat();
@@ -35777,7 +35552,10 @@ function updateManualTxnInfo() {
   if (!kkId || !infoEl) return;
   var saldo = saldoSukarelaNasabah(kkId);
   if (saldo < 0) {
-    infoEl.innerHTML = '⚠️ Utang biaya admin: <b>' + fmt(Math.abs(saldo)) + '</b>';
+    // Catatan: label digeneralisasi jadi "saldo minus (utang)" — penyebabnya bisa
+    // bermacam-macam (potongan biaya admin, penarikan sukarela, dsb), tidak selalu
+    // biaya admin pinjaman, jadi tidak dituduhkan secara spesifik di sini.
+    infoEl.innerHTML = '⚠️ Saldo sukarela minus (utang): <b>' + fmt(Math.abs(saldo)) + '</b>';
     infoEl.style.color = '#e63946';
     infoEl.style.background = 'rgba(230,57,70,0.08)';
     infoEl.style.borderColor = 'rgba(230,57,70,0.25)';
@@ -35800,7 +35578,7 @@ function setManualTxnBayarUtang() {
   var jml = document.getElementById('manualTxnJumlah');
   var ket = document.getElementById('manualTxnKet');
   if (jml) jml.value = Math.abs(saldo);
-  if (ket) ket.value = 'Pembayaran utang biaya admin pinjaman';
+  if (ket) ket.value = 'Pembayaran saldo minus (utang) tabungan sukarela';
   showToast('💳 Form diisi otomatis untuk pelunasan utang');
 }
 
@@ -39304,11 +39082,9 @@ function _pdfGenKoperasi(jsPDFCls) {
   var totalPiutang = pinBerjalan.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   var kasKoperasi = saldoSimpanan - totalPiutang;
   var totalAset = (DB.aset || []).reduce(function (a, b) { return a + (b.nilai || 0); }, 0);
-  // Modal Koperasi → Kifayah: Koperasi hanya berperan sebagai investor/pemodal bagi
-  // Kifayah, jadi dicatat sebagai ASET INVESTASI (bukan piutang pinjaman biasa) —
-  // sisi Kifayah punya kas & pembukuannya sendiri (lihat calcKasKifayah()).
-  var modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
-  var totalAktiva = saldoSimpanan + totalPiutang + totalAset + modalKifayah;
+  // Kifayah kini punya pembukuan cicilan sendiri, TIDAK lagi didanai/dicatat lewat
+  // Koperasi, jadi tidak ada lagi pos "Modal Investasi di Kifayah" di neraca ini.
+  var totalAktiva = saldoSimpanan + totalPiutang + totalAset;
   var totalBungaEstimasi = pinBerjalan.reduce(function (a, p) { return a + Math.round(p.jumlah * ((p.bunga || 0) / 100) * ((p.tenor || 12) / 12)); }, 0);
   var shuPct = ((DB.shuSetting && DB.shuSetting.pctSHU) || 70) / 100;
   var totalSHU = totalBungaEstimasi * shuPct;
@@ -39327,7 +39103,6 @@ function _pdfGenKoperasi(jsPDFCls) {
     { label: 'Kas Tersedia', value: _pdfFmt(kasKoperasi), color: kasKoperasi >= 0 ? [26, 71, 42] : [230, 57, 70] },
     { label: 'Piutang Pinjaman', value: _pdfFmt(totalPiutang), color: [230, 57, 70] },
     { label: 'Total Aset', value: _pdfFmt(totalAset), color: [244, 169, 34] },
-    { label: 'Modal Investasi di Kifayah', value: _pdfFmt(modalKifayah), color: [123, 45, 139] },
     { label: 'Total Aktiva', value: _pdfFmt(totalAktiva), color: [26, 71, 42] },
     { label: 'Estimasi SHU (' + Math.round(shuPct * 100) + '%)', value: _pdfFmt(totalSHU), color: [107, 33, 168] },
     { label: 'PHU Bersih', value: _pdfFmt(phuBersih), color: [244, 169, 34] },
@@ -41639,12 +41414,31 @@ function saveEditTxn() {
   showToast('✅ Transaksi berhasil diperbarui');
 }
 
+// ── Peringatan dampak saldo saat hapus transaksi setoran ──
+// Mengecek apakah menghapus transaksi 't' (setoran Sukarela) akan membuat
+// saldo Simpanan Sukarela nasabah jadi MINUS (tercatat sebagai "utang").
+// Kasus umum: setoran ini sebelumnya sudah "dipakai" untuk membuka Simpanan
+// Berjangka (via transaksi tarik-sukarela terkait) — kalau setorannya dihapus
+// belakangan, penarikannya tetap ada, sehingga saldo jadi minus padahal uangnya
+// memang sudah terpakai wajar (bukan hilang). Peringatan ini mencegah admin
+// menghapus tanpa sadar akan dampak ini.
+function _pesanDampakHapusTxn(t) {
+  if (!t || t.type !== 'simpanan' || t.jenis !== 'sukarela') return '';
+  if (typeof saldoSukarelaNasabah !== 'function') return '';
+  var saldoSaatIni = saldoSukarelaNasabah(t.kkId);
+  var saldoSetelahHapus = saldoSaatIni - (t.jumlah || 0);
+  if (saldoSetelahHapus < 0) {
+    return '\n\n⚠️ PERINGATAN: Ini setoran Sukarela. Jika dihapus, saldo Sukarela nasabah akan MINUS ' + fmt(Math.abs(saldoSetelahHapus)) + ' (tercatat sebagai utang) — kemungkinan karena dana ini sudah dipakai untuk membuka Simpanan Berjangka atau sudah ditarik. Pastikan ini benar sebelum lanjut.';
+  }
+  return '';
+}
+
 function hapusTxn(id, refreshDetail=false, kkId='') {
   const t = DB.transaksi.find(x=>x.id===id);
   if (!t) return;
   const kk = getNasabah(t.kkId);
   const label = `${kk?kk.nama:'?'} — ${t.keterangan||t.type} (${fmt(t.jumlah)})`;
-  if (!confirm(`Hapus transaksi berikut?\n\n"${label}"\n\nAksi ini tidak bisa dibatalkan.`)) return;
+  if (!confirm(`Hapus transaksi berikut?\n\n"${label}"\n\nAksi ini tidak bisa dibatalkan.` + _pesanDampakHapusTxn(t))) return;
   DB.transaksi = DB.transaksi.filter(x=>x.id!==id);
   _tombstoneTxn(id);
   saveDB();
@@ -41662,7 +41456,7 @@ function hapusTxnKeuangan(id) {
   if (!t) return;
   const kk = getNasabah(t.kkId);
   const label = `${kk?kk.nama:'?'} — ${t.keterangan||t.type} (${fmt(t.jumlah)})`;
-  if (!confirm(`Hapus transaksi berikut?\n\n"${label}"\n\nAksi ini tidak bisa dibatalkan.`)) return;
+  if (!confirm(`Hapus transaksi berikut?\n\n"${label}"\n\nAksi ini tidak bisa dibatalkan.` + _pesanDampakHapusTxn(t))) return;
   DB.transaksi = DB.transaksi.filter(x=>x.id!==id);
   _tombstoneTxn(id);
   saveDB();
@@ -49176,10 +48970,8 @@ window.switchPembayaranSubTab = function switchPembayaranSubTab(sub) {
   function _updateBtns() {
     var btnC = document.getElementById('psub-cicilan');
     var btnK = document.getElementById('psub-capital');
-    var btnF = document.getElementById('psub-kifayah');
     if (btnC) btnC.className = 'pembayaran-subtab' + (sub === 'cicilan'  ? ' aktif-cicilan' : '');
     if (btnK) btnK.className = 'pembayaran-subtab' + (sub === 'capital'  ? ' aktif-capital' : '');
-    if (btnF) btnF.className = 'pembayaran-subtab' + (sub === 'kifayah'  ? ' aktif-kifayah' : '');
   }
   _updateBtns();
 
@@ -49220,9 +49012,6 @@ window.switchPembayaranSubTab = function switchPembayaranSubTab(sub) {
         rerenderAngsuranMemberTab&&rerenderAngsuranMemberTab();
         _updateBtns();
       }, 100);
-    } else if (sub === 'kifayah') {
-      /* ── Kifayah — cicilan belanja warung mitra, sumber: DB.pesananWarung ── */
-      sc.innerHTML = _renderKifayahPembayaranTab();
     } else if (sub === 'rencopay') {
       renderRencoPayInline(sc);
     } else {
@@ -54051,9 +53840,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
     // ── Neraca ──
     const kasKoperasi = saldoSimpanan - totalPiutang;
-    // Modal Koperasi → Kifayah dicatat sebagai aset investasi (Koperasi = investor/pemodal Kifayah)
-    const modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
-    const totalAktiva = saldoSimpanan + totalPiutang + totalAset + modalKifayah;
+    // Kifayah kini punya pembukuan cicilan sendiri, tidak lagi didanai/dicatat lewat Koperasi.
+    const totalAktiva = saldoSimpanan + totalPiutang + totalAset;
 
     // ── Data bulan ini ──
     const isThisMonth = t => { const d=new Date(t.tanggal||t.createdAt||''); return d.getMonth()===m && d.getFullYear()===y; };
@@ -54155,7 +53943,6 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           ${_tableRow('Kas & Dana Likuid',_fmt(kasKoperasi),false,kasKoperasi>=0?'#2d6a4f':'#e63946')}
           ${_tableRow('Piutang Pinjaman Aktif',_fmt(totalPiutang),false,'#e63946')}
           ${_tableRow('Aset Tetap & Usaha',_fmt(totalAset),false,'#b07a00')}
-          ${_tableRow('Modal Investasi di Kifayah',_fmt(modalKifayah),false,'#7b2d8b')}
           ${_totalRow('TOTAL AKTIVA',_fmt(totalAktiva),'#1a472a')}
 
           <div style="padding:8px 14px;font-size:10px;font-weight:800;color:#2d6a4f;text-transform:uppercase;letter-spacing:.5px;background:rgba(45,106,79,0.06);margin-top:4px">KEWAJIBAN</div>
@@ -58728,7 +58515,8 @@ if ('serviceWorker' in navigator) {
         <div style="height:1px;background:rgba(0,0,0,0.08);margin:6px 0"></div>
         <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:700">Total Diterima</span><span style="font-weight:800;color:var(--forest)" id="cairTBTotal">Rp 0</span></div>
       </div>
-      <div style="font-size:10.5px;color:var(--text-soft);margin-bottom:14px">Dana akan dikembalikan ke Simpanan Sukarela Anda.</div>
+      <div style="font-size:10.5px;color:var(--text-soft);margin-bottom:10px">Dana akan dikembalikan ke Simpanan Sukarela Anda.</div>
+      <div id="cairTBSaldoInfo" style="background:#f8faf9;border-radius:12px;padding:12px 14px;margin-bottom:16px;border:1.5px solid rgba(45,106,79,0.12)"></div>
       <button class="btn btn-primary btn-block" onclick="konfirmasiCairTB()">Konfirmasi Pencairan</button>
     </div>
   </div>
@@ -59117,6 +58905,23 @@ window.bukaCairTB = function(tbId) {
     warn.style.display = 'block';
     warn.textContent = '⚠️ Pencairan sebelum jatuh tempo (' + fmtDate(tb.tanggalJatuhTempo) + ') — bagi hasil hangus, hanya pokok yang dikembalikan.';
   }
+  // ── Info transparansi saldo: kalau nasabah sudah punya saldo sukarela minus
+  // (mis. dari penarikan/potongan lain saat dana ini masih terkunci), tunjukkan
+  // rinciannya di sini supaya jelas bahwa pencairan ini MENAMBAH saldo (kredit),
+  // bukan penyebab minusnya — dan kalau sesudah pencairan masih minus, itu
+  // adalah sisa kewajiban lama yang belum tertutup, bukan akibat pencairan.
+  var infoEl = document.getElementById('cairTBSaldoInfo');
+  if (infoEl) {
+    var saldoSebelum = typeof saldoSukarelaNasabah === 'function' ? saldoSukarelaNasabah(tb.kkId) : 0;
+    var saldoSesudah = saldoSebelum + total;
+    var html = '<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0"><span style="color:var(--text-soft)">Saldo sukarela saat ini</span><span style="font-weight:700' + (saldoSebelum < 0 ? ';color:#e63946' : '') + '">' + fmt(saldoSebelum) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0"><span style="color:var(--text-soft)">+ Pencairan Berjangka ini</span><span style="font-weight:700;color:#16a34a">+ ' + fmt(total) + '</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0 0;border-top:1px dashed rgba(0,0,0,0.12);margin-top:4px"><span style="font-weight:700">Saldo sukarela setelah ini</span><span style="font-weight:800' + (saldoSesudah < 0 ? ';color:#e63946' : ';color:#16a34a') + '">' + fmt(saldoSesudah) + '</span></div>';
+    if (saldoSebelum < 0) {
+      html += '<div style="font-size:10.5px;color:#e63946;margin-top:6px;line-height:1.5">⚠️ Nasabah sudah punya saldo minus (utang) <b>sebelum</b> pencairan ini. Pencairan Berjangka ini sifatnya menambah saldo, ' + (saldoSesudah < 0 ? 'tapi belum cukup menutup semua minusnya.' : 'dan sudah menutup minus tersebut.') + '</div>';
+    }
+    infoEl.innerHTML = html;
+  }
   openModal('modalCairTB');
 };
 
@@ -59152,7 +58957,14 @@ window.konfirmasiCairTB = function() {
 
   saveDB();
   closeModal('modalCairTB');
-  showToast('✅ Berjangka Syariah dicairkan: ' + fmt(tb.jumlah + bagiHasil));
+  // Beri tahu kalau saldo sukarela masih minus SETELAH pencairan ini — supaya jelas
+  // itu sisa kewajiban lama yang belum tertutup, bukan akibat pencairan itu sendiri.
+  var saldoAkhir = typeof saldoSukarelaNasabah === 'function' ? saldoSukarelaNasabah(tb.kkId) : 0;
+  if (saldoAkhir < 0) {
+    showToast('✅ Dicairkan: ' + fmt(tb.jumlah + bagiHasil) + ' — namun saldo sukarela nasabah masih minus ' + fmt(Math.abs(saldoAkhir)) + ' (sisa kewajiban lama, bukan dari pencairan ini)');
+  } else {
+    showToast('✅ Berjangka Syariah dicairkan: ' + fmt(tb.jumlah + bagiHasil));
+  }
   _refreshTBTabIfOpen();
 };
 
