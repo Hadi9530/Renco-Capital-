@@ -6812,7 +6812,7 @@ function _renderNasabahDashboard(kkId) {
 
   var mySimpanan     = typeof totalSimpananKK === 'function' ? totalSimpananKK(kkId) : 0;
   var mySukarela     = typeof saldoSukarelaNasabah === 'function' ? saldoSukarelaNasabah(kkId) : 0;
-  var myPinjaman     = (db.pinjaman || []).filter(function(p){ return p.kkId === kkId && p.status === 'aktif'; });
+  var myPinjaman     = (db.pinjaman || []).filter(function(p){ return p.kkId === kkId && (p.status === 'aktif' || p.status === 'menunggak'); });
   var mySisaPokok    = myPinjaman.reduce(function(s,p){ return s+(p.sisaPokok||0); }, 0);
   var myTxns         = (db.transaksi || []).filter(function(t){ return t.kkId === kkId; }).reverse().slice(0,5);
   // Ambil SEMUA pending milik user ini yang belum disetujui, terbaru di atas
@@ -7075,7 +7075,7 @@ function _renderTagihanJatuhTempo(kkId) {
      1. KOPERASI RENCO — jadwal cicilan pinjaman aktif
   ============================================================ */
   var koperasiGroups = [];
-  (db.pinjaman || []).filter(function(p){ return p.kkId===kkId && p.status==='aktif'; }).forEach(function(p) {
+  (db.pinjaman || []).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak'); }).forEach(function(p) {
     if (!p.tanggal || !p.tenor) return;
     var tglAwal     = new Date(p.tanggal);
     var pokokPerBln = p.jumlah/p.tenor;
@@ -7111,7 +7111,7 @@ function _renderTagihanJatuhTempo(kkId) {
   var JENIS_LBL= {syariah:'Murabahah',qardh:'Qardh','modal-usaha':'Mudharabah'};
 
   // Adapter syariah ke format pembiayaan
-  var syariahAdapted = (db.pembiayaanSyariah||[]).filter(function(p){ return p.kkId===kkId && p.status==='aktif'; }).map(function(p){
+  var syariahAdapted = (db.pembiayaanSyariah||[]).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak'); }).map(function(p){
     var tenor=Math.max(1,p.tenor||12), dibayar=p.angsuranDibayar||0;
     var cicilanBln=p.cicilan||Math.round((p.totalBayar||p.jumlah||0)/tenor);
     return {
@@ -7128,7 +7128,7 @@ function _renderTagihanJatuhTempo(kkId) {
     };
   });
 
-  var allPmb = (db.pembiayaan||[]).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='disetujui'); }).concat(syariahAdapted);
+  var allPmb = (db.pembiayaan||[]).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak'); }).concat(syariahAdapted);
 
   var capitalGroups = [];
   allPmb.forEach(function(pmb) {
@@ -14661,7 +14661,7 @@ function _dbMigrate() {
 
   // Migrasi pembiayaan: pastikan tglAktif & sisaPokokRC
   DB.pembiayaan.forEach(function(p) {
-    if ((p.status==='disetujui'||p.status==='aktif') && !p.tglAktif)
+    if ((p.status==='disetujui'||p.status==='aktif'||p.status==='menunggak') && !p.tglAktif)
       p.tglAktif = p.tglDisetujui || p.tanggal || new Date().toISOString().split('T')[0];
     if (typeof p.sisaPokokRC !== 'number' && p.jumlah && p.tenor) {
       var bayar = p.angsuranDibayar || 0;
@@ -14744,7 +14744,7 @@ function _dbIntegrity() {
     p.jumlah   = Number(p.jumlah)   || 0;
     p.bunga    = Number(p.bunga)    || 0;
     p.tenor    = Number(p.tenor)    || 12;
-    p.sisaPokok= Math.max(0, Number(p.sisaPokok) || (p.status==='aktif' ? p.jumlah : 0));
+    p.sisaPokok= Math.max(0, Number(p.sisaPokok) || ((p.status==='aktif'||p.status==='menunggak') ? p.jumlah : 0));
     if (!validPinStatus.has(p.status)) { p.status = 'pengajuan'; fixed++; }
     if (!Array.isArray(p.cicilan)) p.cicilan = [];
     if (p.kkId && !kkIds.has(p.kkId)) { fixed++; return false; } // pinjaman yatim
@@ -14857,7 +14857,7 @@ window.dbCheck = function() {
   if (DB.nextPinId <= maxPin) issues.push('nextPinId mundur ('+DB.nextPinId+' ≤ '+maxPin+')');
 
   // Cek sisaPokok negatif
-  var negPin = (DB.pinjaman||[]).filter(function(p){return p.status==='aktif'&&(p.sisaPokok||0)<0;});
+  var negPin = (DB.pinjaman||[]).filter(function(p){return (p.status==='aktif'||p.status==='menunggak')&&(p.sisaPokok||0)<0;});
   if (negPin.length) issues.push('Pinjaman sisaPokok negatif: ' + negPin.length);
 
   // Cek key localStorage lama yang belum dimigrasi
@@ -15220,7 +15220,7 @@ function _renderTagihanNasabah() {
 
   /* -- Koperasi Renco: pinjaman aktif -- */
   var koperasiGroups = [];
-  (db.pinjaman || []).filter(function(p){ return p.kkId===myKkId && p.status==='aktif'; }).forEach(function(p) {
+  (db.pinjaman || []).filter(function(p){ return p.kkId===myKkId && (p.status==='aktif'||p.status==='menunggak'); }).forEach(function(p) {
     if (!p.tanggal || !p.tenor) return;
     var tglAwal=new Date(p.tanggal), pokokPerBln=p.jumlah/p.tenor;
     var sisa=p.sisaPokok!=null?p.sisaPokok:p.jumlah;
@@ -15245,7 +15245,7 @@ function _renderTagihanNasabah() {
   /* -- Renco Capital: pembiayaan + syariah -- */
   var AKAD_LBL={murabahah:'Murabahah',mudharabah:'Mudharabah',musyarakah:'Musyarakah',ijarah:'Ijarah'};
   var JENIS_LBL={syariah:'Murabahah',qardh:'Qardh','modal-usaha':'Mudharabah'};
-  var syariahAdapted=(db.pembiayaanSyariah||[]).filter(function(p){return p.kkId===myKkId&&p.status==='aktif';}).map(function(p){
+  var syariahAdapted=(db.pembiayaanSyariah||[]).filter(function(p){return p.kkId===myKkId&&(p.status==='aktif'||p.status==='menunggak');}).map(function(p){
     var tenor=Math.max(1,p.tenor||12),dibayar=p.angsuranDibayar||0;
     return {id:p.id,kkId:p.kkId,jenis:p.akad||'syariah',
       tujuan:(AKAD_LBL[p.akad]||p.akad||'Syariah')+(p.tujuan?' — '+p.tujuan:''),
@@ -15259,7 +15259,7 @@ function _renderTagihanNasabah() {
       history:p.history||[],_isSyariah:true,_syariahId:p.id,
       _akadLabel:AKAD_LBL[p.akad]||(p.akad||'Syariah')};
   });
-  var allPmb=(db.pembiayaan||[]).filter(function(p){return p.kkId===myKkId&&(p.status==='aktif'||p.status==='disetujui');}).concat(syariahAdapted);
+  var allPmb=(db.pembiayaan||[]).filter(function(p){return p.kkId===myKkId&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');}).concat(syariahAdapted);
   var capitalGroups=[];
   allPmb.forEach(function(pmb){
     var h=typeof _rcHitungCicilanBulanIni==='function'?_rcHitungCicilanBulanIni(pmb):null;
@@ -15512,14 +15512,14 @@ function renderNsPinjaman() {
   var el = document.getElementById('nasabahPinjamanContent');
   if (!el) return;
 
-  var aktif  = pinjaman.filter(function(p){ return p.status === 'aktif'; });
+  var aktif  = pinjaman.filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; });
   var lunas  = pinjaman.filter(function(p){ return p.status === 'lunas'; });
   var proses = pinjaman.filter(function(p){ return p.status === 'pengajuan'; });
   var totalSisa = aktif.reduce(function(s, p){ return s + (p.sisaPokok || p.jumlah || 0); }, 0);
 
   // Untuk nasabah: hanya tampilkan pinjaman aktif + pengajuan (sembunyikan lunas & ditolak)
   if (isNasabah()) {
-    pinjaman = pinjaman.filter(function(p){ return p.status === 'aktif' || p.status === 'pengajuan' || p.status === 'disetujui'; });
+    pinjaman = pinjaman.filter(function(p){ return p.status === 'aktif' || p.status === 'pengajuan' || p.status === 'disetujui' || p.status === 'menunggak'; });
   }
 
   var statusCfg = {
@@ -15599,7 +15599,7 @@ function renderNsPinjaman() {
     html += '<div style="font-size:18px;font-weight:800;color:#1a472a">'+fmtFn(p.jumlah)+'</div>';
     var _akadLbl = ({qardh:'Qardh',murabahah:'Murabahah',mudharabah:'Mudharabah',musyarakah:'Musyarakah',ijarah:'Ijarah',istishna:"Istishna'"})[p.akad] || 'Qardh';
     html += '<div style="font-size:10px;color:#9ca3af;margin-top:2px">'+_akadLbl+' · '+p.tenor+' bulan · Margin '+(p.bunga||0)+'%</div></div>';
-    html += (p.status==='aktif'?'<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#2d6a4f">'+fmtFn(sisa)+'</div><div style="font-size:9px;color:#9ca3af">sisa pokok</div></div>':'');
+    html += (p.status==='aktif'||p.status==='menunggak'?'<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:'+(p.status==='menunggak'?'#dc2626':'#2d6a4f')+'">'+fmtFn(sisa)+'</div><div style="font-size:9px;color:#9ca3af">sisa pokok</div></div>':'');
     html += '</div>';
     if(p.status==='pengajuan') html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(244,169,34,0.08);border-radius:10px;font-size:11px;color:#b07a00;font-weight:600">⌛ Sedang ditinjau admin</div>';
     if(p.status==='ditolak'&&p.alasanTolak) html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(230,57,70,0.07);border-radius:10px;font-size:11px;color:#e63946;font-weight:600">❌ '+p.alasanTolak+'</div>';
@@ -15617,7 +15617,7 @@ function renderNsPengajuan() {
   var pembiayaan = (db.pembiayaan || []).filter(function(p) { return p.kkId === myKkId; });
 
   // Update stat counters
-  var aktif   = pembiayaan.filter(function(p){ return p.status === 'aktif' || p.status === 'disetujui'; });
+  var aktif   = pembiayaan.filter(function(p){ return p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'; });
   var pending = pembiayaan.filter(function(p){ return p.status === 'pengajuan'; });
   var totalEl = document.getElementById('nsPmbTotal');
   var aktifEl = document.getElementById('nsPmbAktif');
@@ -15666,8 +15666,8 @@ function renderNsPengajuan() {
     var ang = (p.jumlah && p.tenor) ? Math.round((p.jumlah * (1 + (p.bunga||10)/100)) / (p.tenor||1)) : 0;
     // Progress angsuran untuk status aktif
     var angDibayar = p.angsuranDibayar || 0;
-    var pct = (p.tenor > 0 && p.status === 'aktif') ? Math.round((angDibayar / p.tenor) * 100) : 0;
-    var progressHTML = (p.status === 'aktif' && p.tenor > 0)
+    var pct = (p.tenor > 0 && (p.status === 'aktif' || p.status === 'menunggak')) ? Math.round((angDibayar / p.tenor) * 100) : 0;
+    var progressHTML = ((p.status === 'aktif' || p.status === 'menunggak') && p.tenor > 0)
       ? '<div style="margin-top:8px"><div style="background:#e8e8e8;border-radius:99px;height:5px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#7b2d8b,#9b59b6);border-radius:99px"></div></div><div style="font-size:9px;color:#9ca3af;margin-top:3px;text-align:right">' + angDibayar + '/' + p.tenor + ' angsuran · ' + pct + '%</div></div>'
       : '';
     return '<div onclick="lihatDetailPembiayaanUser(\'' + p.id + '\')" style="background:white;border-radius:16px;margin-bottom:10px;box-shadow:0 2px 14px rgba(0,0,0,0.08);overflow:hidden;border:1.5px solid ' + sc.border + ';cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" ontouchstart="this.style.transform=\'scale(0.98)\'" ontouchend="this.style.transform=\'\'">' +
@@ -15759,7 +15759,7 @@ function lihatDetailPembiayaanUser(id) {
   var angDibayar = item.angsuranDibayar || 0;
   var sisaAngsuran = Math.max(0, (item.tenor||0) - angDibayar);
   var pctAngsuran = item.tenor > 0 ? Math.round((angDibayar / item.tenor) * 100) : 0;
-  var angsuranTrackerHTML = item.status === 'aktif' ? (
+  var angsuranTrackerHTML = (item.status === 'aktif' || item.status === 'menunggak') ? (
     '<div style="background:rgba(123,45,139,0.06);border:1.5px solid rgba(123,45,139,0.15);border-radius:14px;padding:14px;margin-bottom:14px">'
       + '<div style="font-size:11px;font-weight:700;color:#7b2d8b;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px">📊 Progress Angsuran Saya</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
@@ -15800,6 +15800,8 @@ function lihatDetailPembiayaanUser(id) {
     infoMsgHTML = '<div style="background:rgba(67,97,238,0.07);border:1.5px solid rgba(67,97,238,0.2);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#4361ee;font-weight:600;line-height:1.6">✅ Pembiayaan Anda telah disetujui. Menunggu proses pencairan dana. Silakan hubungi admin koperasi untuk konfirmasi.</div>';
   } else if (item.status === 'aktif') {
     infoMsgHTML = '<div style="background:rgba(64,145,108,0.07);border:1.5px solid rgba(64,145,108,0.2);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#2d6a4f;font-weight:600;line-height:1.6">🟢 Pembiayaan Anda sedang berjalan. Pastikan angsuran dibayarkan tepat waktu setiap bulan.</div>';
+  } else if (item.status === 'menunggak') {
+    infoMsgHTML = '<div style="background:rgba(220,38,38,0.08);border:1.5px solid rgba(220,38,38,0.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#dc2626;font-weight:600;line-height:1.6">🔴 Pembiayaan Anda menunggak. Segera lunasi tunggakan angsuran untuk menghindari penalti lebih lanjut.</div>';
   } else if (item.status === 'lunas') {
     infoMsgHTML = '<div style="background:rgba(244,169,34,0.08);border:1.5px solid rgba(244,169,34,0.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#b07a00;font-weight:600;line-height:1.6">🏆 Selamat! Pembiayaan Anda telah LUNAS. Terima kasih telah menjadi nasabah setia Renco Capital.</div>';
   }
@@ -18014,8 +18016,8 @@ function totalPinjamanAktifKK(kkId) {
   // Kuota pinjaman pribadi nasabah TETAP menghitung gabungan Pinjaman Koperasi +
   // Pinjaman Kifayah (dua buku terpisah), sesuai mekanisme awal: hanya BUKUnya
   // yang dipisah, kuota qardh per-nasabah tetap dihitung total.
-  var totalKop = DB.pinjaman.filter(p=>p.kkId===kkId && p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
-  var totalKf  = (DB.pinjamanKifayah||[]).filter(p=>p.kkId===kkId && p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+  var totalKop = DB.pinjaman.filter(p=>p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak')).reduce((a,b)=>a+(b.sisaPokok||0),0);
+  var totalKf  = (DB.pinjamanKifayah||[]).filter(p=>p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak')).reduce((a,b)=>a+(b.sisaPokok||0),0);
   return totalKop + totalKf;
 }
 // ── Cari data pinjaman di KEDUA buku (Pinjaman Koperasi & Pinjaman Kifayah).
@@ -18043,7 +18045,7 @@ function getKasSettings() {
 // Buku DB.pembayaranKifayah sendiri adalah CATATAN/AUDIT setiap pembayaran ke warung
 // (untuk ditampilkan sebagai riwayat "buku Pembayaran Kifayah"), bukan sumber hitung kas.
 function totalPembayaranKifayah() {
-  return (DB.pinjamanKifayah || []).filter(function(p){ return p.status === 'aktif'; })
+  return (DB.pinjamanKifayah || []).filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; })
     .reduce(function(a, b) { return a + (b.sisaPokok || 0); }, 0);
 }
 // Deteksi apakah sebuah baris DB.transaksi berasal dari Kifayah — dipakai untuk
@@ -18062,7 +18064,7 @@ function calcKas() {
   // jadi cicilan Kifayah yang masih berjalan TIDAK lagi mengurangi kas Koperasi
   // di sini setiap saat; yang mengurangi kas Koperasi hanyalah MODAL yang sudah
   // disetor ke Kifayah, dicatat sekali sebagai alokasi tetap/terkunci).
-  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((a,b)=>a+(b.sisaPokok||0),0);
   const totalKifayah = totalPembayaranKifayah(); // ditampilkan utk info, TIDAK dipakai mengurangi kasAvailable Koperasi
   const modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
   const ks = getKasSettings();
@@ -18207,7 +18209,7 @@ function renderPrediksiKas() {
 
   // ── Hitung cicilan masuk bulan depan (Koperasi Renco) ──
   var cicilanMasuk = 0;
-  var pinjamanAktif = (DB.pinjaman || []).filter(function(p){ return p.status === 'aktif' && (p.sisaPokok || 0) > 0; });
+  var pinjamanAktif = (DB.pinjaman || []).filter(function(p){ return (p.status === 'aktif' || p.status === 'menunggak') && (p.sisaPokok || 0) > 0; });
   pinjamanAktif.forEach(function(p) {
     var tenor = Math.max(1, p.tenor || 12);
     var sisa  = p.sisaPokok || 0;
@@ -18220,7 +18222,7 @@ function renderPrediksiKas() {
 
   // ── Cicilan masuk bulan depan (Renco Capital) ──
   var cicilanRC = 0;
-  var pembiayaanAktif = (DB.pembiayaan || []).filter(function(p){ return p.status === 'aktif'; });
+  var pembiayaanAktif = (DB.pembiayaan || []).filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; });
   pembiayaanAktif.forEach(function(p) {
     var tenor   = Math.max(1, p.tenor || 12);
     var dibayar = p.angsuranDibayar || 0;
@@ -22722,8 +22724,8 @@ function rpAnggotaHTML() {
     if (s.belum > 0) statusPills.push(`<span class="rpa-pill gold">${s.belum} Belum Lunas</span>`);
     if (s.lunas > 0) statusPills.push(`<span class="rpa-pill">✅ ${s.lunas} Lunas</span>`);
     if (!statusPills.length) statusPills.push(`<span class="rpa-pill">Tidak ada tagihan</span>`);
-    const pinjCount = (db.pinjaman||[]).filter(p=>p.kkId===n.id&&p.status==='aktif').length;
-    const pemCount = (db.pembiayaan||[]).filter(p=>p.kkId===n.id&&(p.status==='aktif'||p.status==='disetujui')).length;
+    const pinjCount = (db.pinjaman||[]).filter(p=>p.kkId===n.id&&(p.status==='aktif'||p.status==='menunggak')).length;
+    const pemCount = (db.pembiayaan||[]).filter(p=>p.kkId===n.id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).length;
     const extraInfo = [];
     if (pinjCount) extraInfo.push(`🌿 ${pinjCount} Pinjaman`);
     if (pemCount) extraInfo.push(`🏦 ${pemCount} Pembiayaan`);
@@ -24036,8 +24038,8 @@ function rpPembayaranMemberHTML() {
   var fmtRp = typeof fmt === 'function' ? fmt : function(n){ return 'Rp '+Number(n||0).toLocaleString('id-ID'); };
 
   /* Hitung total tagihan aktif untuk info ringkasan */
-  var pinList = (db.pinjaman||[]).filter(function(p){ return p.kkId===kkId && p.status==='aktif'; });
-  var pemList = (db.pembiayaan||[]).filter(function(p){ return p.kkId===kkId && p.status==='aktif'; });
+  var pinList = (db.pinjaman||[]).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak'); });
+  var pemList = (db.pembiayaan||[]).filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak'); });
   var totalCicilan  = pinList.reduce(function(s,p){ return s+_hitungTagihanCicilanKoperasi(p).tagihan; }, 0);
   var totalAngsuran = pemList.reduce(function(s,p){ return s+(p.cicilanPerBln||p.angsuranBulanan||0); }, 0);
   var totalTagihan  = totalCicilan + totalAngsuran;
@@ -24135,7 +24137,7 @@ window.rpPmbSwitch = function(tab, elBtn) {
 
   } else {
     var pemList = [].concat(db.pembiayaan||[], db.pembiayaanSyariah||[])
-      .filter(function(p){ return p.kkId===kkId && p.status==='aktif'; });
+      .filter(function(p){ return p.kkId===kkId && (p.status==='aktif'||p.status==='menunggak'); });
     if (!pemList.length) {
       content.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:40px;margin-bottom:12px">🎉</div><div style="font-size:14px;font-weight:700;color:#1c3025;margin-bottom:6px">Tidak Ada Pembiayaan Aktif</div><div style="font-size:12px">Anda tidak memiliki angsuran Renco Capital yang aktif.</div></div>';
       return;
@@ -24984,7 +24986,7 @@ function rpDetailTagihan(id) {
     const sumberPin = (db.pinjaman || []).map(p => ({ p, _kf: false }))
       .concat((db.pinjamanKifayah || []).map(p => ({ p, _kf: true })));
     return sumberPin
-      .filter(x => x.p.status === 'aktif' && (x.p.sisaPokok || 0) > 0)
+      .filter(x => (x.p.status === 'aktif' || x.p.status === 'menunggak') && (x.p.sisaPokok || 0) > 0)
       .map(x => {
         const p = x.p;
         const kk = nasabah.find(n => n.id === p.kkId);
@@ -25041,7 +25043,7 @@ function rpDetailTagihan(id) {
 
     // Dari DB.pembiayaan (Renco Capital biasa)
     const fromPembiayaan = (db.pembiayaan || [])
-      .filter(p => p.status === 'aktif' || p.status === 'disetujui')
+      .filter(p => p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak')
       .map(p => {
         const kk = nasabah.find(n => n.id === p.kkId);
         const tenor     = Math.max(1, p.tenor || 12);
@@ -25079,7 +25081,7 @@ function rpDetailTagihan(id) {
 
     // Dari DB.pembiayaanSyariah (akad syariah: Murabahah, Mudharabah, dst)
     const fromSyariah = (db.pembiayaanSyariah || [])
-      .filter(p => p.status === 'aktif')
+      .filter(p => p.status === 'aktif' || p.status === 'menunggak')
       .map(p => {
         const kk        = nasabah.find(n => n.id === p.kkId);
         const tenor     = Math.max(1, p.tenor || 12);
@@ -25443,7 +25445,7 @@ function rpDetailTagihan(id) {
                                 <span style="color:#6b7280">Bunga</span><span style="font-weight:700">${bungaLabel}</span>
                               </div>
                             </div>`;
-                          if (b.status !== 'Lunas' && pin.status === 'aktif') {
+                          if (b.status !== 'Lunas' && (pin.status === 'aktif' || pin.status === 'menunggak')) {
                             bayarBtn = `<button onclick="event.stopPropagation();TagihanApp._bayarCicilanKoperasi('${pin.id}')" style="flex:1;padding:7px 0;font-size:11px;font-weight:700;color:white;background:linear-gradient(135deg,#1a472a,#2d6a4f);border:none;border-radius:9px;cursor:pointer;font-family:inherit">💳 Bayar Cicilan</button>`;
                             perpanjangBtn = `<button onclick="event.stopPropagation();TagihanApp._perpanjangKoperasi('${pin.id}')" style="flex:1;padding:7px 0;font-size:11px;font-weight:700;color:#1a472a;background:rgba(26,71,42,0.08);border:1.5px solid rgba(26,71,42,0.25);border-radius:9px;cursor:pointer;font-family:inherit">⏳ Perpanjang</button>`;
                           }
@@ -26800,7 +26802,7 @@ function rpPengingatHTML() {
     var BULAN_IURAN = 100000;
 
     /* 1. Cicilan pinjaman aktif — dibedakan per jenis akad/pinjaman */
-    pin.filter(function(p){ return p.kkId===a.id && p.status==='aktif'; }).forEach(function(p){
+    pin.filter(function(p){ return p.kkId===a.id && (p.status==='aktif'||p.status==='menunggak'); }).forEach(function(p){
       var pokokPerBln = (p.jumlah>0&&p.tenor>0) ? p.jumlah/p.tenor : 0;
       var sudahBayar  = pokokPerBln>0 ? Math.floor((p.jumlah-(p.sisaPokok||0))/pokokPerBln) : 0;
       var sisaTenor   = Math.max(1, p.tenor-sudahBayar);
@@ -27582,7 +27584,7 @@ function renderHomeTagihan() {
 
   /* 1. Pinjaman aktif — hanya cicilan bulan berjalan */
   (DB.pinjaman || []).filter(function(p) {
-    return p.kkId === myKkId && p.status === 'aktif' && (p.sisaPokok || 0) > 0;
+    return p.kkId === myKkId && (p.status === 'aktif' || p.status === 'menunggak') && (p.sisaPokok || 0) > 0;
   }).forEach(function(p) {
     var tenor   = Math.max(1, p.tenor || 12);
     var dibayar = p.angsuranDibayar || 0;
@@ -27866,7 +27868,7 @@ function renderHome() {
 
   const totalSimpanan = DB.transaksi.filter(t=>t.type==='simpanan').reduce((a,b)=>a+b.jumlah,0)
     - DB.transaksi.filter(t=>t.type==='tarik-sukarela').reduce((a,b)=>a+b.jumlah,0);
-  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif').reduce((a,b)=>a+b.sisaPokok,0);
+  const totalPinjaman = DB.pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((a,b)=>a+b.sisaPokok,0);
   const totalAset = DB.aset.reduce((a,b)=>a+b.nilai,0);
   const totalPHU = Math.max(0, (DB.phuPendapatan||[]).reduce((a,b)=>a+(b.jumlah||0),0) - (DB.phuPengeluaran||[]).reduce((a,b)=>a+(b.jumlah||0),0));
   const total = totalSimpanan + totalAset + totalPHU - totalPinjaman;
@@ -29086,9 +29088,9 @@ function hapusFamilyMember(kkId, idx) {
 function hapusNasabah(id) {
   const a = getNasabah(id);
   if (!a) return;
-  const pinAktif = DB.pinjaman.filter(p=>p.kkId===id && p.status==='aktif').length;
+  const pinAktif = DB.pinjaman.filter(p=>p.kkId===id && (p.status==='aktif'||p.status==='menunggak')).length;
   if (pinAktif > 0) {
-    alert(`⚠️ Tidak bisa menghapus ${a.nama}.\nMasih ada ${pinAktif} pinjaman aktif yang belum lunas.`);
+    alert(`⚠️ Tidak bisa menghapus ${a.nama}.\nMasih ada ${pinAktif} pinjaman aktif/menunggak yang belum lunas.`);
     return;
   }
   if (!confirm(`Hapus nasabah "${a.nama}" beserta semua data transaksinya?\n\nAksi ini tidak bisa dibatalkan.`)) return;
@@ -31133,7 +31135,7 @@ function _renderPembSyListOnly() {
     return nameMatch && statusMatch && memberMatch;
   });
   if (st.sortDesc) filtered = [...filtered].sort((a,b) => (b.jumlah||0) - (a.jumlah||0));
-  const totalAktif = list.filter(p => p.status === 'aktif').reduce((s,p) => s + (p.jumlah||0), 0);
+  const totalAktif = list.filter(p => p.status === 'aktif' || p.status === 'menunggak').reduce((s,p) => s + (p.jumlah||0), 0);
   const AKAD_COLOR = {murabahah:'#0e7490',mudharabah:'#7c3aed',musyarakah:'#b45309',ijarah:'#0f766e',istishna:'#be185d'};
   const AKAD_EMOJI = {murabahah:'🛒',mudharabah:'🤝',musyarakah:'🏗️',ijarah:'🔑',istishna:'🏭'};
   const rowsHTML = filtered.length ? filtered.map(p => {
@@ -31208,7 +31210,7 @@ function renderPembiayaanSyariahKeuanganHTML() {
   const _myIdPemb = (typeof isNasabah === 'function' && isNasabah() && window.AUTH && window.AUTH.user)
                     ? window.AUTH.user.nasabahId : null;
   const list = getPembSyData(); // sudah terfilter via getPembSyData jika nasabah
-  const aktif = list.filter(p=>p.status==='aktif');
+  const aktif = list.filter(p=>p.status==='aktif'||p.status==='menunggak');
   const total = aktif.reduce((s,p)=>s+(p.jumlah||0),0);
   const totalSemua = list.reduce((s,p)=>s+(p.jumlah||0),0);
   const lunasList = list.filter(p=>p.status==='lunas');
@@ -31409,7 +31411,7 @@ function buildPembSyDaftarHTML() {
   });
   if (st.sortDesc) filtered = [...filtered].sort((a,b)=>(b.jumlah||0)-(a.jumlah||0));
 
-  const totalAktif = list.filter(p=>p.status==='aktif').reduce((s,p)=>s+(p.jumlah||0),0);
+  const totalAktif = list.filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((s,p)=>s+(p.jumlah||0),0);
 
   const rowsHTML = filtered.length ? filtered.map(p=>{
     const AKAD_COLOR = {murabahah:'#0e7490',mudharabah:'#7c3aed',musyarakah:'#b45309',ijarah:'#0f766e',istishna:'#be185d'};
@@ -39077,15 +39079,15 @@ function _pdfGenNasabahPribadi(jsPDFCls) {
     return (DB.tabunganBerjangka || []).filter(function (t) { return t.kkId === id && t.status === 'aktif'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
   }
   function getPin(id) {
-    return (DB.pinjaman || []).filter(function (p) { return p.kkId === id && p.status === 'aktif'; }).reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
+    return (DB.pinjaman || []).filter(function (p) { return p.kkId === id && (p.status === 'aktif' || p.status === 'menunggak'); }).reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   }
   function getPem(id) {
-    var biasa = (DB.pembiayaan || []).filter(function (p) { return p.kkId === id && (p.status === 'aktif' || p.status === 'disetujui'); }).reduce(function (a, p) {
+    var biasa = (DB.pembiayaan || []).filter(function (p) { return p.kkId === id && (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'); }).reduce(function (a, p) {
       if (typeof p.sisaPokokRC === 'number') return a + p.sisaPokokRC;
       if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); }
       return a + (p.jumlah || 0);
     }, 0);
-    var syr = (DB.pembiayaanSyariah || []).filter(function (p) { return p.kkId === id && (p.status === 'aktif' || p.status === 'disetujui'); }).reduce(function (a, p) {
+    var syr = (DB.pembiayaanSyariah || []).filter(function (p) { return p.kkId === id && (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'); }).reduce(function (a, p) {
       if (typeof p.sisaPokok === 'number') return a + p.sisaPokok;
       if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); }
       return a + (p.jumlah || 0);
@@ -39162,12 +39164,12 @@ function _pdfGenLaporanPribadiNasabah(jsPDFCls, kkId) {
   var simLainnya = allSim.filter(function (t) { return !t.jenis || ['pokok','wajib','sukarela'].indexOf(t.jenis) < 0; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
   var totalSim = simPokok + simWajib + simSukarela + simLainnya;
 
-  var pinAktif = (DB.pinjaman || []).filter(function (p) { return p.kkId === kkId && p.status === 'aktif'; });
+  var pinAktif = (DB.pinjaman || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'menunggak'); });
   var totalPin = pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   var cicilanPin = pinAktif.reduce(function (a, p) { return a + Math.round((p.jumlah + (p.jumlah * (p.bunga || 0) / 100 * (p.tenor || 12) / 12)) / (p.tenor || 12)); }, 0);
 
-  var pemAktif = (DB.pembiayaan || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui'); });
-  var pemSyrAktif = (DB.pembiayaanSyariah || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui'); });
+  var pemAktif = (DB.pembiayaan || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'); });
+  var pemSyrAktif = (DB.pembiayaanSyariah || []).filter(function (p) { return p.kkId === kkId && (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'); });
   var totalPem = pemAktif.reduce(function (a, p) { if (typeof p.sisaPokokRC === 'number') return a + p.sisaPokokRC; if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); } return a + (p.jumlah || 0); }, 0);
   var totalPemSyr = pemSyrAktif.reduce(function (a, p) { if (typeof p.sisaPokok === 'number') return a + p.sisaPokok; if (p.jumlah && p.tenor) { var b = p.angsuranDibayar || 0; return a + Math.round((p.jumlah / p.tenor) * Math.max(0, p.tenor - b)); } return a + (p.jumlah || 0); }, 0);
   var totalPemAll = totalPem + totalPemSyr;
@@ -39274,10 +39276,12 @@ function _pdfGenKoperasi(jsPDFCls) {
   var saldoSimpanan = totalSimpanan - totalTarik;
   var pinAll = (DB.pinjaman || []).filter(function (p) { var d = new Date(p.tanggal || 0); return !isNaN(d) && d <= cutoff; });
   var pinAktif = pinAll.filter(function (p) { return p.status === 'aktif'; });
+  var pinMenunggak = pinAll.filter(function (p) { return p.status === 'menunggak'; });
   var pinLunas = pinAll.filter(function (p) { return p.status === 'lunas'; });
   var pinPengajuan = pinAll.filter(function (p) { return p.status === 'pengajuan'; });
   var pinDitolak = pinAll.filter(function (p) { return p.status === 'ditolak'; });
-  var totalPiutang = pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
+  var pinBerjalan = pinAktif.concat(pinMenunggak); // aktif + menunggak = masih piutang koperasi
+  var totalPiutang = pinBerjalan.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   var kasKoperasi = saldoSimpanan - totalPiutang;
   var totalAset = (DB.aset || []).reduce(function (a, b) { return a + (b.nilai || 0); }, 0);
   // Modal Koperasi → Kifayah: Koperasi hanya berperan sebagai investor/pemodal bagi
@@ -39285,7 +39289,7 @@ function _pdfGenKoperasi(jsPDFCls) {
   // sisi Kifayah punya kas & pembukuannya sendiri (lihat calcKasKifayah()).
   var modalKifayah = (DB.kifayahModal && typeof DB.kifayahModal.total === 'number') ? DB.kifayahModal.total : 0;
   var totalAktiva = saldoSimpanan + totalPiutang + totalAset + modalKifayah;
-  var totalBungaEstimasi = pinAktif.reduce(function (a, p) { return a + Math.round(p.jumlah * ((p.bunga || 0) / 100) * ((p.tenor || 12) / 12)); }, 0);
+  var totalBungaEstimasi = pinBerjalan.reduce(function (a, p) { return a + Math.round(p.jumlah * ((p.bunga || 0) / 100) * ((p.tenor || 12) / 12)); }, 0);
   var shuPct = ((DB.shuSetting && DB.shuSetting.pctSHU) || 70) / 100;
   var totalSHU = totalBungaEstimasi * shuPct;
   var phuPendapatanAll = (DB.phuPendapatan || []).filter(function (p) { var d = new Date(p.tanggal || p.createdAt || 0); return !isNaN(d) && d <= cutoff; });
@@ -39318,7 +39322,8 @@ function _pdfGenKoperasi(jsPDFCls) {
     { header: 'Sisa Pokok', key: 'sisaF', width: usableW * 0.22 }
   ];
   var rowsPin = [
-    { label: 'Aktif', count: String(pinAktif.length), totalF: _pdfFmt(pinAktif.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: _pdfFmt(totalPiutang), colorFn: null },
+    { label: 'Aktif', count: String(pinAktif.length), totalF: _pdfFmt(pinAktif.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: _pdfFmt(pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0)), colorFn: null },
+    { label: 'Menunggak', count: String(pinMenunggak.length), totalF: _pdfFmt(pinMenunggak.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: _pdfFmt(pinMenunggak.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0)) },
     { label: 'Lunas', count: String(pinLunas.length), totalF: _pdfFmt(pinLunas.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: _pdfFmt(0) },
     { label: 'Pengajuan', count: String(pinPengajuan.length), totalF: _pdfFmt(pinPengajuan.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: '—' },
     { label: 'Ditolak', count: String(pinDitolak.length), totalF: _pdfFmt(pinDitolak.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: '—' }
@@ -39349,7 +39354,7 @@ function _pdfGenRencoCapital(jsPDFCls) {
   var JENIS_LBL = { syariah: 'Murabahah', qardh: 'Qardh', 'modal-usaha': 'Mudharabah' };
   var syrRaw = (DB.pembiayaanSyariah || []).map(function (p) { return Object.assign({}, p, { _src: 'syariah', jenis: AKAD_LBL[p.akad] || p.akad || 'Syariah', sisaPokokRC: typeof p.sisaPokok === 'number' ? p.sisaPokok : undefined }); });
   var pemAll = [].concat(DB.pembiayaan || [], syrRaw);
-  var pemAktif = pemAll.filter(function (p) { return p.status === 'aktif' || p.status === 'disetujui'; });
+  var pemAktif = pemAll.filter(function (p) { return p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'; });
   var pemLunas = pemAll.filter(function (p) { return p.status === 'lunas'; });
   var pemPengaj = pemAll.filter(function (p) { return p.status === 'pengajuan'; });
   function sisaPokok(p) {
@@ -39367,6 +39372,7 @@ function _pdfGenRencoCapital(jsPDFCls) {
   var totalLunas = pemLunas.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
   var totalMargin = pemAktif.reduce(function (a, p) { return a + estimasiMargin(p); }, 0);
   var pctLunas = pemAll.length > 0 ? Math.round((pemLunas.length / pemAll.length) * 100) : 0;
+  var pemMenunggakCount = pemAktif.filter(function (p) { return p.status === 'menunggak'; }).length;
 
   var doc = new jsPDFCls({ orientation: 'p', unit: 'mm', format: 'a4' });
   var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
@@ -39380,23 +39386,26 @@ function _pdfGenRencoCapital(jsPDFCls) {
     { label: 'Sudah Lunas', value: _pdfFmt(totalLunas), color: [26, 71, 42] },
     { label: 'Est. Margin Aktif', value: _pdfFmt(totalMargin), color: [244, 169, 34] },
     { label: 'Kontrak Aktif', value: pemAktif.length + ' kontrak', color: [107, 33, 168] },
+    { label: 'Kontrak Menunggak', value: pemMenunggakCount + ' kontrak', color: [230, 57, 70] },
     { label: 'Tingkat Pelunasan', value: pctLunas + '%', color: [26, 71, 42] }
   ]);
 
   y = _pdfSection(doc, y, margin, 'Detail Pembiayaan Aktif', [107, 33, 168]);
   var cols = [
-    { header: 'Nasabah', key: 'nama', width: usableW * 0.28 },
-    { header: 'Akad', key: 'akad', width: usableW * 0.18 },
-    { header: 'Pokok', key: 'pokokF', width: usableW * 0.18 },
-    { header: 'Sisa Pokok', key: 'sisaF', width: usableW * 0.18, colorFn: function () { return [107, 33, 168]; } },
-    { header: 'Terbayar', key: 'pctF', width: usableW * 0.18 }
+    { header: 'Nasabah', key: 'nama', width: usableW * 0.24 },
+    { header: 'Akad', key: 'akad', width: usableW * 0.16 },
+    { header: 'Status', key: 'statusF', width: usableW * 0.14, colorFn: function (r) { return r._menunggak ? [230, 57, 70] : [45, 106, 79]; } },
+    { header: 'Pokok', key: 'pokokF', width: usableW * 0.16 },
+    { header: 'Sisa Pokok', key: 'sisaF', width: usableW * 0.16, colorFn: function () { return [107, 33, 168]; } },
+    { header: 'Terbayar', key: 'pctF', width: usableW * 0.14 }
   ];
   var rows = pemAktif.map(function (p) {
     var kk = (DB.nasabah || []).find(function (a) { return a.id === p.kkId; }) || { nama: p.nama || '—' };
     var sisa = sisaPokok(p);
     var pct = p.jumlah > 0 ? Math.round(((p.jumlah - sisa) / p.jumlah) * 100) : 0;
     var akadLabel = p._src === 'syariah' ? (AKAD_LBL[p.akad] || p.akad || 'Syariah') : (JENIS_LBL[p.jenis] || p.jenis || p.akad || '—');
-    return { nama: kk.nama, akad: akadLabel, pokokF: _pdfFmt(p.jumlah), sisaF: _pdfFmt(sisa), pctF: pct + '%' };
+    var menunggak = p.status === 'menunggak';
+    return { nama: kk.nama, akad: akadLabel, statusF: menunggak ? 'Menunggak' : 'Aktif', _menunggak: menunggak, pokokF: _pdfFmt(p.jumlah), sisaF: _pdfFmt(sisa), pctF: pct + '%' };
   });
   if (!rows.length) rows.push({ nama: 'Tidak ada pembiayaan aktif', akad: '', pokokF: '', sisaF: '', pctF: '' });
   rows.push({ nama: 'TOTAL', akad: '', pokokF: _pdfFmt(pemAktif.reduce(function (a, b) { return a + (b.jumlah || 0); }, 0)), sisaF: _pdfFmt(totalPiutang), pctF: '', _total: true });
@@ -39413,13 +39422,13 @@ function _pdfGenKeseluruhan(jsPDFCls) {
   var totalSimpanan = (DB.transaksi || []).filter(function (t) { return t.type === 'simpanan'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
   var totalTarik = (DB.transaksi || []).filter(function (t) { return t.type === 'tarik-sukarela'; }).reduce(function (a, b) { return a + (b.jumlah || 0); }, 0);
   var saldoSimpanan = totalSimpanan - totalTarik;
-  var pinAktif = (DB.pinjaman || []).filter(function (p) { return p.status === 'aktif'; });
+  var pinAktif = (DB.pinjaman || []).filter(function (p) { return p.status === 'aktif' || p.status === 'menunggak'; });
   var pinLunas = (DB.pinjaman || []).filter(function (p) { return p.status === 'lunas'; });
   var piutangPin = pinAktif.reduce(function (a, b) { return a + (b.sisaPokok || 0); }, 0);
   var bungaPin = pinAktif.reduce(function (a, p) { return a + (p.jumlah * (p.bunga || 0) / 100 * (p.tenor || 12) / 12); }, 0);
   var syrAllK = (DB.pembiayaanSyariah || []).map(function (p) { return Object.assign({}, p, { _src: 'syariah', sisaPokokRC: typeof p.sisaPokok === 'number' ? p.sisaPokok : undefined }); });
   var pemAll = [].concat(DB.pembiayaan || [], syrAllK);
-  var pemAktif = pemAll.filter(function (p) { return p.status === 'aktif' || p.status === 'disetujui'; });
+  var pemAktif = pemAll.filter(function (p) { return p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'; });
   function sisaPokok(p) {
     if (typeof p.sisaPokokRC === 'number') return p.sisaPokokRC;
     if (typeof p.sisaPokok === 'number') return p.sisaPokok;
@@ -39939,7 +39948,8 @@ function _renderLaporanKoperasiNasabahView() {
   var totalAnggota   = (DB.nasabah||[]).length;
   var totalSimpanan  = (DB.transaksi||[]).filter(function(t){return t.type==='simpanan';}).reduce(function(a,b){return a+(b.jumlah||0);},0)
                      - (DB.transaksi||[]).filter(function(t){return t.type==='tarik-sukarela';}).reduce(function(a,b){return a+(b.jumlah||0);},0);
-  var pinAktif       = (DB.pinjaman||[]).filter(function(p){return p.status==='aktif';});
+  var pinAktif       = (DB.pinjaman||[]).filter(function(p){return p.status==='aktif'||p.status==='menunggak';});
+  var pinMenunggakCount = pinAktif.filter(function(p){return p.status==='menunggak';}).length;
   var totalPiutang   = pinAktif.reduce(function(a,b){return a+(b.sisaPokok||0);},0);
   var kasKoperasi    = totalSimpanan - totalPiutang;
   var phuTotal       = (DB.phuPendapatan||[]).reduce(function(a,b){return a+(b.jumlah||0);},0)
@@ -39996,7 +40006,7 @@ function _renderLaporanKoperasiNasabahView() {
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 12px">'
     + _kCard('💵 Dana Simpanan', fmt2(totalSimpanan), 'Total bersih', '#2d6a4f')
     + _kCard('💰 Kas Tersedia', fmt2(kasKoperasi), kasKoperasi>=0?'Aman':'Perhatian', kasKoperasi>=0?'#2d6a4f':'#e63946')
-    + _kCard('📤 Piutang Aktif', fmt2(totalPiutang), pinAktif.length+' pinjaman', '#e63946')
+    + _kCard('📤 Piutang Aktif', fmt2(totalPiutang), pinAktif.length+' pinjaman'+(pinMenunggakCount>0?' ('+pinMenunggakCount+' menunggak)':''), '#e63946')
     + _kCard('🏆 SHU Terealisasi', fmt2(totalSHU), Math.round(shuPct*100)+'% \u00b7 sesuai cicilan berjalan', '#7c3aed')
   + '</div>';
 
@@ -40072,11 +40082,11 @@ function renderLaporanBulananHTML() {
 
   // ── Data Pinjaman: gabungan DB.pinjaman + DB.pembiayaan (Renco Capital) ──
   // DB.pinjaman — pinjaman biasa (koperasi)
-  const pinAktif  = (DB.pinjaman||[]).filter(p=>p.status==='aktif');
+  const pinAktif  = (DB.pinjaman||[]).filter(p=>p.status==='aktif'||p.status==='menunggak');
   const pinLunas  = (DB.pinjaman||[]).filter(p=>p.status==='lunas');
 
   // DB.pembiayaan — pembiayaan Renco Capital (status aktif/disetujui)
-  const pemAktif  = (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='disetujui');
+  const pemAktif  = (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');
   const pemLunas  = (DB.pembiayaan||[]).filter(p=>p.status==='lunas');
 
   // Sisa pokok: pinjaman pakai sisaPokok, pembiayaan pakai sisaPokokRC (atau hitung dari angsuranDibayar)
@@ -40162,12 +40172,12 @@ function renderLaporanBulananHTML() {
     nama:a.nama, id:a.id,
     sim: totalSimpananKK(a.id),
     pin: (()=>{
-      const p1 = (DB.pinjaman||[]).filter(p=>p.kkId===a.id&&p.status==='aktif').reduce((s,p)=>s+(p.sisaPokok||0),0);
-      const p2 = (DB.pembiayaan||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='disetujui')).reduce((s,p)=>s+sisaPokokPem(p),0);
+      const p1 = (DB.pinjaman||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='menunggak')).reduce((s,p)=>s+(p.sisaPokok||0),0);
+      const p2 = (DB.pembiayaan||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).reduce((s,p)=>s+sisaPokokPem(p),0);
       return p1+p2;
     })(),
-    pinAktif: (DB.pinjaman||[]).filter(p=>p.kkId===a.id&&p.status==='aktif').length
-            + (DB.pembiayaan||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='disetujui')).length,
+    pinAktif: (DB.pinjaman||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='menunggak')).length
+            + (DB.pembiayaan||[]).filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).length,
     pinLunas: (DB.pinjaman||[]).filter(p=>p.kkId===a.id&&p.status==='lunas').length
             + (DB.pembiayaan||[]).filter(p=>p.kkId===a.id&&p.status==='lunas').length,
   })).filter(x=>x.sim>0||x.pin>0).sort((a,b)=>b.sim-a.sim);
@@ -40511,7 +40521,7 @@ window.renderTrendChart = function(period, btnEl) {
 
 function renderLaporanKoperasiHTML() {
   const totalSimpanan = (DB.transaksi||[]).filter(t=>t.type==='simpanan').reduce((a,b)=>a+b.jumlah,0);
-  const totalPinjaman = (DB.pinjaman||[]).filter(p=>p.status==='aktif').reduce((a,b)=>a+b.jumlah,0);
+  const totalPinjaman = (DB.pinjaman||[]).filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((a,b)=>a+b.jumlah,0);
   const totalAset = (DB.aset||[]).reduce((a,b)=>a+b.nilai,0);
   const totalBunga = (DB.pinjaman||[]).reduce((a,p)=>a+(p.jumlah*p.bunga/100*p.tenor/12),0);
   const shuPct = (DB.shuSetting?.pctSHU||70)/100;
@@ -41930,7 +41940,7 @@ const PMB_LABELS = { syariah:'Murabahah (Jual Beli)', qardh:'Qardh (Pinjaman Keb
 
 function renderPembiayaanStats() {
   const p = DB.pembiayaan || [];
-  const aktif = p.filter(x=>x.status==='aktif'||x.status==='disetujui');
+  const aktif = p.filter(x=>x.status==='aktif'||x.status==='disetujui'||x.status==='menunggak');
   const lunas = p.filter(x=>x.status==='lunas');
   const syariah = aktif.filter(x=>x.jenis==='syariah');
   const konv = aktif.filter(x=>x.jenis==='qardh');
@@ -41964,7 +41974,7 @@ function renderPembiayaanDaftar() {
     const angsuran = item.jumlah && item.tenor ? (item.jumlah/item.tenor + item.jumlah*(item.bunga/100)/12) : 0;
     const angsuranDibayar = item.angsuranDibayar || 0;
     const pct = item.tenor > 0 ? Math.round((angsuranDibayar / item.tenor) * 100) : 0;
-    const showProgress = item.status === 'aktif' && item.tenor > 0;
+    const showProgress = (item.status === 'aktif' || item.status === 'menunggak') && item.tenor > 0;
     html += `<div class="pmb-card" onclick="lihatDetailPembiayaan('${item.id}')">
       <div class="pmb-icon ${item.jenis}">${icon}</div>
       <div class="pmb-info" style="flex:1;min-width:0">
@@ -41980,7 +41990,7 @@ function renderPembiayaanDaftar() {
       <div style="text-align:right;flex-shrink:0">
         <div class="pmb-amount">${fmt(item.jumlah||0)}</div>
         <div class="pmb-status ${sc}" style="display:inline-block;margin-top:5px">${statusText[item.status]||'Pengajuan'}</div>
-        ${angsuran && item.status==='aktif' ? '<div style="font-size:10px;color:var(--text-soft);margin-top:3px">~'+fmt(angsuran)+'/bln</div>' : ''}
+        ${angsuran && (item.status==='aktif'||item.status==='menunggak') ? '<div style="font-size:10px;color:var(--text-soft);margin-top:3px">~'+fmt(angsuran)+'/bln</div>' : ''}
       </div>
     </div>`;
   });
@@ -42228,7 +42238,7 @@ function renderPembiayaanPembayaranRC() {
   if (!wrap) return;
 
   // Build angsuran RC list inline
-  var allPmb = (DB.pembiayaanSyariah||[]).filter(function(p){ return p.status==='aktif'; });
+  var allPmb = (DB.pembiayaanSyariah||[]).filter(function(p){ return p.status==='aktif'||p.status==='menunggak'; });
   var today = new Date().toISOString().slice(0,10);
   var nowM  = today.slice(0,7);
 
@@ -42335,7 +42345,7 @@ function renderPembiayaanNasabah(filterStatus) {
   // Summary counts
   const nasabahDenganPmb = [...new Set(pembiayaan.map(p=>p.kkId))].length;
   const nasabahBelumPmb  = nasabah.length - nasabahDenganPmb;
-  const totalAktif       = pembiayaan.filter(p=>p.status==='aktif'||p.status==='disetujui').length;
+  const totalAktif       = pembiayaan.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak').length;
   const totalPengajuan   = pembiayaan.filter(p=>p.status==='pengajuan').length;
 
   // Active filter
@@ -42344,11 +42354,11 @@ function renderPembiayaanNasabah(filterStatus) {
   // Per-nasabah data
   const rows = nasabah.map(a => {
     const pmbs     = pembiayaan.filter(p=>p.kkId===a.id);
-    const aktif    = pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui');
+    const aktif    = pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');
     const pengajuan= pmbs.filter(p=>p.status==='pengajuan');
     const lunas    = pmbs.filter(p=>p.status==='lunas');
     const totalSim = transaksi.filter(t=>t.kkId===a.id&&t.type==='simpanan').reduce((s,t)=>s+t.jumlah,0);
-    const totalPin = pinjaman.filter(p=>p.kkId===a.id&&p.status==='aktif').reduce((s,p)=>s+(p.sisaPokok||0),0);
+    const totalPin = pinjaman.filter(p=>p.kkId===a.id&&(p.status==='aktif'||p.status==='menunggak')).reduce((s,p)=>s+(p.sisaPokok||0),0);
     const totalPmb = aktif.reduce((s,p)=>s+(p.jumlah||0),0);
     const hasAktif = aktif.length > 0;
     const hasPengajuan = pengajuan.length > 0;
@@ -42592,7 +42602,7 @@ function _renderDetailPembiayaan(item) {
         </button>
         <div style="font-size:10px;color:var(--text-soft);text-align:center;margin-top:6px">Klik untuk memulai pencairan & angsuran</div>
       </div>`;
-  } else if(item.status === 'aktif') {
+  } else if(item.status === 'aktif' || item.status === 'menunggak') {
     actionHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <button onclick="catatAngsuranPembiayaan('${item.id}')" style="padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#7b2d8b,#9b59b6);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
@@ -42615,7 +42625,7 @@ function _renderDetailPembiayaan(item) {
   const angsuranDibayar = item.angsuranDibayar || 0;
   const sisaAngsuran = Math.max(0, (item.tenor||0) - angsuranDibayar);
   const pctAngsuran = item.tenor > 0 ? Math.round((angsuranDibayar / item.tenor) * 100) : 0;
-  const angsuranTrackerHTML = item.status === 'aktif' ? `
+  const angsuranTrackerHTML = (item.status === 'aktif' || item.status === 'menunggak') ? `
     <div style="background:rgba(123,45,139,0.06);border:1.5px solid rgba(123,45,139,0.15);border-radius:14px;padding:14px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:700;color:#7b2d8b;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px">📊 Progress Angsuran</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
@@ -43043,9 +43053,9 @@ function showNasabahInfoPembiayaan(kkId) {
   const a = (DB.nasabah||[]).find(x=>x.id===kkId);
   if(!a) { card.style.display='none'; return; }
   const totalSim = (DB.transaksi||[]).filter(t=>t.kkId===kkId&&t.type==='simpanan').reduce((s,t)=>s+t.jumlah,0);
-  const totalPin = (DB.pinjaman||[]).filter(p=>p.kkId===kkId&&p.status==='aktif').reduce((s,p)=>s+(p.sisaPokok||0),0);
+  const totalPin = (DB.pinjaman||[]).filter(p=>p.kkId===kkId&&(p.status==='aktif'||p.status==='menunggak')).reduce((s,p)=>s+(p.sisaPokok||0),0);
   const pmbs = (DB.pembiayaan||[]).filter(p=>p.kkId===kkId);
-  const aktifPmb = pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui').reduce((s,p)=>s+(p.jumlah||0),0);
+  const aktifPmb = pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak').reduce((s,p)=>s+(p.jumlah||0),0);
   const kapasitas = Math.max(0, totalSim*3 - totalPin - aktifPmb);
   const initials = a.nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   card.style.display = 'block';
@@ -43072,7 +43082,7 @@ function showNasabahInfoPembiayaan(kkId) {
         <div style="font-size:12px;font-weight:800;color:#7b2d8b;margin-top:3px">${fmt(kapasitas)}</div>
       </div>
     </div>
-    ${pmbs.length ? `<div style="margin-top:10px;font-size:10px;color:var(--text-soft);font-weight:700">📋 ${pmbs.length} riwayat pembiayaan sebelumnya · ${pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui').length} aktif</div>` : ''}
+    ${pmbs.length ? `<div style="margin-top:10px;font-size:10px;color:var(--text-soft);font-weight:700">📋 ${pmbs.length} riwayat pembiayaan sebelumnya · ${pmbs.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak').length} aktif</div>` : ''}
   `;
 }
 
@@ -45621,7 +45631,7 @@ function renderCicilanHTML() {
         <label>Pilih Nasabah</label>
         <select class="cicilan-dl-select" id="cicilanDlNasabahSelect" onchange="_onCicilanDlNasabahChange()">
           <option value="">— Pilih Nasabah —</option>
-          ${DB.nasabah.filter(n=>DB.pinjaman.some(p=>p.kkId===n.id&&p.status==='aktif')).map(n=>`<option value="${n.id}">${n.nama}</option>`).join('')}
+          ${DB.nasabah.filter(n=>DB.pinjaman.some(p=>p.kkId===n.id&&(p.status==='aktif'||p.status==='menunggak'))).map(n=>`<option value="${n.id}">${n.nama}</option>`).join('')}
         </select>
       </div>
       ` : `
@@ -45681,7 +45691,7 @@ function initCicilanAnimations() {
 // Build printable cicilan report HTML
 function buildCicilanPrintHTML(filter, kkIdFilter) {
   const today = new Date(); today.setHours(0,0,0,0);
-  const allPin = DB.pinjaman.filter(p => p.status === 'aktif' && (!kkIdFilter || p.kkId === kkIdFilter));
+  const allPin = DB.pinjaman.filter(p => (p.status === 'aktif' || p.status === 'menunggak') && (!kkIdFilter || p.kkId === kkIdFilter));
 
   function generateSchedule(p) {
     const cicilan = p.tenor > 0 ? Math.round((p.jumlah + p.jumlah*(p.bunga/100)*(p.tenor/12)) / p.tenor) : 0;
@@ -45966,7 +45976,7 @@ async function downloadCicilanPDF(kkIdFilter) {
     }
 
     const today = new Date(); today.setHours(0,0,0,0);
-    const allPin = DB.pinjaman.filter(p => p.status === 'aktif' && (!kkIdFilter || p.kkId === kkIdFilter));
+    const allPin = DB.pinjaman.filter(p => (p.status === 'aktif' || p.status === 'menunggak') && (!kkIdFilter || p.kkId === kkIdFilter));
 
     function generateSchedule(p) {
       const cicilan = p.tenor > 0 ? Math.round((p.jumlah + p.jumlah*(p.bunga/100)*(p.tenor/12)) / p.tenor) : 0;
@@ -46664,7 +46674,7 @@ function openCatatAngsuranManual() {
   const sel = document.getElementById('caAngPmbSelect');
   if (sel) {
     sel.innerHTML = '<option value="">— Pilih Pembiayaan —</option>' +
-      (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='disetujui').map(p=>{
+      (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak').map(p=>{
         const kk=getNasabah(p.kkId);
         return `<option value="${p.id}">${kk?kk.nama:'?'} — ${p.tujuan||'Pembiayaan'} (ke-${(p.angsuranDibayar||0)+1}/${p.tenor})</option>`;
       }).join('');
@@ -46716,7 +46726,7 @@ async function downloadAngsuranReport() {
 
 function buildAngsuranPrintHTML() {
   const today = new Date();
-  const allPmb = (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='lunas');
+  const allPmb = (DB.pembiayaan||[]).filter(p=>p.status==='aktif'||p.status==='menunggak'||p.status==='lunas');
   const rows = allPmb.map(pmb => {
     const kk = getNasabah(pmb.kkId);
     const dibayar = pmb.angsuranDibayar||0;
@@ -46906,7 +46916,7 @@ async function _downloadRcPDF(kkIdFilter) {
 function _buildRcPrintHTML(kkIdFilter) {
   var today = new Date(); today.setHours(0,0,0,0);
   var allPmb = (DB.pembiayaan || []).filter(function(p) {
-    return (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'lunas') && (!kkIdFilter || p.kkId === kkIdFilter);
+    return (p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak' || p.status === 'lunas') && (!kkIdFilter || p.kkId === kkIdFilter);
   });
 
   // Helper: hitung schedule lengkap per pembiayaan
@@ -47237,8 +47247,9 @@ renderPinjamanHTML = function() {
     ? (DB.pinjaman || []).filter(p => p.kkId === _pinMyId)
     : (DB.pinjaman || []);
   const aktifList  = semuaPin.filter(p => p.status==='aktif');
+  const menunggakList = semuaPin.filter(p => p.status==='menunggak');
   const lunasList  = semuaPin.filter(p => p.status==='lunas');
-  const grandAktif = aktifList.reduce((s,p) => s+(p.sisaPokok||0), 0);
+  const grandAktif = aktifList.concat(menunggakList).reduce((s,p) => s+(p.sisaPokok||0), 0);
   const grandPokok = semuaPin.reduce((s,p) => s+(p.jumlah||0), 0);
 
   // Ambil panel lama tanpa hero
@@ -47253,12 +47264,16 @@ renderPinjamanHTML = function() {
     <div style="position:absolute;right:-12px;top:-12px;font-size:110px;opacity:0.07;line-height:1;pointer-events:none">📋</div>
     <div class="keu-hero-label">${_pinMyId ? 'Sisa Pinjaman Saya' : 'Total Sisa Pinjaman Aktif'}</div>
     <div class="keu-hero-amount">${fmt(grandAktif)}</div>
-    <div class="keu-hero-sub">${aktifList.length} pinjaman aktif · ${lunasList.length} lunas · ${semuaPin.length} total</div>
+    <div class="keu-hero-sub">${aktifList.length} pinjaman aktif${menunggakList.length>0?' · '+menunggakList.length+' menunggak':''} · ${lunasList.length} lunas · ${semuaPin.length} total</div>
     <div class="keu-hero-pills">
       <div class="keu-hero-pill">
         <div class="keu-hero-pill-val">${aktifList.length}</div>
         <div class="keu-hero-pill-lbl">Aktif</div>
       </div>
+      ${menunggakList.length>0?`<div class="keu-hero-pill">
+        <div class="keu-hero-pill-val" style="color:#ff8a8a">${menunggakList.length}</div>
+        <div class="keu-hero-pill-lbl">Menunggak</div>
+      </div>`:''}
       <div class="keu-hero-pill">
         <div class="keu-hero-pill-val">${lunasList.length}</div>
         <div class="keu-hero-pill-lbl">Lunas</div>
@@ -48913,7 +48928,7 @@ function renderLaporanKeuanganSyariah(){
 
   // ── NERACA (Balance Sheet) ──
   const totalSimpanan = txn.filter(t=>t.type==='simpanan').reduce((s,t)=>s+(t.jumlah||0),0);
-  const totalPinjaman = pinjaman.filter(p=>p.status==='aktif').reduce((s,p)=>s+(p.sisaPokok||p.jumlah||0),0);
+  const totalPinjaman = pinjaman.filter(p=>p.status==='aktif'||p.status==='menunggak').reduce((s,p)=>s+(p.sisaPokok||p.jumlah||0),0);
   const totalModalCatat = modal.reduce((s,x)=>s+(x.jumlah||0),0);
   const totalMdhSalur = mdh.reduce((s,x)=>s+(x.jumlah||0),0);
   const totalBhKop = bh.reduce((s,x)=>s+(x.bagianKoperasi||0),0);
@@ -49221,10 +49236,10 @@ function calcCapital() {
     .reduce(function(s, m){ return s + (m.jumlah || 0); }, 0);
 
   var totalDisalurkan = pembiayaan
-    .filter(function(p){ return p.status === 'aktif' || p.status === 'disetujui'; })
+    .filter(function(p){ return p.status === 'aktif' || p.status === 'disetujui' || p.status === 'menunggak'; })
     .reduce(function(s, p){ return s + (p.jumlah || 0); }, 0);
   totalDisalurkan += pembiayaanSy
-    .filter(function(p){ return p.status === 'aktif'; })
+    .filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; })
     .reduce(function(s, p){ return s + (p.jumlah || 0); }, 0);
 
   var sisaPool    = Math.max(0, totalPool - totalDisalurkan);
@@ -49463,7 +49478,7 @@ function renderRencoCapitalHTML() {
   // agar bisa dipakai oleh buildSchedule & _rcHitungCicilanBulanIni tanpa perubahan logika
   var AKAD_LBL = {murabahah:'Murabahah',mudharabah:'Mudharabah',musyarakah:'Musyarakah',ijarah:'Ijarah',istishna:"Istishna'",qardh:'Qardh'};
   var syariahAdapted = DB.pembiayaanSyariah
-    .filter(function(p){ return p.status === 'aktif'; })
+    .filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; })
     .map(function(p){
       var tenor      = Math.max(1, p.tenor || 12);
       var dibayar    = p.angsuranDibayar || 0;
@@ -49928,8 +49943,8 @@ function _rcPopulateBayarSelect(pmbId) {
   var sel = document.getElementById('rcBayarPmbSelect');
   if (!sel) return;
   var AKAD_LBL = {murabahah:'Murabahah',mudharabah:'Mudharabah',musyarakah:'Musyarakah',ijarah:'Ijarah',istishna:"Istishna'",qardh:'Qardh'};
-  var aktif = (DB.pembiayaan || []).filter(function(p){ return p.status === 'aktif'; });
-  var syariah = (DB.pembiayaanSyariah || []).filter(function(p){ return p.status === 'aktif'; });
+  var aktif = (DB.pembiayaan || []).filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; });
+  var syariah = (DB.pembiayaanSyariah || []).filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; });
 
   var opts = aktif.map(function(p){
     var kk = getNasabah(p.kkId);
@@ -51567,7 +51582,7 @@ function buildPembSyDaftarHTMLForMember(kkId) {
   });
   var fmt = window.fmt || function(n){ return 'Rp '+n; };
   var fmtDate = window.fmtDate || function(d){ return d; };
-  var aktif = memberList.filter(function(p) { return p.status === 'aktif'; });
+  var aktif = memberList.filter(function(p) { return p.status === 'aktif' || p.status === 'menunggak'; });
   var lunas = memberList.filter(function(p) { return p.status === 'lunas'; });
   var AKAD_COLOR = {murabahah:'#0e7490',mudharabah:'#7c3aed',musyarakah:'#b45309',ijarah:'#0f766e',istishna:'#be185d'};
   var AKAD_EMOJI = {murabahah:'🛒',mudharabah:'🤝',musyarakah:'🏗️',ijarah:'🔑',istishna:'🏭'};
@@ -53498,15 +53513,15 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     }
     function _getPin(id) {
       return typeof totalPinjamanAktifKK === 'function' ? totalPinjamanAktifKK(id) :
-        (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&p.status==='aktif';}).reduce(function(a,b){return a+(b.sisaPokok||0);},0);
+        (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='menunggak');}).reduce(function(a,b){return a+(b.sisaPokok||0);},0);
     }
     function _getPem(id) {
-      var biasa = (DB.pembiayaan||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui');}).reduce(function(a,p){
+      var biasa = (DB.pembiayaan||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');}).reduce(function(a,p){
         if (typeof p.sisaPokokRC === 'number') return a + p.sisaPokokRC;
         if (p.jumlah && p.tenor) { var b = p.angsuranDibayar||0; return a + Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b)); }
         return a + (p.jumlah||0);
       }, 0);
-      var syr = (DB.pembiayaanSyariah||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui');}).reduce(function(a,p){
+      var syr = (DB.pembiayaanSyariah||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');}).reduce(function(a,p){
         if (typeof p.sisaPokok === 'number') return a + p.sisaPokok;
         if (p.jumlah && p.tenor) { var b = p.angsuranDibayar||0; return a + Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b)); }
         return a + (p.jumlah||0);
@@ -53652,16 +53667,16 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       return (DB.tabunganBerjangka||[]).filter(t=>t.kkId===id&&t.status==='aktif').reduce((a,b)=>a+(b.jumlah||0),0);
     }
     function getPin(id) {
-      return (DB.pinjaman||[]).filter(p=>p.kkId===id&&p.status==='aktif').reduce((a,b)=>a+(b.sisaPokok||0),0);
+      return (DB.pinjaman||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='menunggak')).reduce((a,b)=>a+(b.sisaPokok||0),0);
     }
     function getPem(id) {
       // Sisa pokok pembiayaan RC (reguler + syariah)
-      const biasa = (DB.pembiayaan||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui')).reduce((a,p)=>{
+      const biasa = (DB.pembiayaan||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).reduce((a,p)=>{
         if(typeof p.sisaPokokRC==='number') return a+p.sisaPokokRC;
         if(p.jumlah&&p.tenor){const b=p.angsuranDibayar||0;return a+Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b));}
         return a+(p.jumlah||0);
       },0);
-      const syr = (DB.pembiayaanSyariah||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui')).reduce((a,p)=>{
+      const syr = (DB.pembiayaanSyariah||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).reduce((a,p)=>{
         if(typeof p.sisaPokok==='number') return a+p.sisaPokok;
         if(p.jumlah&&p.tenor){const b=p.angsuranDibayar||0;return a+Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b));}
         return a+(p.jumlah||0);
@@ -53669,12 +53684,12 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       return biasa+syr;
     }
     function getCicilan(id) {
-      const cicilanPin = (DB.pinjaman||[]).filter(p=>p.kkId===id&&p.status==='aktif').reduce((a,b)=>{
+      const cicilanPin = (DB.pinjaman||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='menunggak')).reduce((a,b)=>{
         const ang = Math.round((b.jumlah+(b.jumlah*(b.bunga||0)/100*(b.tenor||12)/12))/((b.tenor||12)));
         return a+ang;
       },0);
-      const cicilanPem = (DB.pembiayaan||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui')).reduce((a,p)=>a+(p.cicilanPerBln||0),0);
-      const cicilanSyr = (DB.pembiayaanSyariah||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui')).reduce((a,p)=>a+(p.cicilan||0),0);
+      const cicilanPem = (DB.pembiayaan||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).reduce((a,p)=>a+(p.cicilanPerBln||0),0);
+      const cicilanSyr = (DB.pembiayaanSyariah||[]).filter(p=>p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak')).reduce((a,p)=>a+(p.cicilan||0),0);
       return cicilanPin+cicilanPem+cicilanSyr;
     }
     function getTxnBulan(id) {
@@ -53977,7 +53992,9 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     // Catatan: status pinjaman (aktif/lunas/dsb) mengikuti status TERKINI di sistem,
     // karena riwayat status per-bulan tidak disimpan terpisah.
     const pinAll       = (DB.pinjaman || []).filter(p=>{ const d=new Date(p.tanggal||0); return !isNaN(d) && d<=cutoff; });
-    const pinAktif     = pinAll.filter(p=>p.status==='aktif');
+    const pinAktifOnly = pinAll.filter(p=>p.status==='aktif');
+    const pinMenunggak = pinAll.filter(p=>p.status==='menunggak');
+    const pinAktif     = pinAktifOnly.concat(pinMenunggak); // aktif + menunggak = masih tercatat sebagai piutang
     const pinLunas     = pinAll.filter(p=>p.status==='lunas');
     const pinPengajuan = pinAll.filter(p=>p.status==='pengajuan');
     const pinDitolak   = pinAll.filter(p=>p.status==='ditolak');
@@ -54038,7 +54055,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
     // ── Ringkasan pinjaman per status ──
     const pinStatusRows = [
-      {label:'🟢 Aktif',    count:pinAktif.length,     total:pinAktif.reduce((a,b)=>a+(b.jumlah||0),0),    sisa:totalPiutang,       color:'#2d6a4f'},
+      {label:'🟢 Aktif',    count:pinAktifOnly.length, total:pinAktifOnly.reduce((a,b)=>a+(b.jumlah||0),0),sisa:pinAktifOnly.reduce((a,b)=>a+(b.sisaPokok||0),0), color:'#2d6a4f'},
+      {label:'🔴 Menunggak',count:pinMenunggak.length, total:pinMenunggak.reduce((a,b)=>a+(b.jumlah||0),0),sisa:pinMenunggak.reduce((a,b)=>a+(b.sisaPokok||0),0), color:'#e63946'},
       {label:'🏆 Lunas',    count:pinLunas.length,     total:pinLunas.reduce((a,b)=>a+(b.jumlah||0),0),    sisa:0,                  color:'#b07a00'},
       {label:'⏳ Pengajuan',count:pinPengajuan.length, total:pinPengajuan.reduce((a,b)=>a+(b.jumlah||0),0),sisa:0,                  color:'#4361ee'},
       {label:'❌ Ditolak',  count:pinDitolak.length,   total:pinDitolak.reduce((a,b)=>a+(b.jumlah||0),0),  sisa:0,                  color:'#e63946'},
@@ -54084,7 +54102,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
             <div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700">Anggota</div>
           </div>
           <div style="text-align:center;background:rgba(255,255,255,0.07);border-radius:9px;padding:7px 4px">
-            <div style="font-size:16px;font-weight:800;color:#ffd166">${pinAktif.length}</div>
+            <div style="font-size:16px;font-weight:800;color:#ffd166">${pinAktif.length}${pinMenunggak.length>0?` <span style="font-size:9px;color:#ff8a8a">(${pinMenunggak.length} 🔴)</span>`:''}</div>
             <div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700">Pin Aktif</div>
           </div>
           <div style="text-align:center;background:rgba(255,255,255,0.07);border-radius:9px;padding:7px 4px">
@@ -54304,7 +54322,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       sisaPokokRC: typeof p.sisaPokok==='number' ? p.sisaPokok : undefined,
     }));
     const pemAll    = [...(DB.pembiayaan||[]), ...syrRaw];
-    const pemAktif  = pemAll.filter(p=>p.status==='aktif'||p.status==='disetujui');
+    const pemAktif  = pemAll.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');
+    const pemMenunggak = pemAll.filter(p=>p.status==='menunggak');
     const pemLunas  = pemAll.filter(p=>p.status==='lunas');
     const pemPengaj = pemAll.filter(p=>p.status==='pengajuan');
 
@@ -54365,7 +54384,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
           <div style="text-align:center;background:rgba(255,255,255,0.08);border-radius:9px;padding:7px">
             <div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700">Aktif</div>
-            <div style="font-size:16px;font-weight:800;color:#ffd166">${pemAktif.length}</div>
+            <div style="font-size:16px;font-weight:800;color:#ffd166">${pemAktif.length}${pemMenunggak.length>0?` <span style="font-size:9px;color:#ff8a8a">(${pemMenunggak.length}🔴)</span>`:''}</div>
           </div>
           <div style="text-align:center;background:rgba(255,255,255,0.08);border-radius:9px;padding:7px">
             <div style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:700">Lunas</div>
@@ -54380,7 +54399,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
       <!-- Stats -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 12px">
-        ${_statCard('Piutang Aktif',_fmt(totalPiutang),'sisa pokok','#6b21a8','📊')}
+        ${_statCard('Piutang Aktif',_fmt(totalPiutang),pemMenunggak.length>0?(pemMenunggak.length+' menunggak'):'sisa pokok','#6b21a8','📊')}
         ${_statCard('Sudah Lunas',_fmt(totalLunas),'kumulatif','#2d6a4f','✅')}
         ${_statCard('Est. Margin',_fmt(totalMargin),'total aktif','#f4a922','💰')}
         ${_statCard('Angsuran Bulan Ini',_fmt(angsMasuk),months[m]+' '+y,'#059669','💳')}
@@ -54458,7 +54477,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     const saldoSimpanan  = totalSimpanan - totalTarik;
 
     // Koperasi pinjaman
-    const pinAktif = (DB.pinjaman||[]).filter(p=>p.status==='aktif');
+    const pinAktif = (DB.pinjaman||[]).filter(p=>p.status==='aktif'||p.status==='menunggak');
+    const pinMenunggak = (DB.pinjaman||[]).filter(p=>p.status==='menunggak');
     const pinLunas = (DB.pinjaman||[]).filter(p=>p.status==='lunas');
     const piutangPin = pinAktif.reduce((a,b)=>a+(b.sisaPokok||0),0);
     const bungaPin   = pinAktif.reduce((a,p)=>a+(p.jumlah*(p.bunga||0)/100*(p.tenor||12)/12),0);
@@ -54466,7 +54486,8 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     // Renco Capital — gabungkan DB.pembiayaan + DB.pembiayaanSyariah
     const syrAllK = (DB.pembiayaanSyariah||[]).map(p=>Object.assign({},p,{_src:'syariah',sisaPokokRC:typeof p.sisaPokok==='number'?p.sisaPokok:undefined}));
     const pemAll    = [...(DB.pembiayaan||[]),...syrAllK];
-    const pemAktif  = pemAll.filter(p=>p.status==='aktif'||p.status==='disetujui');
+    const pemAktif  = pemAll.filter(p=>p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');
+    const pemMenunggak = pemAll.filter(p=>p.status==='menunggak');
     function sisaPokok(p){
       if(typeof p.sisaPokokRC==='number')return p.sisaPokokRC;
       if(typeof p.sisaPokok==='number')return p.sisaPokok;
@@ -54519,11 +54540,11 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           
           <div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 12px">
             <div style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700">📤 Pinjaman Koperasi</div>
-            <div style="font-size:14px;font-weight:800;color:#ffd166;margin-top:2px">${pinAktif.length} aktif · ${pinLunas.length} lunas</div>
+            <div style="font-size:14px;font-weight:800;color:#ffd166;margin-top:2px">${pinAktif.length} aktif · ${pinLunas.length} lunas${pinMenunggak.length>0?` · <span style="color:#ff8a8a">${pinMenunggak.length} menunggak</span>`:''}</div>
           </div>
           <div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 12px">
             <div style="font-size:9px;color:rgba(255,255,255,0.4);font-weight:700">🏦 Renco Capital</div>
-            <div style="font-size:14px;font-weight:800;color:#cc99ff;margin-top:2px">${pemAktif.length} aktif · ${pemAll.filter(p=>p.status==='lunas').length} lunas${(DB.pembiayaanSyariah||[]).length>0?' ('+String((DB.pembiayaanSyariah||[]).length)+' syariah)':''}</div>
+            <div style="font-size:14px;font-weight:800;color:#cc99ff;margin-top:2px">${pemAktif.length} aktif · ${pemAll.filter(p=>p.status==='lunas').length} lunas${pemMenunggak.length>0?` · <span style="color:#ff8a8a">${pemMenunggak.length} menunggak</span>`:''}${(DB.pembiayaanSyariah||[]).length>0?' ('+String((DB.pembiayaanSyariah||[]).length)+' syariah)':''}</div>
           </div>
         </div>
       </div>
@@ -54742,7 +54763,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
       // 4. Pencairan pinjaman baru bulan ini (arus keluar)
       allPin.filter(function(p){
-        return _inBulan(p.tanggal||p.tanggalDisetujui, y, m) && (p.status==='aktif'||p.status==='lunas');
+        return _inBulan(p.tanggal||p.tanggalDisetujui, y, m) && (p.status==='aktif'||p.status==='lunas'||p.status==='menunggak');
       }).forEach(function(p){
         // Hindari duplikasi dengan transaksi type:'pinjaman' yang sudah ada di DB.transaksi
         var sudahAda = rows.some(function(r){ return r.kkId===p.kkId && r.kategori==='keluar' && r.jenisGrup==='Pembiayaan / Pinjaman' && Math.abs(r.jumlah-(p.jumlah||0))<1; });
@@ -55279,7 +55300,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
         rows.push({tanggal:c.tanggal||c.tglBayar,nama:_getNama2(p.kkId),kkId:p.kkId,jenis:'Angsuran Renco Capital',jenisGrup:'Pembayaran Angsuran RC',kategori:'keluar',jumlah:c.jumlah||c.nominal||0,ket:'Angsuran ke-'+(c.no||c.ke||'-')});
       });
     });
-    allPin2.filter(function(p){return _inB(p.tanggal||p.tanggalDisetujui)&&(p.status==='aktif'||p.status==='lunas');}).forEach(function(p){
+    allPin2.filter(function(p){return _inB(p.tanggal||p.tanggalDisetujui)&&(p.status==='aktif'||p.status==='lunas'||p.status==='menunggak');}).forEach(function(p){
       var sudahAda=rows.some(function(r){return r.kkId===p.kkId&&r.kategori==='keluar'&&r.jenisGrup==='Pembiayaan / Pinjaman'&&Math.abs(r.jumlah-(p.jumlah||0))<1;});
       if(!sudahAda) rows.push({tanggal:p.tanggal||p.tanggalDisetujui,nama:_getNama2(p.kkId),kkId:p.kkId,jenis:'Pencairan Pinjaman',jenisGrup:'Pembiayaan / Pinjaman',kategori:'keluar',jumlah:p.jumlah||0,ket:'Tenor '+(p.tenor||'-')+' bulan'});
     });
@@ -55466,13 +55487,13 @@ window.renderLaporanNasabahUser = function() {
   var simLainnya=allSim.filter(function(t){return !t.jenis||(['pokok','wajib','sukarela'].indexOf(t.jenis)<0);}).reduce(function(a,b){return a+(b.jumlah||0);},0);
   var totalSim=simPokok+simWajib+simSukarela+simLainnya;
   var simBulan=allSim.filter(function(t){var d=new Date(t.tanggal);return d.getMonth()===m&&d.getFullYear()===y;}).reduce(function(a,b){return a+(b.jumlah||0);},0);
-  var pinAktif=(DB.pinjaman||[]).filter(function(p){return p.kkId===kkId&&p.status==='aktif';});
+  var pinAktif=(DB.pinjaman||[]).filter(function(p){return p.kkId===kkId&&(p.status==='aktif'||p.status==='menunggak');});
   var pinPengajuan=(DB.pinjaman||[]).filter(function(p){return p.kkId===kkId&&p.status==='pengajuan';});
   var totalPin=pinAktif.reduce(function(a,b){return a+(b.sisaPokok||0);},0);
   var cicilanPin=pinAktif.reduce(function(a,p){return a+Math.round((p.jumlah+(p.jumlah*(p.bunga||0)/100*(p.tenor||12)/12))/(p.tenor||12));},0);
-  var pemAktif=(DB.pembiayaan||[]).filter(function(p){return p.kkId===kkId&&(p.status==='aktif'||p.status==='disetujui');});
+  var pemAktif=(DB.pembiayaan||[]).filter(function(p){return p.kkId===kkId&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');});
   var pemPengajuan=(DB.pembiayaan||[]).filter(function(p){return p.kkId===kkId&&p.status==='pengajuan';});
-  var pemSyrAktif=(DB.pembiayaanSyariah||[]).filter(function(p){return p.kkId===kkId&&(p.status==='aktif'||p.status==='disetujui');});
+  var pemSyrAktif=(DB.pembiayaanSyariah||[]).filter(function(p){return p.kkId===kkId&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');});
   var pemSyrPengaj=(DB.pembiayaanSyariah||[]).filter(function(p){return p.kkId===kkId&&p.status==='pengajuan';});
   var totalPem=pemAktif.reduce(function(a,p){if(typeof p.sisaPokokRC==='number')return a+p.sisaPokokRC;if(p.jumlah&&p.tenor){var b=p.angsuranDibayar||0;return a+Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b));}return a+(p.jumlah||0);},0);
   var totalPemSyr=pemSyrAktif.reduce(function(a,p){if(typeof p.sisaPokok==='number')return a+p.sisaPokok;if(p.jumlah&&p.tenor){var b=p.angsuranDibayar||0;return a+Math.round((p.jumlah/p.tenor)*Math.max(0,p.tenor-b));}return a+(p.jumlah||0);},0);
@@ -56405,15 +56426,15 @@ window.renderLaporanNasabahHTML = function() {
     return (DB.tabunganBerjangka||[]).filter(function(t){return t.kkId===id&&t.status==='aktif';}).reduce(function(a,b){return a+(b.jumlah||0);},0);
   }
   function _pinAktif(id) {
-    var p1 = (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&p.status==='aktif';}).reduce(function(a,b){return a+(b.sisaPokok||0);},0);
-    var p2 = (DB.pembiayaan||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui');}).reduce(function(a,b){return a+(b.jumlah||0);},0);
+    var p1 = (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='menunggak');}).reduce(function(a,b){return a+(b.sisaPokok||0);},0);
+    var p2 = (DB.pembiayaan||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak');}).reduce(function(a,b){return a+(b.jumlah||0);},0);
     return p1+p2;
   }
   function _pinPengajuan(id) {
     return (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&p.status==='pengajuan';}).length;
   }
   function _cicilan(id) {
-    return (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&p.status==='aktif';}).reduce(function(a,b){
+    return (DB.pinjaman||[]).filter(function(p){return p.kkId===id&&(p.status==='aktif'||p.status==='menunggak');}).reduce(function(a,b){
       var cic = b.jumlah+b.jumlah*(b.bunga||0)/100*(b.tenor||12)/12;
       return a+Math.round(cic/((b.tenor||12)));
     },0);
@@ -59371,7 +59392,7 @@ function hitungTransparansiDana() {
   var tbLocked = DB.tabunganBerjangka.filter(function(t){ return t.status === 'aktif'; }).reduce(function(a,b){ return a+b.jumlah; }, 0);
   var totalDanaAnggota = pokok + wajib + sukarelaBebas + tbLocked;
 
-  var totalPinjaman = (DB.pinjaman || []).filter(function(p){ return p.status === 'aktif'; }).reduce(function(a,b){ return a+(b.sisaPokok||0); }, 0);
+  var totalPinjaman = (DB.pinjaman || []).filter(function(p){ return p.status === 'aktif' || p.status === 'menunggak'; }).reduce(function(a,b){ return a+(b.sisaPokok||0); }, 0);
   var totalPembiayaan = (DB.pembiayaan || []).filter(function(p){ return p.status==='aktif'||p.status==='disetujui'||p.status==='menunggak'; }).reduce(function(a,b){ return a+(b.jumlah||0); }, 0);
   var totalDisalurkan = totalPinjaman + totalPembiayaan;
   // PENTING: tbLocked sudah termasuk di dalam totalDanaAnggota, jadi harus
