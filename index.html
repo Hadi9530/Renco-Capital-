@@ -1093,20 +1093,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!el) {
       el = document.createElement('div');
       el.id = '_nasabahSoftBanner';
-      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:#b45309;color:#fff;'
-        + 'font-family:inherit;font-size:11.5px;padding:9px 14px;display:flex;align-items:center;gap:8px;'
-        + 'box-shadow:0 2px 8px rgba(0,0,0,.25);padding-top:calc(9px + env(safe-area-inset-top))';
+      el.style.cssText = 'position:fixed;top:6px;right:6px;left:auto;z-index:99998;background:rgba(180,83,9,.92);color:#fff;'
+        + 'font-family:inherit;font-size:9.5px;padding:4px 8px;display:flex;align-items:center;gap:5px;'
+        + 'border-radius:99px;max-width:78vw;box-shadow:0 2px 6px rgba(0,0,0,.2);backdrop-filter:blur(6px);'
+        + 'margin-top:env(safe-area-inset-top)';
       el.innerHTML =
-        '<span style="flex-shrink:0;font-size:15px">📡</span>'
-        + '<span id="_nasabahSoftBannerMsg" style="flex:1;line-height:1.4"></span>'
-        + '<button id="_nasabahSoftBannerRetry" style="flex-shrink:0;background:rgba(255,255,255,.22);color:#fff;border:none;padding:6px 12px;border-radius:99px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Coba Lagi</button>';
+        '<span style="flex-shrink:0;font-size:11px">📡</span>'
+        + '<span id="_nasabahSoftBannerMsg" style="flex:1;line-height:1.3"></span>'
+        + '<button id="_nasabahSoftBannerRetry" style="flex-shrink:0;background:rgba(255,255,255,.22);color:#fff;border:none;padding:3px 8px;border-radius:99px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit">🔄</button>';
       document.body.appendChild(el);
       document.getElementById('_nasabahSoftBannerRetry').onclick = function() {
         if (typeof window.loadDB === 'function') window.loadDB();
       };
     }
     document.getElementById('_nasabahSoftBannerMsg').textContent = msg
-      || 'Gagal memuat data terbaru — menampilkan data tersimpan sementara.';
+      || 'Koneksi tidak stabil — data lokal ditampilkan.';
     el.style.display = 'flex';
   }
   function _rencoHideNasabahSoftBanner() {
@@ -1200,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', function() {
               console.warn('[RENCO☁] Nasabah: gagal muat cloud, pakai cache lokal sementara (fallback ringan):', e.message);
               _showSync('error', 'Gagal cloud — data lokal sementara');
               if (typeof _baseLoadDB === 'function') _baseLoadDB.apply(this, arguments);
-              _rencoShowNasabahSoftBanner('Gagal memuat data terbaru dari server. Menampilkan data tersimpan sementara — mungkin belum yang terbaru. Transaksi baru akan tersinkron otomatis setelah koneksi pulih.');
+              _rencoShowNasabahSoftBanner('Koneksi tidak stabil — data mungkin belum terbaru.');
               _rencoStartSoftRetryLoop();
               setTimeout(_reRenderAll, 100);
               return;
@@ -6911,7 +6912,7 @@ function _hideAdminButtonsForNasabah() {
   var laporanTabs = document.querySelectorAll('#page-laporan .tab-pill');
   laporanTabs.forEach(function(t, i) {
     var td = t.getAttribute('data-tab')||'';
-    t.style.display = (td==='nasabah-pribadi'||td==='koperasi') ? '' : 'none';
+    t.style.display = (td==='nasabah-pribadi') ? '' : 'none';
   });
   // Ubah label tab pertama menjadi "Laporan Saya"
   if (laporanTabs[0]) laporanTabs[0].textContent = '📋 Laporan Saya';
@@ -12104,6 +12105,10 @@ window.deletePengurus = function(id) {
 
           <!-- LANGKAH 2: ALAMAT PENGIRIMAN -->
           <div id="kfCheckoutStep2" style="display:none">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#1c3025;background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:10px;padding:10px 12px;margin-bottom:12px;cursor:pointer">
+              <input type="checkbox" id="kfCartAmbilSendiri" onchange="_kfToggleAmbilSendiri()"> 🏪 Ambil Sendiri di Warung (tanpa kurir/ongkir)
+            </label>
+            <div id="kfCartAlamatWrap">
             <div class="field" style="margin-bottom:10px">
               <label>Alamat Pengiriman <span id="kfCartAlamatHint" style="display:none;font-weight:600;color:#7b2d8b;font-size:11px">· pesanan sebelumnya</span></label>
               <div id="kfCartAlamatChips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
@@ -12139,6 +12144,8 @@ window.deletePengurus = function(id) {
                 </div>
               </div>
             </div>
+            </div>
+            <div id="kfCartAmbilSendiriNote" style="display:none;font-size:12px;color:#6b7280;background:#faf7fb;border:1px solid #f0eef3;border-radius:10px;padding:10px 12px;margin-bottom:10px">🏪 Barang akan diambil langsung di warung penjual — tidak perlu alamat pengiriman, dan pesanan tidak akan masuk ke daftar kurir.</div>
             <div style="display:flex;gap:8px;margin-top:14px">
               <button class="btn btn-outline" style="flex:1" onclick="_kfCheckoutGotoStep(1)">‹ Kembali</button>
               <button class="btn btn-primary" style="flex:2" onclick="_kfCheckoutValidasiAlamatLanjut()">Lanjut ke Pembayaran →</button>
@@ -19991,7 +19998,7 @@ function renderPage(p) {
     if (!_lprAdm) {
       lprTabs.forEach(function(t) {
         var td = t.getAttribute('data-tab')||'';
-        t.style.display = (td==='nasabah-pribadi'||td==='koperasi') ? '' : 'none';
+        t.style.display = (td==='nasabah-pribadi') ? '' : 'none';
       });
       if (lprTabs[0]) lprTabs[0].textContent = '📋 Laporan Saya';
     } else {
@@ -20798,7 +20805,7 @@ function _kfRenderAkunMenuBadges() {
   var kurirBadge = document.getElementById('kfAkunKurirBadge');
   if (kurirBadge) {
     var k = (typeof _kfMyKurir === 'function') ? _kfMyKurir() : null;
-    var kCount = (k && k.status === 'aktif') ? (DB.pesananWarung||[]).filter(function(p){ return p.status === 'diproses' && !p.kurirId; }).length : 0;
+    var kCount = (k && k.status === 'aktif') ? (DB.pesananWarung||[]).filter(function(p){ return p.status === 'diproses' && !p.kurirId && !p.ambilSendiri; }).length : 0;
     if (kCount > 0) { kurirBadge.textContent = kCount; kurirBadge.style.display = 'inline-block'; }
     else { kurirBadge.style.display = 'none'; }
   }
@@ -21162,6 +21169,7 @@ function kifayahKurirAmbilPesanan(pesananId) {
   var p = (DB.pesananWarung||[]).find(function(x){ return x.id === pesananId; });
   if (!p) return;
   if (p.status !== 'diproses' || p.kurirId) { showToast('⚠️ Pesanan ini sudah diambil kurir lain'); renderKifayahKurirSaya(); return; }
+  if (p.ambilSendiri) { showToast('⚠️ Pesanan ini diambil sendiri oleh pembeli, tidak perlu kurir'); renderKifayahKurirSaya(); return; }
   // Cegah transaksi fiktif: kurir tidak boleh mengantar pesanannya sendiri
   // (klaim ongkir tanpa pengantaran riil karena pembeli = kurir itu sendiri).
   if (p.pembeliId === k.nasabahId) { showToast('🚫 Tidak bisa mengambil pesanan milik sendiri'); renderKifayahKurirSaya(); return; }
@@ -21268,7 +21276,7 @@ function renderKifayahKurirSaya() {
     return;
   }
   var semuaPesanan = DB.pesananWarung || [];
-  var tersedia = semuaPesanan.filter(function(p){ return p.status === 'diproses' && !p.kurirId; })
+  var tersedia = semuaPesanan.filter(function(p){ return p.status === 'diproses' && !p.kurirId && !p.ambilSendiri; })
     .sort(function(a,b){ return (a.dibuatPada||'').localeCompare(b.dibuatPada||''); });
   var sedangDiantar = semuaPesanan.filter(function(p){ return p.status === 'dikirim' && p.kurirId === k.id; })
     .sort(function(a,b){ return (b.kurirDiambilPada||'').localeCompare(a.kurirDiambilPada||''); });
@@ -22489,7 +22497,7 @@ function _kfUpdatePesananBadge() {
   var kurirSelf = (typeof _kfMyKurir === 'function') ? _kfMyKurir() : null;
   if (kurirSelf && kurirSelf.status === 'aktif') {
     count += (DB.pesananWarung || []).filter(function(p) {
-      return p.status === 'diproses' && !p.kurirId;
+      return p.status === 'diproses' && !p.kurirId && !p.ambilSendiri;
     }).length;
   }
   if (count > 0) {
@@ -22570,6 +22578,8 @@ function kifayahOpenCart() {
   var chkSimpanReset = document.getElementById('kfCartSimpanAlamat'); if (chkSimpanReset) chkSimpanReset.checked = false;
   var lblReset = document.getElementById('kfCartAlamatLabel'); if (lblReset) lblReset.value = '';
   var jdReset = document.getElementById('kfCartJadikanDefault'); if (jdReset) jdReset.checked = false;
+  var ambilReset = document.getElementById('kfCartAmbilSendiri'); if (ambilReset) ambilReset.checked = false;
+  if (typeof _kfToggleAmbilSendiri === 'function') _kfToggleAmbilSendiri();
   _kfToggleSimpanAlamatBox();
   _kfRenderCartAlamatChips();
   _kfRenderCartGpsStatus();
@@ -23467,8 +23477,11 @@ function _kfCheckoutGotoStep(n) {
   if (body) body.scrollTop = 0;
 }
 function _kfCheckoutValidasiAlamatLanjut() {
-  var alamatKirim = ((document.getElementById('kfCartAlamat')||{}).value||'').trim();
-  if (!alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
+  var ambilSendiri = !!(document.getElementById('kfCartAmbilSendiri')||{}).checked;
+  if (!ambilSendiri) {
+    var alamatKirim = ((document.getElementById('kfCartAlamat')||{}).value||'').trim();
+    if (!alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
+  }
   _kfCheckoutGotoStep(3);
 }
 function kifayahRemoveFromCart(produkId) {
@@ -23566,6 +23579,16 @@ window._kfSetMetode = function(val) {
   var sel = document.getElementById('kfCartMetode');
   if (sel && sel.value !== val) sel.value = val;
   _kfToggleTenorField();
+};
+// Toggle mode "Ambil Sendiri di Warung": saat aktif, sembunyikan form alamat
+// pengiriman (alamat tidak wajib diisi) dan tampilkan catatan pengganti.
+window._kfToggleAmbilSendiri = function() {
+  var chk = document.getElementById('kfCartAmbilSendiri');
+  var ambil = !!(chk && chk.checked);
+  var wrap = document.getElementById('kfCartAlamatWrap');
+  var note = document.getElementById('kfCartAmbilSendiriNote');
+  if (wrap) wrap.style.display = ambil ? 'none' : 'block';
+  if (note) note.style.display = ambil ? 'block' : 'none';
 };
 // Hide/show opsi alamat tambahan (input manual, simpan alamat) supaya form tidak penuh teks.
 window._kfToggleAlamatOpsi = function() {
@@ -23681,10 +23704,11 @@ function kifayahCheckout() {
   var cicilanTenor = isCicilanBayar ? parseInt((document.getElementById('kfCartTenor')||{}).value, 10) : null;
   var cicilanTipe = isCicilanBayar ? _kfCicilanTipeDariTenor(cicilanTenor) : null; // otomatis: tenor <4 bulan = Qardh, ≥4 bulan = Murabahah
   var metode = isCicilanBayar ? 'cicilan' : metodeRaw; // metodeBayar tersimpan generik 'cicilan', detail skema di pesanan.cicilan.tipe
-  var alamatKirim = (document.getElementById('kfCartAlamat').value||'').trim();
-  if (!alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
-  var kirimLat = (typeof _kfCartGpsLat === 'number') ? _kfCartGpsLat : null;
-  var kirimLng = (typeof _kfCartGpsLng === 'number') ? _kfCartGpsLng : null;
+  var ambilSendiri = !!(document.getElementById('kfCartAmbilSendiri')||{}).checked;
+  var alamatKirim = ambilSendiri ? 'Ambil Sendiri di Warung' : (document.getElementById('kfCartAlamat').value||'').trim();
+  if (!ambilSendiri && !alamatKirim) { showToast('⚠️ Alamat pengiriman wajib diisi'); return; }
+  var kirimLat = ambilSendiri ? null : ((typeof _kfCartGpsLat === 'number') ? _kfCartGpsLat : null);
+  var kirimLng = ambilSendiri ? null : ((typeof _kfCartGpsLng === 'number') ? _kfCartGpsLng : null);
   // Kelompokkan item keranjang per warung — 1 pesanan per warung
   var byWarung = {};
   _kfCart.forEach(function(c){
@@ -23764,6 +23788,7 @@ function kifayahCheckout() {
       alamatKirim: alamatKirim,
       kirimLat: kirimLat,
       kirimLng: kirimLng,
+      ambilSendiri: ambilSendiri,
       dibuatPada: nowISO()
     };
     if (cicilanTipe) {
@@ -23794,7 +23819,7 @@ function kifayahCheckout() {
       if (pr) pr.stok = Math.max(0, (Number(pr.stok)||0) - i.qty);
     });
   });
-  if (myNasabah) {
+  if (myNasabah && !ambilSendiri) {
     myNasabah.alamatKirimTerakhir = alamatKirim;
     myNasabah.gpsKirimTerakhirLat = kirimLat;
     myNasabah.gpsKirimTerakhirLng = kirimLng;
@@ -24380,8 +24405,12 @@ function _kfRenderPesananCard(sellerView, p) {
       actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'diproses\')">Terima</button>'
         + '<button class="kf-mini-action kf-reject" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'dibatalkan\')">Tolak</button>';
     } else if (p.status === 'diproses') {
-      actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'dikirim\')">Kirim Sendiri</button>'
-        + '<div style="font-size:11px;color:#9ca3af;margin-top:4px">atau tunggu kurir mengambil pesanan ini</div>';
+      if (p.ambilSendiri) {
+        actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'selesai\')">✅ Sudah Diambil Pembeli</button>';
+      } else {
+        actions = '<button class="kf-mini-action kf-accept" onclick="kifayahUpdatePesananStatus(\''+p.id+'\',\'dikirim\')">Kirim Sendiri</button>'
+          + '<div style="font-size:11px;color:#9ca3af;margin-top:4px">atau tunggu kurir mengambil pesanan ini</div>';
+      }
     } else if (p.status === 'dikirim' && p.kurirId) {
       actions = '<div style="font-size:11px;font-weight:700;color:#7b2d8b">🛵 Diantar oleh kurir: '+(p.kurirNama||'-')+'</div>';
     } else if (p.status === 'dikirim') {
@@ -24403,7 +24432,9 @@ function _kfRenderPesananCard(sellerView, p) {
   var cicilanBadge = (p.metodeBayar === 'cicilan') ? ' <span style="font-size:11px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">💳 '+_kfCicilanLabel(p)+'</span>' : '';
   var lunasKoperasiBadge = (p.metodeBayar === 'cicilan' && p.dibayarKoperasi) ? ' <span style="font-size:11px;font-weight:800;color:#16a34a;background:#dcfce7;border-radius:8px;padding:1px 6px;margin-left:4px">✅ Dibayar Kifayah</span>' : '';
   var kurirBadge = '';
-  if (p.kurirId) {
+  if (p.ambilSendiri) {
+    kurirBadge = ' <span style="font-size:11px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">🏪 Ambil Sendiri</span>';
+  } else if (p.kurirId) {
     var _kfKurirInfo = (DB.kurir||[]).find(function(x){ return x.id === p.kurirId; });
     var _kfKurirRatingLabel = (_kfKurirInfo && Number(_kfKurirInfo.ratingCount) > 0) ? ' ⭐'+Number(_kfKurirInfo.ratingAvg).toFixed(1) : '';
     kurirBadge = ' <span style="font-size:11px;font-weight:800;color:#7b2d8b;background:#f4e9f7;border-radius:8px;padding:1px 6px;margin-left:4px">🛵 '+(p.kurirNama||'Kurir')+_kfKurirRatingLabel+'</span>';
@@ -26945,20 +26976,22 @@ function rpToggleAnggota(kkId) {
   }
 
   function _buildMsg(data) {
-    var line = '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
+    var line = '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
     var ts = new Date().toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
     var rows = '';
-    (data.rows || []).forEach(function(r) { rows += '\n\u2022 ' + r.label + ': ' + r.val; });
-    return '\ud83c\udfe6 *KOPERASI RENCO*\n' + line + '\n' +
-      (data.icon ? data.icon + ' ' : '') + '*' + (data.title || 'Transaksi') + '*\n' +
-      (data.sub ? '_' + data.sub + '_\n' : '') +
-      line + rows + '\n' + line + '\n' +
-      (data.totalLabel ? '*' + data.totalLabel + ':* ' + data.totalVal + '\n' : '') +
-      (data.note ? '\n\ud83d\udcdd ' + data.note + '\n' : '') +
-      line + '\n_Dikirim oleh: ' +
-      (window.AUTH && window.AUTH.user ? (window.AUTH.user.nama || window.AUTH.user.username) : 'Anggota') +
-      '_\n_Waktu: ' + ts + '_\n' + line + '\n\u2705 Mohon konfirmasi penerimaan dari Admin.';
+    (data.rows || []).forEach(function(r) { rows += '\n' + r.label + ': *' + r.val + '*'; });
+    var senderName = (window.AUTH && window.AUTH.user) ? (window.AUTH.user.nama || window.AUTH.user.username) : 'Anggota';
+    return '\ud83c\udfe6 *Koperasi Keluarga RENCO*\n' +
+      (data.icon ? data.icon + ' ' : '') + '*' + (data.title || 'Transaksi') + '*' +
+      (data.sub ? '\n' + data.sub : '') + '\n' +
+      line + rows + '\n' +
+      (data.totalLabel ? line + '\n' + data.totalLabel + ': *' + data.totalVal + '*\n' : '') +
+      line +
+      (data.note ? '\n\ud83d\udcac ' + data.note + '\n' : '\n') +
+      '\nDikirim oleh ' + senderName + ' \u2022 ' + ts + '\n' +
+      'Terima kasih, mohon dicek ya \ud83d\ude4f';
   }
+
 
   window.rencoOpenShare = function(data) {
     _injectShareCSS(); _ensureShareDOM();
@@ -39657,10 +39690,10 @@ function saveTarikTunai() {
 // ── Metadata label per jenis transaksi, dipakai sheet/PDF/WA generik di bawah ──
 window._txnSuksesMeta = function(jenisTxn) {
   var map = {
-    'tarik':      { judul: 'Tarik Tunai',       labelJumlah: 'Jumlah Ditarik',   fileSlug: 'tarik-tunai',    waEmoji: '💰' },
-    'simpanan':   { judul: 'Setoran Simpanan',  labelJumlah: 'Jumlah Setoran',   fileSlug: 'setoran-simpanan', waEmoji: '💵' },
-    'pinjaman':   { judul: 'Pencairan Pinjaman',labelJumlah: 'Jumlah Pinjaman',  fileSlug: 'pencairan-pinjaman', waEmoji: '📤' },
-    'cicilan':    { judul: 'Pembayaran Cicilan',labelJumlah: 'Jumlah Dibayar',   fileSlug: 'pembayaran-cicilan', waEmoji: '💳' }
+    'tarik':      { judul: 'Tarik Tunai',       labelJumlah: 'Jumlah Ditarik',   fileSlug: 'tarik-tunai',    waEmoji: '💰', labelSaldo: 'Saldo' },
+    'simpanan':   { judul: 'Setoran Simpanan',  labelJumlah: 'Jumlah Setoran',   fileSlug: 'setoran-simpanan', waEmoji: '💵', labelSaldo: 'Saldo' },
+    'pinjaman':   { judul: 'Pencairan Pinjaman',labelJumlah: 'Jumlah Pinjaman',  fileSlug: 'pencairan-pinjaman', waEmoji: '📤', labelSaldo: 'Sisa Pinjaman' },
+    'cicilan':    { judul: 'Pembayaran Cicilan',labelJumlah: 'Jumlah Dibayar',   fileSlug: 'pembayaran-cicilan', waEmoji: '💳', labelSaldo: 'Sisa Pinjaman' }
   };
   return map[jenisTxn] || map['tarik'];
 };
@@ -39683,8 +39716,8 @@ function _pdfGenTxnSukses(jsPDFCls, data) {
     { label: 'Waktu Transaksi', value: tglLabel, color: [70, 70, 70] },
     { label: meta.labelJumlah, value: _pdfFmt(data.jumlah), color: [220, 38, 38] }
   ];
-  if (data.saldoSebelum != null) ringkasan.push({ label: 'Saldo Sebelum', value: _pdfFmt(data.saldoSebelum), color: [70, 70, 70] });
-  if (data.saldoSesudah != null) ringkasan.push({ label: data.saldoSebelum != null ? 'Saldo Sesudah' : 'Saldo Saat Ini', value: _pdfFmt(data.saldoSesudah), color: [26, 71, 42] });
+  if (data.saldoSebelum != null) ringkasan.push({ label: meta.labelSaldo + ' Sebelum', value: _pdfFmt(data.saldoSebelum), color: [70, 70, 70] });
+  if (data.saldoSesudah != null) ringkasan.push({ label: data.saldoSebelum != null ? (meta.labelSaldo + ' Sesudah') : (meta.labelSaldo + ' Saat Ini'), value: _pdfFmt(data.saldoSesudah), color: [26, 71, 42] });
   ringkasan.push({ label: 'Keterangan', value: data.ket || '-', color: [70, 70, 70] });
   y = _pdfRingkasan(doc, y, margin, usableW, ringkasan);
 
@@ -39728,8 +39761,8 @@ function _buildTxnSuksesWAMsg(data) {
     '• Nama: ' + (data.nama || '-') + '\n' +
     '• Waktu: ' + tglLabel + '\n' +
     '• ' + meta.labelJumlah + ': ' + fmt(data.jumlah) + '\n' +
-    (data.saldoSebelum != null ? '• Saldo Sebelum: ' + fmt(data.saldoSebelum) + '\n' : '') +
-    (data.saldoSesudah != null ? '• ' + (data.saldoSebelum != null ? 'Saldo Sesudah' : 'Saldo Saat Ini') + ': ' + fmt(data.saldoSesudah) + '\n' : '') +
+    (data.saldoSebelum != null ? '• ' + meta.labelSaldo + ' Sebelum: ' + fmt(data.saldoSebelum) + '\n' : '') +
+    (data.saldoSesudah != null ? '• ' + (data.saldoSebelum != null ? (meta.labelSaldo + ' Sesudah') : (meta.labelSaldo + ' Saat Ini')) + ': ' + fmt(data.saldoSesudah) + '\n' : '') +
     (data.ket ? '• Keterangan: ' + data.ket + '\n' : '') +
     line + '\n' +
     '_Terima kasih telah menjadi bagian dari Koperasi Renco._';
@@ -59199,14 +59232,18 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           <div style="padding:10px">
             ${tabelGrup}
           </div>
-          <div style="display:flex;gap:8px;padding:8px 10px;background:#f9fafb;border-top:1px solid rgba(0,0,0,0.06)">
+          <div style="display:flex;gap:8px;padding:8px 10px;background:#f9fafb;border-top:1px solid rgba(0,0,0,0.06);flex-wrap:wrap">
             <button onclick="window._arsipDownloadPDFAnggota('${kkId}')"
-              style="flex:1;background:linear-gradient(135deg,#1a472a,#2d6a4f);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
+              style="flex:1;min-width:90px;background:linear-gradient(135deg,#1a472a,#2d6a4f);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
               📑 Download PDF
             </button>
             <button onclick="window._arsipUploadDriveAnggota('${kkId}')"
-              style="flex:1;background:linear-gradient(135deg,#1e40af,#2563eb);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
+              style="flex:1;min-width:90px;background:linear-gradient(135deg,#1e40af,#2563eb);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
               ☁️ Google Drive
+            </button>
+            <button onclick="window._arsipKirimEmailAnggota('${kkId}')"
+              style="flex:1;min-width:90px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
+              ✉️ Kirim Email
             </button>
           </div>
         </div>`;
@@ -59429,12 +59466,15 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       var jenisLabel={simpanan:'Simpanan','tarik-sukarela':'Tarik Sukarela',tarik:'Penarikan',pinjaman:'Pencairan Pinjaman',cicilan:'Bayar Cicilan',angsuran:'Angsuran RC','angsuran-rc':'Angsuran Renco Capital'}[t.type]||(t.keterangan||t.type||'Transaksi');
       if(t.type==='simpanan'){jenisLabel={pokok:'Simpanan Pokok',wajib:'Simpanan Wajib',sukarela:'Simpanan Sukarela'}[t.jenis||'']||'Simpanan';}
       var jenisGrup={simpanan:'Simpanan','tarik-sukarela':'Penarikan Simpanan',tarik:'Penarikan Simpanan',pinjaman:'Pembiayaan / Pinjaman',cicilan:'Pembayaran Cicilan',angsuran:'Pembayaran Angsuran RC','angsuran-rc':'Pembayaran Angsuran RC'}[t.type]||'Lain-lain';
-      rows.push({tanggal:t.tanggal,nama:_getNama2(t.kkId),kkId:t.kkId,jenis:jenisLabel,jenisGrup:jenisGrup,kategori:isKeluar?'keluar':'masuk',jumlah:t.jumlah||0,ket:t.keterangan||jenisLabel});
+      rows.push({id:t.id,tanggal:t.tanggal,nama:_getNama2(t.kkId),kkId:t.kkId,jenis:jenisLabel,jenisGrup:jenisGrup,kategori:isKeluar?'keluar':'masuk',jumlah:t.jumlah||0,ket:t.keterangan||jenisLabel});
     });
     allPin2.forEach(function(p){
       (p.cicilan||[]).filter(function(c){return _inB(c.tanggal||c.tglBayar);}).forEach(function(c){
         var tglC2=(c.tanggal||c.tglBayar||'').slice(0,10);
-        var sudahDiTxn2=rows.some(function(r){return r.kkId===p.kkId&&r.jenisGrup==='Pembayaran Cicilan'&&Math.abs(r.jumlah-(c.jumlah||0))<1&&(r.tanggal||'').slice(0,10)===tglC2;});
+        var sudahDiTxn2=rows.some(function(r){
+          if (c.txnId) return r.id === c.txnId; // presisi, anti-dobel
+          return r.kkId===p.kkId&&r.jenisGrup==='Pembayaran Cicilan'&&Math.abs(r.jumlah-(c.jumlah||0))<1&&(r.tanggal||'').slice(0,10)===tglC2;
+        });
         if(sudahDiTxn2)return;
         rows.push({tanggal:c.tanggal||c.tglBayar,nama:_getNama2(p.kkId),kkId:p.kkId,jenis:'Bayar Cicilan Pinjaman',jenisGrup:'Pembayaran Cicilan',kategori:'keluar',jumlah:c.jumlah||0,ket:'Cicilan ke-'+(c.no||'-')});
       });
@@ -59518,12 +59558,16 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     }
   };
 
-  /* ── Download PDF per anggota ── */
-  window._arsipDownloadPDFAnggota = async function(kkId) {
-    var nb = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
-    var nama = nb ? nb.nama : kkId;
-    if (typeof showToast === 'function') showToast('📑 Membuat PDF untuk '+nama+'...');
-    // Kumpulkan semua transaksi anggota ini
+  /* ── Kumpulkan semua transaksi 1 anggota (dipakai bareng oleh Download PDF & Kirim Email) ──
+     PENTING: cicilan pinjaman koperasi (p.cicilan) di-dedup terhadap DB.transaksi
+     (type:'cicilan') via txnId (presisi) atau heuristik kkId+jumlah+tanggal (data lama
+     tanpa txnId) — sebelumnya TIDAK ada dedup sama sekali di sini, sehingga setiap
+     pembayaran cicilan selalu tercatat 2x di PDF/email (sekali dari DB.transaksi,
+     sekali lagi dari p.cicilan). Angsuran Renco Capital diberi guard yang sama untuk
+     berjaga-jaga. */
+  function _arsipKumpulRowsAnggota(kkId) {
+    var nb2  = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
+    var nama = nb2 ? nb2.nama : kkId;
     var allRows2 = [];
     var allTxA   = DB.transaksi||[];
     var allPinA  = DB.pinjaman||[];
@@ -59535,22 +59579,87 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       var jenis={simpanan:'Simpanan','tarik-sukarela':'Tarik Sukarela',tarik:'Penarikan',pinjaman:'Pencairan Pinjaman',cicilan:'Bayar Cicilan',angsuran:'Angsuran RC','angsuran-rc':'Angsuran Renco Capital'}[t.type]||(t.keterangan||t.type||'Transaksi');
       if(t.type==='simpanan'){jenis={pokok:'Simpanan Pokok',wajib:'Simpanan Wajib',sukarela:'Simpanan Sukarela'}[t.jenis||'']||'Simpanan';}
       var jenisGrup={simpanan:'Simpanan','tarik-sukarela':'Penarikan Simpanan',tarik:'Penarikan Simpanan',pinjaman:'Pembiayaan / Pinjaman',cicilan:'Pembayaran Cicilan',angsuran:'Pembayaran Angsuran RC','angsuran-rc':'Pembayaran Angsuran RC'}[t.type]||'Lain-lain';
-      allRows2.push({tanggal:t.tanggal,nama:nama,kkId,jenis,jenisGrup,kategori:isKeluar?'keluar':'masuk',jumlah:t.jumlah||0,ket:t.keterangan||jenis});
+      allRows2.push({id:t.id, tanggal:t.tanggal,nama:nama,kkId,jenis,jenisGrup,kategori:isKeluar?'keluar':'masuk',jumlah:t.jumlah||0,ket:t.keterangan||jenis});
     });
     allPinA.filter(function(p){return p.kkId===kkId;}).forEach(function(p){
-      (p.cicilan||[]).forEach(function(c){allRows2.push({tanggal:c.tanggal||c.tglBayar,nama,kkId,jenis:'Bayar Cicilan',jenisGrup:'Pembayaran Cicilan',kategori:'masuk',jumlah:c.jumlah||0,ket:'Cicilan ke-'+(c.no||'-')});});
+      (p.cicilan||[]).forEach(function(c){
+        var tglC3 = (c.tanggal||c.tglBayar||'').slice(0,10);
+        var sudahDiTxn3 = allRows2.some(function(r){
+          if (c.txnId) return r.id === c.txnId; // presisi, anti-dobel
+          return r.kkId===kkId && r.jenisGrup==='Pembayaran Cicilan' &&
+                 Math.abs(r.jumlah-(c.jumlah||0))<1 && (r.tanggal||'').slice(0,10)===tglC3;
+        });
+        if (sudahDiTxn3) return;
+        allRows2.push({tanggal:c.tanggal||c.tglBayar,nama,kkId,jenis:'Bayar Cicilan',jenisGrup:'Pembayaran Cicilan',kategori:'masuk',jumlah:c.jumlah||0,ket:'Cicilan ke-'+(c.no||'-')});
+      });
     });
     allPemA.filter(function(p){return p.kkId===kkId;}).forEach(function(p){
       (p.angsuranList||p.cicilan||[]).filter(function(c){return c.status==='lunas'||c.lunas;}).forEach(function(c){
+        var tglC4 = (c.tanggal||c.tglBayar||'').slice(0,10);
+        var sudahDiTxn4 = allRows2.some(function(r){
+          if (c.txnId) return r.id === c.txnId;
+          return r.kkId===kkId && r.jenisGrup==='Pembayaran Angsuran RC' &&
+                 Math.abs(r.jumlah-(c.jumlah||c.nominal||0))<1 && (r.tanggal||'').slice(0,10)===tglC4;
+        });
+        if (sudahDiTxn4) return;
         allRows2.push({tanggal:c.tanggal||c.tglBayar,nama,kkId,jenis:'Angsuran Renco Capital',jenisGrup:'Pembayaran Angsuran RC',kategori:'keluar',jumlah:c.jumlah||c.nominal||0,ket:'Angsuran ke-'+(c.no||c.ke||'-')});
       });
     });
     allRows2.sort(function(a,b){return new Date(a.tanggal)-new Date(b.tanggal);});
+    return { nama: nama, rows: allRows2 };
+  }
+
+  /* ── Download PDF per anggota ── */
+  window._arsipDownloadPDFAnggota = async function(kkId) {
+    var nb = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
+    var nama = nb ? nb.nama : kkId;
+    if (typeof showToast === 'function') showToast('📑 Membuat PDF untuk '+nama+'...');
+    var kumpul = _arsipKumpulRowsAnggota(kkId);
+    var allRows2 = kumpul.rows;
     try {
       var fname = 'riwayat-'+nama.toLowerCase().replace(/\s+/g,'-')+'.pdf';
       _pdfArsipNative(allRows2, 'RIWAYAT TRANSAKSI LENGKAP', nama, fname);
       if (typeof showToast === 'function') showToast('✅ PDF '+nama+' berhasil diunduh!');
     } catch(e){ if(typeof showToast==='function') showToast('❌ Gagal membuat PDF'); console.error(e); }
+  };
+
+  /* ── Kirim Email langsung ke nasabah: rekap riwayat transaksinya (mailto:,
+       konsisten dengan fitur pengingat WA/Email yang sudah ada di tab Tunggakan) ── */
+  window._arsipKirimEmailAnggota = function(kkId) {
+    var nb = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
+    if (!nb) { if (typeof showToast === 'function') showToast('⚠️ Data nasabah tidak ditemukan'); return; }
+    var emailTujuan = (nb.email||'').trim();
+    if (emailTujuan.indexOf('@') < 0) {
+      if (typeof showToast === 'function') showToast('⚠️ '+nb.nama+' belum punya alamat email — lengkapi dulu di data nasabah');
+      return;
+    }
+    var kumpul = _arsipKumpulRowsAnggota(kkId);
+    var rows = kumpul.rows;
+    if (!rows.length) { if (typeof showToast === 'function') showToast('⚠️ Belum ada transaksi untuk dikirim'); return; }
+    var totalMasukE = rows.filter(function(r){return r.kategori==='masuk';}).reduce(function(s,r){return s+r.jumlah;},0);
+    var totalKeluarE= rows.filter(function(r){return r.kategori==='keluar';}).reduce(function(s,r){return s+r.jumlah;},0);
+    var kopE = (DB.pengaturan&&DB.pengaturan.namaKoperasi)||'Koperasi RENCO';
+    var maxBaris = 40;
+    var daftarStrE = rows.slice(-maxBaris).map(function(r){
+      var tanda = (r.kategori==='keluar') ? '-' : '+';
+      return _fmtTgl(r.tanggal)+' | '+r.jenis+' | '+tanda+_fmtRp(r.jumlah);
+    }).join('\n');
+    var lebihE = rows.length > maxBaris ? '\n... dan '+(rows.length-maxBaris)+' transaksi lainnya (hubungi admin untuk rincian lengkap)' : '';
+    var subjectE = encodeURIComponent('['+kopE+'] Riwayat Transaksi Anda — '+nb.nama);
+    var bodyE = encodeURIComponent(
+      'Kepada Yth. '+nb.nama+',\n\n'
+      +'Berikut rekap riwayat transaksi Anda di '+kopE+':\n\n'
+      +daftarStrE+lebihE+'\n\n'
+      +'Total Masuk  : '+_fmtRp(totalMasukE)+'\n'
+      +'Total Keluar : '+_fmtRp(totalKeluarE)+'\n\n'
+      +'Jika ada transaksi yang menurut Anda tidak sesuai, mohon segera hubungi admin '+kopE+'.\n\n'
+      +'Terima kasih.\n\n'
+      +'Salam hormat,\n'+kopE+'\n'
+      +'Dikirim: '+new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})
+    );
+    var mailtoLink = 'mailto:'+encodeURIComponent(emailTujuan)+'?subject='+subjectE+'&body='+bodyE;
+    window.location.href = mailtoLink;
+    if (typeof showToast === 'function') showToast('📧 Membuka aplikasi email ke '+emailTujuan+'...');
   };
 
   /* ── Download PDF semua (gabungan bulan yang difilter) ── */
