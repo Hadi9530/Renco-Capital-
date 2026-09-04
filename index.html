@@ -15783,22 +15783,33 @@ function _dbMigrate() {
   // Cicilan Kifayah — 2 skema berbeda, masing-masing dgn tenor tetap tapi minimal
   // belanja & limit bulanan per-nasabah bisa diatur admin lewat menu Kifayah > Admin > Pengaturan.
   if (!DB.kifayahSetting.qardh || typeof DB.kifayahSetting.qardh !== 'object') {
-    DB.kifayahSetting.qardh = { tenorOpsi: [2,3], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 };
+    DB.kifayahSetting.qardh = { tenorOpsi: [1], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 };
   }
   // Migrasi data lama: pastikan field feeLayanan ada meski objek qardh sudah pernah dibuat sebelumnya
   if (typeof DB.kifayahSetting.qardh.feeLayanan !== 'number' || isNaN(DB.kifayahSetting.qardh.feeLayanan)) {
     DB.kifayahSetting.qardh.feeLayanan = 10000;
   }
   if (!DB.kifayahSetting.murabahah || typeof DB.kifayahSetting.murabahah !== 'object') {
-    DB.kifayahSetting.murabahah = { tenorOpsi: [4,6,8,10,12], minBelanja: 100000, limitBulanan: 400000, marginTable: {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan: 10000 };
+    DB.kifayahSetting.murabahah = { tenorOpsi: [2,3,4], minBelanja: 100000, limitBulanan: 400000, marginTable: {2:0.5,3:0.75,4:1.0}, feeLayanan: 10000 };
   }
   // Migrasi data lama: pastikan field marginTable & feeLayanan ada meski objek murabahah sudah pernah dibuat sebelumnya
   if (!DB.kifayahSetting.murabahah.marginTable || typeof DB.kifayahSetting.murabahah.marginTable !== 'object') {
-    DB.kifayahSetting.murabahah.marginTable = {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+    DB.kifayahSetting.murabahah.marginTable = {2:0.5,3:0.75,4:1.0};
   }
   if (typeof DB.kifayahSetting.murabahah.feeLayanan !== 'number' || isNaN(DB.kifayahSetting.murabahah.feeLayanan)) {
     DB.kifayahSetting.murabahah.feeLayanan = 10000;
   }
+  // Skema cicilan Kifayah disederhanakan jadi 4 opsi saja: 1,2,3,4 — tenor 1 = Qardh
+  // (bayar lunas bulan depan, tanpa margin), tenor 2/3/4 = Murabahah (dengan margin
+  // keuntungan). Dipaksa (bukan hanya default) supaya data lama dari skema sebelumnya
+  // (Qardh 2–3 / Murabahah 4,6,8,10,12) otomatis termigrasi ke skema baru ini.
+  DB.kifayahSetting.qardh.tenorOpsi = [1];
+  DB.kifayahSetting.murabahah.tenorOpsi = [2,3,4];
+  [2,3,4].forEach(function(t){
+    if (typeof DB.kifayahSetting.murabahah.marginTable[t] !== 'number' || isNaN(DB.kifayahSetting.murabahah.marginTable[t])) {
+      DB.kifayahSetting.murabahah.marginTable[t] = {2:0.5,3:0.75,4:1.0}[t];
+    }
+  });
   // Jasa Kurir (kirim barang/paket) — tarif per kg + tarif per km, diatur admin
   // lewat menu Kifayah > Admin > Pengaturan.
   if (!DB.kifayahSetting.jasaKurir || typeof DB.kifayahSetting.jasaKurir !== 'object') {
@@ -23493,24 +23504,22 @@ function _kfMetodeAdalahCicilan(metode) {
   return metode === 'cicilan';
 }
 // Skema cicilan disatukan jadi satu opsi "Cicilan" — skema aktual (Qardh/Murabahah)
-// ditentukan otomatis dari tenor yang dipilih nasabah: tenor < 4 bulan = Qardh (tanpa
-// margin), tenor 4 bulan ke atas = Murabahah (dengan margin). Batas ini mengikuti
-// rentang tenor yang sudah diatur admin untuk masing-masing skema (Qardh 2–3 bulan,
-// Murabahah 4/6/8/10/12 bulan).
+// ditentukan otomatis dari tenor yang dipilih nasabah: tenor 1 = Qardh (bayar lunas
+// bulan depan, tanpa margin), tenor 2/3/4 = Murabahah (dengan margin keuntungan).
 function _kfCicilanTipeDariTenor(tenor) {
-  return (Number(tenor) >= 4) ? 'murabahah' : 'qardh';
+  return (Number(tenor) >= 2) ? 'murabahah' : 'qardh';
 }
 // Gabungan semua opsi tenor Qardh + Murabahah, dipakai untuk satu dropdown Tenor Cicilan.
 function _kfCicilanTenorGabungan() {
   var ks = DB.kifayahSetting || {};
-  var qOpsi = (ks.qardh && ks.qardh.tenorOpsi) || [2,3];
-  var mOpsi = (ks.murabahah && ks.murabahah.tenorOpsi) || [4,6,8,10,12];
+  var qOpsi = (ks.qardh && ks.qardh.tenorOpsi) || [1];
+  var mOpsi = (ks.murabahah && ks.murabahah.tenorOpsi) || [2,3,4];
   return qOpsi.concat(mOpsi);
 }
 function _kfCicilanSetting(tipe) {
   var ks = DB.kifayahSetting || {};
-  return (tipe === 'murabahah') ? (ks.murabahah || { tenorOpsi:[4,6,8,10,12], minBelanja:100000, limitBulanan:400000, marginTable:{4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan:10000 })
-       : (ks.qardh || { tenorOpsi:[2,3], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 });
+  return (tipe === 'murabahah') ? (ks.murabahah || { tenorOpsi:[2,3,4], minBelanja:100000, limitBulanan:400000, marginTable:{2:0.5,3:0.75,4:1.0}, feeLayanan:10000 })
+       : (ks.qardh || { tenorOpsi:[1], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 });
 }
 // ── Formula Qardh Kifayah: tanpa margin (bebas riba), nasabah hanya membayar
 // Fee Layanan tetap (bisa diatur admin) yang termasuk dalam jumlah cicilan.
@@ -23536,7 +23545,7 @@ function _kfHitungQardh(hargaBarang, tenor) {
 // Cicilan / bulan = Total Tagihan ÷ Tenor
 function _kfHitungMurabahah(hargaBarang, tenor) {
   var ks = _kfCicilanSetting('murabahah');
-  var marginTable = ks.marginTable || {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+  var marginTable = ks.marginTable || {2:0.5,3:0.75,4:1.0};
   var marginPersen = Number(marginTable[tenor]) || 0;
   var fee = Number(ks.feeLayanan) || 0;
   var margin = Math.round((hargaBarang||0) * (marginPersen/100));
@@ -23633,7 +23642,7 @@ function _kfToggleTenorField() {
       // Hanya bangun ulang saat metode cicilan baru dipilih atau select masih kosong.
       if (tenorSel && (tenorSel.dataset.tipe !== 'cicilan' || !tenorSel.options.length)) {
         var prevTenorVal = tenorSel.value;
-        tenorSel.innerHTML = tenorOpsiGabungan.map(function(t){ return '<option value="'+t+'">'+t+' bulan</option>'; }).join('');
+        tenorSel.innerHTML = tenorOpsiGabungan.map(function(t){ return '<option value="'+t+'">Cicilan '+t+'</option>'; }).join('');
         tenorSel.dataset.tipe = 'cicilan';
         // Pertahankan tenor yang sudah dipilih nasabah kalau masih valid
         if (prevTenorVal && tenorOpsiGabungan.indexOf(parseInt(prevTenorVal,10)) !== -1) {
@@ -23651,6 +23660,9 @@ function _kfToggleTenorField() {
       var biayaWrap = document.getElementById('kfCartBiayaWrap');
       if (tipe === 'murabahah') {
         var h = _kfHitungMurabahah(_kfCartTotalCache||0, tenorTerpilihNow);
+        var sisaTagihanH = Math.max(0, h.totalTagihan - h.hargaBarang);
+        var sisaBulanH = tenorTerpilihNow - 1;
+        var perBulanH = sisaBulanH > 0 ? Math.round(sisaTagihanH / sisaBulanH) : sisaTagihanH;
         if (biayaWrap) {
           biayaWrap.style.display = 'block';
           biayaWrap.innerHTML = '<div style="background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:14px;padding:14px">'
@@ -23660,21 +23672,29 @@ function _kfToggleTenorField() {
             + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Harga Jual</span><strong>'+fmt(h.hargaJual)+'</strong></div>'
             + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:8px"><span>Biaya Fee Layanan</span><strong>'+fmt(h.fee)+'</strong></div>'
             + '<div style="height:1px;background:rgba(123,45,139,0.2);margin-bottom:8px"></div>'
-            + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1c3025;margin-bottom:4px"><span>Total Tagihan</span><span>'+fmt(h.totalTagihan)+'</span></div>'
-            + '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#7b2d8b"><span>Cicilan / bulan ('+tenorTerpilihNow+'x)</span><span>'+fmt(h.cicilanPerBulan)+'</span></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1c3025;margin-bottom:10px"><span>Total Tagihan</span><span>'+fmt(h.totalTagihan)+'</span></div>'
+            + '<div style="background:rgba(123,45,139,0.08);border-radius:10px;padding:10px;margin-bottom:6px">'
+            + '<div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900;color:#7b2d8b"><span>Bayar Sekarang (Angsuran 1)</span><span>'+fmt(h.hargaBarang)+'</span></div>'
+            + '</div>'
+            + '<div style="background:rgba(123,45,139,0.08);border-radius:10px;padding:10px">'
+            + '<div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900;color:#7b2d8b"><span>Sisa '+sisaBulanH+' Bulan Ke Depan</span><span>'+fmt(perBulanH)+' /bln</span></div>'
+            + '<div style="font-size:10.5px;color:#9ca3af;margin-top:2px">Total sisa tagihan '+fmt(sisaTagihanH)+', dicicil rata '+sisaBulanH+' bulan (angsuran ke-2 s/d ke-'+tenorTerpilihNow+')</div>'
+            + '</div>'
             + '</div>';
         }
       } else {
         var hq = _kfHitungQardh(_kfCartTotalCache||0, tenorTerpilihNow);
+        var judulQardh = (tenorTerpilihNow===1) ? '💰 Rincian Bayar Lunas (Bulan Depan)' : '🕊️ Rincian Biaya Qardh';
+        var labelCicilanQardh = (tenorTerpilihNow===1) ? 'Total Bayar (Lunas Bulan Depan)' : 'Cicilan / bulan ('+tenorTerpilihNow+'x)';
         if (biayaWrap) {
           biayaWrap.style.display = 'block';
           biayaWrap.innerHTML = '<div style="background:#f4e9f7;border:1.5px solid #e3c9ea;border-radius:14px;padding:14px">'
-            + '<div style="font-weight:800;font-size:12.5px;color:#7b2d8b;margin-bottom:10px">🕊️ Rincian Biaya Qardh</div>'
+            + '<div style="font-weight:800;font-size:12.5px;color:#7b2d8b;margin-bottom:10px">'+judulQardh+'</div>'
             + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:5px"><span>Harga Barang</span><strong>'+fmt(hq.hargaBarang)+'</strong></div>'
             + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#4b5563;margin-bottom:8px"><span>Biaya Fee Layanan</span><strong>'+fmt(hq.fee)+'</strong></div>'
             + '<div style="height:1px;background:rgba(123,45,139,0.2);margin-bottom:8px"></div>'
             + '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:#1c3025;margin-bottom:4px"><span>Total Tagihan</span><span>'+fmt(hq.totalTagihan)+'</span></div>'
-            + '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#7b2d8b"><span>Cicilan / bulan ('+tenorTerpilihNow+'x)</span><span>'+fmt(hq.cicilanPerBulan)+'</span></div>'
+            + '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;color:#7b2d8b"><span>'+labelCicilanQardh+'</span><span>'+fmt(hq.cicilanPerBulan)+'</span></div>'
             + '</div>';
         }
       }
@@ -23760,15 +23780,18 @@ function kifayahCheckout() {
       showToast('⚠️ Transaksi cicilan tidak dapat diproses saat ini, silakan hubungi admin');
       return;
     }
-    // Cicilan ke-1 WAJIB langsung dipotong dari Saldo Kifayah pembeli begitu pesanan
-    // ditandai "selesai" (lihat kifayahUpdatePesananStatus). Supaya pesanan cicilan
-    // yang nantinya pasti gagal tidak sempat dibuat, saldo Kifayah pembeli divalidasi
-    // cukup DI SINI — sebelum pesanan dibuat — bukan menunggu sampai gagal saat
-    // pesanan diselesaikan.
-    var _saldoKifayahCekAwal = saldoKifayahNasabah(myId);
-    if (_saldoKifayahCekAwal < totalSemua) {
-      showToast('⚠️ Saldo Kifayah tidak cukup untuk Cicilan ke-1 (tersedia ' + fmt(_saldoKifayahCekAwal) + ', dibutuhkan ' + fmt(totalSemua) + ') — pesanan tidak bisa dibuat');
-      return;
+    // Cicilan ke-1 (tenor 2/3/4) WAJIB langsung dipotong dari Saldo Kifayah pembeli
+    // begitu pesanan ditandai "selesai" (lihat kifayahUpdatePesananStatus) — jadi
+    // saldo divalidasi cukup DI SINI dulu, sebelum pesanan dibuat. Untuk tenor 1
+    // ("Cicilan 1" = bayar lunas BULAN DEPAN, bukan sekarang), TIDAK ada potongan
+    // di awal sama sekali — jadi tidak perlu dicek saldo di sini.
+    if (cicilanTenor !== 1) {
+      var _angsuran1Butuh = totalSemua;
+      var _saldoKifayahCekAwal = saldoKifayahNasabah(myId);
+      if (_saldoKifayahCekAwal < _angsuran1Butuh) {
+        showToast('⚠️ Saldo Kifayah tidak cukup untuk Cicilan ke-1 (tersedia ' + fmt(_saldoKifayahCekAwal) + ', dibutuhkan ' + fmt(_angsuran1Butuh) + ') — pesanan tidak bisa dibuat');
+        return;
+      }
     }
   }
   Object.keys(byWarung).forEach(function(warungId){
@@ -24578,15 +24601,23 @@ function kifayahUpdatePesananStatus(pesananId, status) {
   if (!p) return;
   var sudahSelesaiSebelumnya = (p.status === 'selesai');
 
-  // Cicilan (Qardh/Murabahah): sebelum pesanan ditandai "selesai" untuk pertama
-  // kalinya, cicilan ke-1 WAJIB ditarik otomatis dari Tabungan Sukarela pembeli
-  // sejumlah harga barang (p.total — TIDAK termasuk fee/margin). Kalau saldo
-  // Sukarela pembeli tidak cukup, seluruh transaksi DITOLAK (status batal diubah,
-  // saldo warung & Dompet Kifayah tidak disentuh sama sekali).
-  if (status === 'selesai' && !sudahSelesaiSebelumnya && p.metodeBayar === 'cicilan') {
+  // Cicilan (Murabahah, tenor 2/3/4): sebelum pesanan ditandai "selesai" untuk
+  // pertama kalinya, angsuran ke-1 WAJIB ditarik otomatis dari Tabungan Sukarela
+  // pembeli — sejumlah harga barang (p.total, TIDAK termasuk margin/fee), sisanya
+  // (margin+fee) dicicil rata pada angsuran berikutnya lewat
+  // kifayahBayarCicilanPesanan(). Kalau saldo Sukarela pembeli tidak cukup, seluruh
+  // transaksi DITOLAK (status batal diubah, saldo warung & Dompet Kifayah tidak
+  // disentuh sama sekali).
+  // Untuk tenor 1 ("Cicilan 1" — Qardh, bayar LUNAS BULAN DEPAN): TIDAK ada
+  // potongan otomatis sama sekali di sini — seluruh Total Tagihan (harga+fee)
+  // baru ditagih belakangan lewat menu "Cicilan Saya" (sama seperti angsuran
+  // ke-2 dst pada tenor 2/3/4), jadi tidak perlu cek saldo di titik ini.
+  var _cicilanTenor1 = !!(p.cicilan && p.cicilan.tenor === 1);
+  var _jumlahAngsuran1 = p.total || 0;
+  if (status === 'selesai' && !sudahSelesaiSebelumnya && p.metodeBayar === 'cicilan' && !_cicilanTenor1) {
     var _saldoSukPembeli = saldoKifayahNasabah(p.pembeliId);
-    if (_saldoSukPembeli < (p.total || 0)) {
-      showToast('⚠️ Saldo Kifayah ' + (p.pembeliNama||'pembeli') + ' tidak cukup untuk Cicilan ke-1 (tersedia ' + fmt(_saldoSukPembeli) + ', dibutuhkan ' + fmt(p.total||0) + ') — pesanan tidak bisa diselesaikan');
+    if (_saldoSukPembeli < _jumlahAngsuran1) {
+      showToast('⚠️ Saldo Kifayah ' + (p.pembeliNama||'pembeli') + ' tidak cukup untuk Cicilan ke-1 (tersedia ' + fmt(_saldoSukPembeli) + ', dibutuhkan ' + fmt(_jumlahAngsuran1) + ') — pesanan tidak bisa diselesaikan');
       return;
     }
   }
@@ -24616,28 +24647,35 @@ function kifayahUpdatePesananStatus(pesananId, status) {
       DB.kifayahDompet.saldo = _kfDompetBaru;
       _kfDompetCatat('tarik', p.total || 0, 'Pencairan cicilan ke ' + (wTujuan ? wTujuan.nama : (p.warungNama||'-')) + ' — pesanan ' + p.id, _kfDompetLama, _kfDompetBaru);
 
-      // ── Cicilan ke-1 otomatis ─────────────────────────────────────────
+      // ── Cicilan ke-1 otomatis (hanya tenor 2/3/4) ────────────────────────
       // Ditarik dari Tabungan Sukarela pembeli (saldo sudah dipastikan cukup
       // di atas), tercatat sebagai transaksi 'tarik-sukarela' berlabel Kifayah,
-      // lalu dana tsb menjadi pelunasan/pengembalian ke Dompet Kifayah sejumlah
-      // harga barang (bukan termasuk fee/margin) — mengembalikan Dompet Kifayah
-      // ke saldo semula untuk bagian pokok pesanan ini.
-      var _cicilanLbl1 = (typeof _kfCicilanLabel === 'function') ? _kfCicilanLabel(p) : 'Cicilan';
-      kifayahCatatTransaksi(p.pembeliId, 'tarik', p.total || 0, 'Cicilan ke-1 (' + _cicilanLbl1 + ') — Belanja Kifayah pesanan ' + p.id + (p.pembeliNama ? ' — ' + p.pembeliNama : ''), { jenis: 'cicilan', refId: p.id });
-      var _kfDompetLama2 = kifayahDompetSaldo();
-      var _kfDompetBaru2 = _kfDompetLama2 + (p.total || 0);
-      DB.kifayahDompet.saldo = _kfDompetBaru2;
-      _kfDompetCatat('setor', p.total || 0, 'Pelunasan Cicilan ke-1 dari Saldo Kifayah ' + (p.pembeliNama||'-') + ' — pesanan ' + p.id, _kfDompetLama2, _kfDompetBaru2);
-
+      // lalu dana tsb menjadi pelunasan/pengembalian ke Dompet Kifayah — sejumlah
+      // harga barang saja (pokok), sisanya (margin+fee) dicicil belakangan.
+      // Untuk tenor 1 ("Cicilan 1" — bayar lunas BULAN DEPAN): angsuranDibayar
+      // tetap 0, seluruh Total Tagihan baru ditagih nanti lewat "Cicilan Saya".
       if (!p.cicilan) p.cicilan = {};
-      p.cicilan.angsuranDibayar = 1;
-      p.cicilan.angsuran1Tanggal = nowISO();
-      p.cicilan.angsuran1Jumlah = p.total || 0;
-      // totalDibayar = akumulasi seluruh angsuran yang sudah masuk (dipakai
-      // _kfCicilanNextInfo() utk menghitung sisa tagihan angsuran berikutnya
-      // tanpa menghitung ulang harga barang yang sudah lunas di angsuran ke-1).
-      p.cicilan.totalDibayar = p.total || 0;
-      p.cicilan.riwayat = [{ no: 1, jumlah: p.total || 0, tanggal: nowISO(), sumber: 'Sukarela (otomatis)' }];
+      if (!_cicilanTenor1) {
+        var _cicilanLbl1 = (typeof _kfCicilanLabel === 'function') ? _kfCicilanLabel(p) : 'Cicilan';
+        kifayahCatatTransaksi(p.pembeliId, 'tarik', _jumlahAngsuran1, 'Cicilan ke-1 (' + _cicilanLbl1 + ') — Belanja Kifayah pesanan ' + p.id + (p.pembeliNama ? ' — ' + p.pembeliNama : ''), { jenis: 'cicilan', refId: p.id });
+        var _kfDompetLama2 = kifayahDompetSaldo();
+        var _kfDompetBaru2 = _kfDompetLama2 + _jumlahAngsuran1;
+        DB.kifayahDompet.saldo = _kfDompetBaru2;
+        _kfDompetCatat('setor', _jumlahAngsuran1, 'Pelunasan Cicilan ke-1 dari Saldo Kifayah ' + (p.pembeliNama||'-') + ' — pesanan ' + p.id, _kfDompetLama2, _kfDompetBaru2);
+
+        p.cicilan.angsuranDibayar = 1;
+        p.cicilan.angsuran1Tanggal = nowISO();
+        p.cicilan.angsuran1Jumlah = _jumlahAngsuran1;
+        // totalDibayar = akumulasi seluruh angsuran yang sudah masuk (dipakai
+        // _kfCicilanNextInfo() utk menghitung sisa tagihan angsuran berikutnya
+        // tanpa menghitung ulang harga barang yang sudah lunas di angsuran ke-1).
+        p.cicilan.totalDibayar = _jumlahAngsuran1;
+        p.cicilan.riwayat = [{ no: 1, jumlah: _jumlahAngsuran1, tanggal: nowISO(), sumber: 'Sukarela (otomatis)' }];
+      } else {
+        p.cicilan.angsuranDibayar = 0;
+        p.cicilan.totalDibayar = 0;
+        p.cicilan.riwayat = [];
+      }
     }
   }
   // Kredit ongkir ke Saldo Kurir — hanya sekali, saat pesanan pertama kali menjadi "selesai"
@@ -24658,7 +24696,7 @@ function kifayahUpdatePesananStatus(pesananId, status) {
     }
   }
   saveDB();
-  var _cicilan1Msg = (status === 'selesai' && p.metodeBayar === 'cicilan') ? ' — Cicilan ke-1 (' + fmt(p.total||0) + ') otomatis dipotong dari Sukarela' : '';
+  var _cicilan1Msg = (status === 'selesai' && p.metodeBayar === 'cicilan') ? (_cicilanTenor1 ? ' — Cicilan 1 (Lunas Bulan Depan): belum ada potongan, bayar nanti lewat menu Cicilan Saya' : ' — Cicilan ke-1 (' + fmt(_jumlahAngsuran1||0) + ') otomatis dipotong dari Sukarela') : '';
   showToast(status === 'selesai' ? ((p.kurirId ? (p.ongkirCod ? '✅ Pesanan selesai diantar — Ongkir COD diterima tunai' : '✅ Pesanan selesai diantar — Saldo Warung & Saldo Kurir diperbarui') : '✅ Pesanan selesai — Saldo Warung diperbarui') + _cicilan1Msg) : '✅ Status pesanan diperbarui');
   renderKifayahWarungSaya();
   if (typeof renderKifayahPesananMasuk === 'function') renderKifayahPesananMasuk();
@@ -25590,38 +25628,38 @@ function _renderKifayahAdminSection(key) {
   el.innerHTML = html;
 }
 
-var _KF_MURABAHAH_TENOR = [4,6,8,10,12];
+var _KF_MURABAHAH_TENOR = [2,3,4];
 
 function _kfRenderPengaturanCicilan() {
   var ks = DB.kifayahSetting || {};
-  var qardh = ks.qardh || { tenorOpsi:[2,3], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 };
-  var murabahah = ks.murabahah || { tenorOpsi:[4,6,8,10,12], minBelanja:100000, limitBulanan:400000, marginTable:{4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan:10000 };
-  var marginTable = murabahah.marginTable || {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0};
+  var qardh = ks.qardh || { tenorOpsi:[1], minBelanja:50000, limitBulanan:200000, feeLayanan:10000 };
+  var murabahah = ks.murabahah || { tenorOpsi:[2,3,4], minBelanja:100000, limitBulanan:400000, marginTable:{2:0.5,3:0.75,4:1.0}, feeLayanan:10000 };
+  var marginTable = murabahah.marginTable || {2:0.5,3:0.75,4:1.0};
   var jasaKurir = ks.jasaKurir || { tarifPerKg:3000, tarifPerKm:2000, minimum:5000 };
   var gadai = ks.gadai || { ujrahPctPerPeriode:1.5, periodeHari:10, maxRasioPencairan:75 };
   var marginRowsHtml = _KF_MURABAHAH_TENOR.map(function(t){
     var val = (marginTable[t] !== undefined) ? marginTable[t] : 0;
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-      + '<label style="font-size:11px;flex:1;margin:0">Margin ' + t + ' bulan (%)</label>'
+      + '<label style="font-size:11px;flex:1;margin:0">Margin Cicilan ' + t + ' (%)</label>'
       + '<input type="number" id="kfSetMargin_' + t + '" value="' + val + '" min="0" step="0.1" style="width:90px">'
       + '</div>';
   }).join('');
-  return '<div style="font-size:11px;color:#6b7280;margin-bottom:14px;line-height:1.5">Atur minimal belanja & limit cicilan per-nasabah per bulan untuk masing-masing skema. Tenor tersedia: Qardh 2–3 bulan, Murabahah 4/6/8/10/12 bulan.</div>'
+  return '<div style="font-size:11px;color:#6b7280;margin-bottom:14px;line-height:1.5">Atur minimal belanja & limit cicilan per-nasabah per bulan untuk masing-masing skema. Opsi cicilan: 1 (Qardh, bayar lunas bulan depan), 2/3/4 (Murabahah, dengan margin keuntungan).</div>'
     + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:14px;margin-bottom:12px">'
-    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">🕊️ Cicilan Qardh (tenor 2–3 bulan)</div>'
+    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">🕊️ Cicilan 1 — Bayar Lunas Bulan Depan (Qardh)</div>'
     + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Minimal Belanja (Rp)</label><input type="number" id="kfSetQardhMin" value="'+(qardh.minBelanja||0)+'" min="0" step="1000"></div>'
     + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Limit per Nasabah / Bulan (Rp)</label><input type="number" id="kfSetQardhLimit" value="'+(qardh.limitBulanan||0)+'" min="0" step="1000"></div>'
     + '<div class="field" style="margin-bottom:0"><label style="font-size:11px">Fee Layanan / Transaksi (Rp)</label><input type="number" id="kfSetQardhFee" value="'+(qardh.feeLayanan!==undefined?qardh.feeLayanan:10000)+'" min="0" step="1000"></div>'
-    + '<div style="font-size:11px;color:#9ca3af;line-height:1.5;margin-top:8px">Qardh tanpa margin — nasabah hanya membayar Fee Layanan, termasuk dalam Total Tagihan. Cicilan/bln = (Harga Barang + Fee) ÷ Tenor.</div>'
+    + '<div style="font-size:11px;color:#9ca3af;line-height:1.5;margin-top:8px">Tanpa margin — nasabah hanya membayar Fee Layanan, termasuk dalam Total Tagihan, dibayar lunas sekaligus bulan depan.</div>'
     + '</div>'
     + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:14px;margin-bottom:16px">'
-    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">📿 Cicilan Murabahah (tenor 4/6/8/10/12 bulan)</div>'
+    + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">📿 Cicilan 2/3/4 — Bertahap dengan Margin (Murabahah)</div>'
     + '<div class="field" style="margin-bottom:8px"><label style="font-size:11px">Minimal Belanja (Rp)</label><input type="number" id="kfSetMurabahahMin" value="'+(murabahah.minBelanja||0)+'" min="0" step="1000"></div>'
     + '<div class="field" style="margin-bottom:12px"><label style="font-size:11px">Limit per Nasabah / Bulan (Rp)</label><input type="number" id="kfSetMurabahahLimit" value="'+(murabahah.limitBulanan||0)+'" min="0" step="1000"></div>'
     + '<div class="field" style="margin-bottom:12px"><label style="font-size:11px">Fee Layanan / Transaksi (Rp)</label><input type="number" id="kfSetMurabahahFee" value="'+(murabahah.feeLayanan!==undefined?murabahah.feeLayanan:10000)+'" min="0" step="1000"></div>'
-    + '<div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.4px;font-weight:800;margin-bottom:8px">Margin Tetap per Tenor</div>'
+    + '<div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.4px;font-weight:800;margin-bottom:8px">Margin Tetap per Opsi Cicilan</div>'
     + marginRowsHtml
-    + '<div style="font-size:11px;color:#9ca3af;line-height:1.5;margin-top:2px">Rumus: Margin = Harga Barang × %Margin. Harga Jual = Harga Barang + Margin. Total Tagihan = Harga Jual + Fee. Cicilan/bln = Total Tagihan ÷ Tenor.</div>'
+    + '<div style="font-size:11px;color:#9ca3af;line-height:1.5;margin-top:2px">Rumus: Margin = Harga Barang × %Margin. Harga Jual = Harga Barang + Margin. Total Tagihan = Harga Jual + Fee. Cicilan/bln = Total Tagihan ÷ Jumlah Cicilan.</div>'
     + '</div>'
     + '<div style="background:#faf7fb;border:1.5px solid #f0eef3;border-radius:14px;padding:14px;margin-bottom:16px">'
     + '<div style="font-weight:800;font-size:13px;color:#7b2d8b;margin-bottom:10px">🛵 Jasa Kurir (kirim barang/paket)</div>'
@@ -25677,17 +25715,17 @@ function kifayahAdminSimpanPengaturan() {
     marginTableBaru[t] = mv;
   }
   if (!DB.kifayahSetting || typeof DB.kifayahSetting !== 'object') DB.kifayahSetting = {};
-  if (!DB.kifayahSetting.qardh) DB.kifayahSetting.qardh = { tenorOpsi:[2,3] };
-  if (!DB.kifayahSetting.murabahah) DB.kifayahSetting.murabahah = { tenorOpsi:[4,6,8,10,12] };
+  if (!DB.kifayahSetting.qardh) DB.kifayahSetting.qardh = { tenorOpsi:[1] };
+  if (!DB.kifayahSetting.murabahah) DB.kifayahSetting.murabahah = { tenorOpsi:[2,3,4] };
   DB.kifayahSetting.qardh.minBelanja = Math.round(qMin);
   DB.kifayahSetting.qardh.limitBulanan = Math.round(qLimit);
   DB.kifayahSetting.qardh.feeLayanan = Math.round(qFee);
-  DB.kifayahSetting.qardh.tenorOpsi = [2,3];
+  DB.kifayahSetting.qardh.tenorOpsi = [1];
   DB.kifayahSetting.murabahah.minBelanja = Math.round(mMin);
   DB.kifayahSetting.murabahah.limitBulanan = Math.round(mLimit);
   DB.kifayahSetting.murabahah.feeLayanan = Math.round(mFee);
   DB.kifayahSetting.murabahah.marginTable = marginTableBaru;
-  DB.kifayahSetting.murabahah.tenorOpsi = [4,6,8,10,12];
+  DB.kifayahSetting.murabahah.tenorOpsi = [2,3,4];
   if (!DB.kifayahSetting.jasaKurir) DB.kifayahSetting.jasaKurir = {};
   DB.kifayahSetting.jasaKurir.tarifPerKg = Math.round(jkTarifKg);
   DB.kifayahSetting.jasaKurir.tarifPerKm = Math.round(jkTarifKm);
@@ -25847,8 +25885,8 @@ function kifayahAdminResetTotal() {
   DB.jasaSewa = [];
   DB.jasaService = [];
   DB.kifayahSetting = {
-    qardh: { tenorOpsi: [2,3], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 },
-    murabahah: { tenorOpsi: [4,6,8,10,12], minBelanja: 100000, limitBulanan: 400000, marginTable: {4:1.0,6:1.5,8:2.0,10:2.5,12:3.0}, feeLayanan: 10000 },
+    qardh: { tenorOpsi: [1], minBelanja: 50000, limitBulanan: 200000, feeLayanan: 10000 },
+    murabahah: { tenorOpsi: [2,3,4], minBelanja: 100000, limitBulanan: 400000, marginTable: {2:0.5,3:0.75,4:1.0}, feeLayanan: 10000 },
     jasaKurir: { tarifPerKg: 3000, tarifPerKm: 2000, minimum: 5000 },
     gadai: { ujrahPctPerPeriode: 1.5, periodeHari: 10, maxRasioPencairan: 75, tenorOpsiBulan: [1,2,3,4], batasLelangHari: 30 }
   };
@@ -59158,9 +59196,21 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
       if (nasabahIds.length===0) return `<div style="text-align:center;padding:40px;color:#9ca3af;font-size:13px">Tidak ada data untuk filter yang dipilih</div>`;
 
+      window._arsipEmailBlastData = [];
+
       return nasabahIds.map(function(kkId){
         var data  = byAnggota[kkId];
         var selisi= data.masuk - data.keluar;
+
+        // Data email nasabah — dipakai oleh tombol "Kirim PDF" (Web Share) dan
+        // "Kirim PDF ke Semua (berurutan)" untuk memastikan dokumen dikirim ke
+        // email TERDAFTAR yang benar. Fitur "Kirim Email" teks (mailto:) dan
+        // "Blast Email Rekap" sudah dihapus karena digantikan Kirim PDF.
+        var nbArsip = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
+        var emailTujuanArsip = ((nbArsip&&nbArsip.email)||'').trim();
+        var hasEmailArsip = emailTujuanArsip.indexOf('@') >= 0;
+        window._arsipEmailBlastData.push({ kkId: kkId, nama: data.nama, email: emailTujuanArsip, hasEmail: hasEmailArsip });
+
 
         // Kelompokkan baris per jenisGrup
         var byGrup = {};
@@ -59241,10 +59291,7 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
               style="flex:1;min-width:90px;background:linear-gradient(135deg,#1e40af,#2563eb);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
               ☁️ Google Drive
             </button>
-            <button onclick="window._arsipKirimEmailAnggota('${kkId}')"
-              style="flex:1;min-width:90px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">
-              ✉️ Kirim Email
-            </button>
+            ${(typeof navigator!=='undefined' && navigator.share) ? ('<button onclick="window._arsipKirimPDFShareAnggota(\''+kkId+'\')" style="flex:1;min-width:90px;background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;border:none;border-radius:9px;padding:8px;font-size:10px;font-weight:700;cursor:pointer">📎 Kirim PDF</button>') : ''}
           </div>
         </div>`;
       }).join('');
@@ -59298,6 +59345,21 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
           <option value="semua" ${filterNasabah==='semua'?'selected':''}>👥 Semua Anggota</option>
           ${nasabahOptions}
         </select>
+      </div>` : '';
+
+    /* ── Tombol Blast Email ke Semua Anggota (khusus filter "Per Anggota", admin) ──
+       Pola sama dengan "Kirim WA Blast ke Semua" di tab Pengingat Tagihan:
+       buka mailto: satu per satu via window.open() + jeda antar-tap, BUKAN kirim
+       otomatis dari server (tidak ada backend email di app ini) — admin tetap perlu
+       tap "Kirim" di tiap aplikasi email yang terbuka, tapi tidak perlu buka satu-satu
+       kartu nasabah secara manual. */
+    var blastEmailHTML = (filterView==='anggota' && typeof isAdmin==='function' && isAdmin() && typeof navigator!=='undefined' && navigator.share) ? `
+      <div style="padding:0 14px 14px">
+        <button onclick="window._arsipKirimPDFSemuaAnggota()"
+          style="width:100%;background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;border:none;border-radius:12px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(15,118,110,0.25)">
+          📎 Kirim PDF ke Semua (berurutan)
+        </button>
+        <div style="font-size:9.5px;color:#9ca3af;text-align:center;margin-top:5px;line-height:1.4">Menu share PDF muncul satu per satu per anggota — pilih Email, lalu otomatis lanjut ke anggota berikutnya</div>
       </div>` : '';
 
     /* ── Tombol download & drive semua ── */
@@ -59372,6 +59434,9 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
 
     <!-- ══ FILTER ANGGOTA (hanya view anggota) ══ -->
     ${filterAnggotaHTML}
+
+    <!-- ══ BLAST EMAIL (hanya view anggota, admin) ══ -->
+    ${blastEmailHTML}
 
     <!-- ══ KONTEN UTAMA ══ -->
     ${kontenUtama}
@@ -59492,13 +59557,168 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
   }
 
   /* ── Render tabel arsip native (kop surat + tabel vektor asli, bukan screenshot) ── */
-  function _pdfArsipNative(rows, judul, subJudul, fname) {
+  /* ══════════════════════════════════════════════════════════════════
+     Gaya PDF Arsip — minimalis & profesional, KHUSUS dokumen Arsip.
+     Dibuat terpisah dari _pdfKop/_pdfSection/_pdfRingkasan/_pdfTabel/
+     _pdfTtd/_pdfFooterSemua global (dipakai laporan lain di app) supaya
+     perubahan tampilan ini tidak memengaruhi PDF lain. Prinsip desain:
+     satu warna aksen (hijau tua), tipografi konsisten, garis tipis
+     sebagai pemisah (bukan blok warna penuh), angka rata kanan seperti
+     dokumen pembukuan/ledger formal. */
+  function _pdfArsipHeader(doc, pageW, margin, judul, subJudul) {
+    var y = 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12.5);
+    doc.setTextColor(26, 71, 42);
+    doc.text('KOPERASI RENCO', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(130, 130, 130);
+    doc.text(String(judul).toUpperCase(), pageW - margin, y, { align: 'right' });
+    y += 4.5;
+    doc.setDrawColor(26, 71, 42);
+    doc.setLineWidth(0.7);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.3);
+    doc.setTextColor(100, 100, 100);
+    doc.text(subJudul, margin, y);
+    return y + 8;
+  }
+
+  function _pdfArsipLabel(doc, y, margin, title) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text(String(title).toUpperCase(), margin, y);
+    return y + 5;
+  }
+
+  // Ringkasan: satu baris ramping, label kecil di atas nilai, dipisah garis vertikal tipis
+  function _pdfArsipRingkasan(doc, y, margin, usableW, items) {
+    var n = items.length, colW = usableW / n;
+    doc.setDrawColor(225, 225, 225);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y, margin + usableW, y);
+    items.forEach(function (it, i) {
+      var x = margin + i * colW;
+      var padL = i === 0 ? 0 : 5;
+      if (i > 0) doc.line(x, y + 2, x, y + 15);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.6);
+      doc.setTextColor(140, 140, 140);
+      doc.text(String(it.label).toUpperCase(), x + padL, y + 6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      var c = it.color || [40, 40, 40];
+      doc.setTextColor(c[0], c[1], c[2]);
+      doc.text(String(it.value), x + padL, y + 13.5, { maxWidth: colW - padL - 2 });
+    });
+    doc.line(margin, y + 17, margin + usableW, y + 17);
+    return y + 23;
+  }
+
+  // Tabel ledger minimalis: header teks + garis bawah tegas, baris dipisah garis tipis,
+  // tanpa blok warna (zebra) — angka rata kanan, grup sebagai label kecil bergaris atas.
+  function _pdfArsipTabel(doc, y, margin, usableW, pageH, cols, rows) {
+    var headH = 6.5, lineH = 6;
+    function drawHead() {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(100, 100, 100);
+      var x = margin;
+      cols.forEach(function (c) {
+        var align = c.align === 'right' ? 'right' : 'left';
+        doc.text(String(c.header).toUpperCase(), align === 'right' ? x + c.width - 1.5 : x + 1, y + 4.5, { align: align, maxWidth: c.width - 3 });
+        x += c.width;
+      });
+      y += headH;
+      doc.setDrawColor(70, 70, 70);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, margin + usableW, y);
+      y += 2.6;
+    }
+    drawHead();
+    rows.forEach(function (r) {
+      if (y + lineH + 4 > pageH - 26) { doc.addPage(); y = 16; drawHead(); }
+      if (r._group) {
+        y += 1.5;
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, margin + usableW, y);
+        y += 4.2;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(26, 71, 42);
+        doc.text(String(r._group), margin + 1, y);
+        y += 2.6;
+        return;
+      }
+      if (r._total) {
+        doc.setDrawColor(60, 60, 60);
+        doc.setLineWidth(0.4);
+        doc.line(margin, y, margin + usableW, y);
+        y += 2.4;
+      }
+      var x = margin;
+      doc.setFontSize(7.3);
+      cols.forEach(function (c) {
+        var val = r[c.key] != null ? String(r[c.key]) : '';
+        var align = c.align === 'right' ? 'right' : 'left';
+        doc.setFont('helvetica', (r._total || c.bold) ? 'bold' : 'normal');
+        var color = c.colorFn ? c.colorFn(r) : (r._total ? [30, 30, 30] : (c.color || [55, 55, 55]));
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.text(val, align === 'right' ? x + c.width - 1.5 : x + 1, y + 4, { align: align, maxWidth: c.width - 3 });
+        x += c.width;
+      });
+      y += lineH;
+      if (!r._total) {
+        doc.setDrawColor(238, 238, 238);
+        doc.setLineWidth(0.15);
+        doc.line(margin, y, margin + usableW, y);
+      }
+    });
+    return y;
+  }
+
+  function _pdfArsipTtd(doc, y, pageW, pageH, margin) {
+    if (y + 38 > pageH - 14) { doc.addPage(); y = 16; }
+    var xKanan = pageW - margin - 50;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(110, 110, 110);
+    doc.text('Bendahara,', margin, y + 7);
+    doc.text('Selong, ' + _pdfTglPanjang(), xKanan, y + 7);
+    doc.text('Ketua Koperasi,', xKanan, y + 12);
+    doc.setTextColor(70, 70, 70);
+    doc.text('( ______________________ )', margin, y + 30);
+    doc.text('( ______________________ )', xKanan, y + 30);
+    return y + 36;
+  }
+
+  function _pdfArsipFooter(doc, pageW, pageH, margin, judul) {
+    var total = doc.internal.getNumberOfPages();
+    for (var p = 1; p <= total; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.2);
+      doc.line(margin, pageH - 12, pageW - margin, pageH - 12);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6.4);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Koperasi RENCO  ·  ' + judul + '  ·  Dokumen arsip', margin, pageH - 7.5);
+      doc.text('Hal. ' + p + ' / ' + total, pageW - margin, pageH - 7.5, { align: 'right' });
+    }
+  }
+
+  function _pdfArsipBuildDoc(rows, judul, subJudul) {
     var jsPDFCls = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-    if (!jsPDFCls) { if (typeof showToast === 'function') showToast('⚠️ Library PDF belum siap, coba lagi'); return; }
+    if (!jsPDFCls) return null;
     var doc = new jsPDFCls({ orientation: 'p', unit: 'mm', format: 'a4' });
     var pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
-    var margin = 14, usableW = pageW - margin * 2;
-    var y = _pdfKop(doc, pageW, margin, judul, subJudul + '  |  Dicetak ' + _pdfTglPanjang());
+    var margin = 16, usableW = pageW - margin * 2;
+    var y = _pdfArsipHeader(doc, pageW, margin, judul, subJudul + '  ·  Dicetak ' + _pdfTglPanjang());
 
     var grupOrder = ['Simpanan','Pembayaran Cicilan','Pembayaran Angsuran RC','Penarikan Simpanan','Pembiayaan / Pinjaman','Lain-lain'];
     var byGrup = {};
@@ -59506,21 +59726,21 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     var totalMasuk = rows.filter(function(r){return r.kategori==='masuk';}).reduce(function(a,b){return a+b.jumlah;},0);
     var totalKeluar = rows.filter(function(r){return r.kategori==='keluar';}).reduce(function(a,b){return a+b.jumlah;},0);
 
-    y = _pdfSection(doc, y, margin, 'Ringkasan Arus Kas', [26, 71, 42]);
-    y = _pdfRingkasan(doc, y, margin, usableW, [
+    y = _pdfArsipLabel(doc, y, margin, 'Ringkasan Arus Kas');
+    y = _pdfArsipRingkasan(doc, y, margin, usableW, [
       { label: 'Kas Masuk', value: _pdfFmt(totalMasuk), color: [26, 71, 42] },
-      { label: 'Kas Keluar', value: _pdfFmt(totalKeluar), color: [230, 57, 70] },
-      { label: 'Jumlah Transaksi', value: rows.length + ' transaksi', color: [26, 71, 42] },
-      { label: 'Selisih Bersih', value: _pdfFmt(totalMasuk - totalKeluar), color: (totalMasuk-totalKeluar)>=0?[26,71,42]:[230,57,70] }
+      { label: 'Kas Keluar', value: _pdfFmt(totalKeluar), color: [180, 45, 55] },
+      { label: 'Jumlah Transaksi', value: String(rows.length), color: [40, 40, 40] },
+      { label: 'Selisih Bersih', value: _pdfFmt(totalMasuk - totalKeluar), color: (totalMasuk-totalKeluar)>=0?[26,71,42]:[180,45,55] }
     ]);
 
-    y = _pdfSection(doc, y, margin, 'Detail Transaksi', [26, 71, 42]);
+    y = _pdfArsipLabel(doc, y, margin, 'Detail Transaksi');
     var cols = [
       { header: 'Tanggal', key: 'tglF', width: usableW * 0.16 },
-      { header: 'Anggota', key: 'nama', width: usableW * 0.24 },
-      { header: 'Jenis', key: 'jenis', width: usableW * 0.22 },
-      { header: 'Jumlah', key: 'jumlahF', width: usableW * 0.20, colorFn: function(r){ return r._masuk ? [26,71,42] : [230,57,70]; } },
-      { header: 'Arus', key: 'arus', width: usableW * 0.18 }
+      { header: 'Anggota', key: 'nama', width: usableW * 0.28 },
+      { header: 'Jenis', key: 'jenis', width: usableW * 0.28 },
+      { header: 'Arus', key: 'arus', width: usableW * 0.11 },
+      { header: 'Jumlah', key: 'jumlahF', width: usableW * 0.17, align: 'right', colorFn: function(r){ return r._masuk ? [26,71,42] : [180,45,55]; } }
     ];
     var tblRows = [];
     var months2 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
@@ -59529,16 +59749,22 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
       var gRows = byGrup[g];
       var isKel = gRows[0] && gRows[0].kategori==='keluar';
       var totG = gRows.reduce(function(a,b){return a+b.jumlah;},0);
-      tblRows.push({ _group: (isKel?'⬆ KAS KELUAR':'⬇ KAS MASUK') + ' — ' + g + ' · Total: ' + _pdfFmt(totG) });
+      tblRows.push({ _group: (isKel?'Kas Keluar':'Kas Masuk') + ' — ' + g + '  ·  ' + _pdfFmt(totG) });
       gRows.forEach(function(r){
-        tblRows.push({ tglF: fmtTglR(r.tanggal), nama: r.nama, jenis: r.jenis, jumlahF: (r.kategori==='masuk'?'+':'-')+_pdfFmt(r.jumlah), arus: r.kategori==='masuk'?'Masuk':'Keluar', _masuk: r.kategori==='masuk' });
+        tblRows.push({ tglF: fmtTglR(r.tanggal), nama: r.nama, jenis: r.jenis, jumlahF: (r.kategori==='masuk'?'+ ':'- ')+_pdfFmt(r.jumlah), arus: r.kategori==='masuk'?'Masuk':'Keluar', _masuk: r.kategori==='masuk' });
       });
     });
     if (!tblRows.length) tblRows.push({ tglF:'', nama:'Tidak ada transaksi pada periode ini', jenis:'', jumlahF:'', arus:'' });
-    tblRows.push({ tglF:'', nama:'TOTAL', jenis:'', jumlahF: _pdfFmt(totalMasuk-totalKeluar), arus: 'M:'+_pdfFmt(totalMasuk)+' K:'+_pdfFmt(totalKeluar), _total:true });
-    y = _pdfTabel(doc, y, margin, usableW, pageH, cols, tblRows);
-    y = _pdfTtd(doc, y + 6, pageW, pageH, margin);
-    _pdfFooterSemua(doc, pageW, pageH, margin, judul);
+    tblRows.push({ tglF:'', nama:'TOTAL', jenis:'M: '+_pdfFmt(totalMasuk)+'   K: '+_pdfFmt(totalKeluar), jumlahF: _pdfFmt(totalMasuk-totalKeluar), arus:'', _total:true });
+    y = _pdfArsipTabel(doc, y, margin, usableW, pageH, cols, tblRows);
+    y = _pdfArsipTtd(doc, y + 8, pageW, pageH, margin);
+    _pdfArsipFooter(doc, pageW, pageH, margin, judul);
+    return doc;
+  }
+
+  function _pdfArsipNative(rows, judul, subJudul, fname) {
+    var doc = _pdfArsipBuildDoc(rows, judul, subJudul);
+    if (!doc) { if (typeof showToast === 'function') showToast('⚠️ Library PDF belum siap, coba lagi'); return; }
     doc.save(fname);
     return fname;
   }
@@ -59623,46 +59849,100 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
     } catch(e){ if(typeof showToast==='function') showToast('❌ Gagal membuat PDF'); console.error(e); }
   };
 
-  /* ── Kirim Email langsung ke nasabah: rekap riwayat transaksinya (mailto:,
-       konsisten dengan fitur pengingat WA/Email yang sudah ada di tab Tunggakan) ── */
-  window._arsipKirimEmailAnggota = function(kkId) {
+  /* ── Kirim PDF asli via Web Share API (satu nasabah, satu tap) ──
+     mailto: TIDAK BISA melampirkan file (batasan browser, bukan batasan kode) —
+     jadi ini pakai menu share bawaan HP: admin tap tombol, pilih aplikasi Email
+     (atau WA/lainnya) di share sheet, dan file PDF ASLI otomatis terlampir.
+     Ini satu tap per nasabah (tidak bisa diloop otomatis seperti blast teks,
+     karena share sheet OS butuh interaksi pengguna tiap kali dipanggil).
+     PENTING: Web Share API tidak punya field "Kepada" (beda dengan mailto:), jadi
+     alamat tujuan tidak bisa diisi otomatis oleh browser. Untuk memastikan PDF
+     selalu dikirim ke email TERDAFTAR nasabah yang benar (bukan salah kirim/salah
+     ketik), fungsi ini: (1) wajib nasabah.email terisi, (2) tampilkan konfirmasi
+     nama+email sebelum share sheet dibuka, (3) salin email ke clipboard otomatis
+     supaya tinggal tempel di kolom "Kepada" pada aplikasi Email, (4) sertakan email
+     tujuan di teks share sebagai pengingat visual. */
+  window._arsipKirimPDFShareAnggota = async function(kkId) {
     var nb = (DB.nasabah||[]).find(function(a){return a.id===kkId;});
-    if (!nb) { if (typeof showToast === 'function') showToast('⚠️ Data nasabah tidak ditemukan'); return; }
-    var emailTujuan = (nb.email||'').trim();
-    if (emailTujuan.indexOf('@') < 0) {
-      if (typeof showToast === 'function') showToast('⚠️ '+nb.nama+' belum punya alamat email — lengkapi dulu di data nasabah');
+    if (!nb) { if (typeof showToast==='function') showToast('⚠️ Data nasabah tidak ditemukan'); return; }
+    var emailNb = (nb.email||'').trim();
+    if (emailNb.indexOf('@') < 0) {
+      if (typeof showToast==='function') showToast('⚠️ '+nb.nama+' belum punya email terdaftar — lengkapi dulu di data nasabah');
       return;
     }
+    if (!navigator.share) {
+      if (typeof showToast==='function') showToast('⚠️ HP/browser ini tidak mendukung fitur share. Gunakan Download PDF lalu kirim manual.');
+      return;
+    }
+    if (!confirm('Kirim PDF riwayat transaksi '+nb.nama+'?\n\nKe email terdaftar: '+emailNb+'\n\nEmail ini akan disalin ke clipboard — tempel di kolom "Kepada" setelah memilih aplikasi Email.')) return;
+    if (typeof showToast==='function') showToast('📎 Menyiapkan PDF untuk '+nb.nama+' ('+emailNb+')...');
     var kumpul = _arsipKumpulRowsAnggota(kkId);
-    var rows = kumpul.rows;
-    if (!rows.length) { if (typeof showToast === 'function') showToast('⚠️ Belum ada transaksi untuk dikirim'); return; }
-    var totalMasukE = rows.filter(function(r){return r.kategori==='masuk';}).reduce(function(s,r){return s+r.jumlah;},0);
-    var totalKeluarE= rows.filter(function(r){return r.kategori==='keluar';}).reduce(function(s,r){return s+r.jumlah;},0);
-    var kopE = (DB.pengaturan&&DB.pengaturan.namaKoperasi)||'Koperasi RENCO';
-    var maxBaris = 40;
-    var daftarStrE = rows.slice(-maxBaris).map(function(r){
-      var tanda = (r.kategori==='keluar') ? '-' : '+';
-      return _fmtTgl(r.tanggal)+' | '+r.jenis+' | '+tanda+_fmtRp(r.jumlah);
-    }).join('\n');
-    var lebihE = rows.length > maxBaris ? '\n... dan '+(rows.length-maxBaris)+' transaksi lainnya (hubungi admin untuk rincian lengkap)' : '';
-    var subjectE = encodeURIComponent('['+kopE+'] Riwayat Transaksi Anda — '+nb.nama);
-    var bodyE = encodeURIComponent(
-      'Kepada Yth. '+nb.nama+',\n\n'
-      +'Berikut rekap riwayat transaksi Anda di '+kopE+':\n\n'
-      +daftarStrE+lebihE+'\n\n'
-      +'Total Masuk  : '+_fmtRp(totalMasukE)+'\n'
-      +'Total Keluar : '+_fmtRp(totalKeluarE)+'\n\n'
-      +'Jika ada transaksi yang menurut Anda tidak sesuai, mohon segera hubungi admin '+kopE+'.\n\n'
-      +'Terima kasih.\n\n'
-      +'Salam hormat,\n'+kopE+'\n'
-      +'Dikirim: '+new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})
-    );
-    var mailtoLink = 'mailto:'+encodeURIComponent(emailTujuan)+'?subject='+subjectE+'&body='+bodyE;
-    window.location.href = mailtoLink;
-    if (typeof showToast === 'function') showToast('📧 Membuka aplikasi email ke '+emailTujuan+'...');
+    var doc = _pdfArsipBuildDoc(kumpul.rows, 'RIWAYAT TRANSAKSI LENGKAP', nb.nama);
+    if (!doc) { if (typeof showToast==='function') showToast('⚠️ Library PDF belum siap, coba lagi'); return; }
+    var fname = 'riwayat-'+nb.nama.toLowerCase().replace(/\s+/g,'-')+'.pdf';
+    var file;
+    try { file = new File([doc.output('blob')], fname, { type: 'application/pdf' }); }
+    catch(e) { if (typeof showToast==='function') showToast('❌ Gagal menyiapkan file PDF'); console.error(e); return; }
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+      if (typeof showToast==='function') showToast('⚠️ HP ini tidak mendukung share file PDF. Gunakan Download PDF lalu kirim manual.');
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(emailNb); } catch(e) { /* abaikan jika clipboard tidak diizinkan */ }
+    }
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Riwayat Transaksi — '+nb.nama,
+        text: 'Kirim ke email terdaftar: '+emailNb+'\nRiwayat transaksi Koperasi RENCO a.n. '+nb.nama+'.'
+      });
+      if (typeof showToast==='function') showToast('✅ Pilih aplikasi Email, lalu tempel '+emailNb+' di kolom Kepada');
+    } catch(e) {
+      if (e && e.name !== 'AbortError') { if (typeof showToast==='function') showToast('❌ Gagal membuka menu share'); console.error(e); }
+    }
   };
 
-  /* ── Download PDF semua (gabungan bulan yang difilter) ── */
+  /* ── Kirim PDF ke Semua Anggota — antrian otomatis berurutan ──
+     PENTING: OS Android/iOS mewajibkan interaksi pengguna tiap kali file di-share
+     (tidak ada API untuk "kirim file ke banyak alamat sekaligus tanpa sentuhan").
+     Yang bisa dilakukan: rantai otomatis — begitu satu share sheet ditutup
+     (dikirim atau dibatalkan), lanjut buka share sheet nasabah berikutnya tanpa
+     admin perlu tap tombol lagi. Ini pendekatan client-side terbaik yang
+     memungkinkan tanpa backend/API email. */
+  window._arsipKirimPDFSemuaAnggota = async function() {
+    if (!navigator.share) { if (typeof showToast==='function') showToast('⚠️ HP/browser ini tidak mendukung fitur share'); return; }
+    var data = window._arsipEmailBlastData || [];
+    var valid = data.filter(function(d){ return d.hasEmail; });
+    if (!valid.length) { if (typeof showToast==='function') showToast('⚠️ Tidak ada anggota dengan email terisi pada filter ini'); return; }
+    if (!confirm('Kirim PDF ke '+valid.length+' anggota secara berurutan?\n\nMenu share akan muncul satu per satu — email tujuan tiap anggota otomatis disalin ke clipboard, tinggal tempel di kolom "Kepada", pilih aplikasi Email, lalu Kirim. Setelah itu otomatis lanjut ke anggota berikutnya.')) return;
+    var berhasil = 0, dilewati = 0;
+    for (var i=0; i<valid.length; i++) {
+      var d = valid[i];
+      if (typeof showToast==='function') showToast('📎 ('+(i+1)+'/'+valid.length+') Menyiapkan PDF '+d.nama+' → '+d.email+'...');
+      var kumpul = _arsipKumpulRowsAnggota(d.kkId);
+      var doc = _pdfArsipBuildDoc(kumpul.rows, 'RIWAYAT TRANSAKSI LENGKAP', d.nama);
+      if (!doc) { dilewati++; continue; }
+      var fname = 'riwayat-'+d.nama.toLowerCase().replace(/\s+/g,'-')+'.pdf';
+      var file;
+      try { file = new File([doc.output('blob')], fname, { type: 'application/pdf' }); }
+      catch(e) { dilewati++; continue; }
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) { dilewati++; continue; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try { await navigator.clipboard.writeText(d.email); } catch(e) { /* abaikan jika clipboard tidak diizinkan */ }
+      }
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Riwayat Transaksi — '+d.nama,
+          text: 'Kirim ke email terdaftar: '+d.email+'\nRiwayat transaksi Koperasi RENCO a.n. '+d.nama+'.'
+        });
+        berhasil++;
+      } catch(e) { /* dibatalkan pengguna — tetap lanjut ke anggota berikutnya */ }
+    }
+    if (typeof showToast==='function') showToast('✅ Selesai — '+berhasil+' terkirim, '+dilewati+' dilewati dari '+valid.length+' anggota');
+  };
+
+
   window._arsipDownloadAllPDF = async function() {
     var filterT = window._arsipFilterTahun || 'semua';
     var allTxDB = DB.transaksi||[]; var allPinDB=DB.pinjaman||[]; var allPemDB=[].concat(DB.pembiayaan||[],DB.pembiayaanSyariah||[]);
