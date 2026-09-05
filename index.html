@@ -59279,8 +59279,15 @@ window.setMemberTabPembayaran = setMemberTabPembayaran;
               <div style="font-size:12px;font-weight:800;color:#b91c1c">${_fmtRp(data.keluar)}</div>
             </div>
           </div>
-          <div style="padding:10px">
-            ${tabelGrup}
+          <div style="padding:10px 10px 4px">
+            <button onclick="var d=document.getElementById('arsipDetail_${kkId}');var i=document.getElementById('arsipDetailIcon_${kkId}');var open=d.style.display!=='none';d.style.display=open?'none':'block';if(i)i.textContent=open?'▸':'▾';"
+              style="width:100%;background:#f9fafb;border:1px solid #eee;border-radius:9px;padding:9px 12px;font-size:11px;font-weight:700;color:#4b5563;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+              <span>📋 Rincian Transaksi (${data.rows.length})</span>
+              <span id="arsipDetailIcon_${kkId}" style="transition:transform .15s;font-weight:900">▸</span>
+            </button>
+            <div id="arsipDetail_${kkId}" style="display:none;margin-top:8px">
+              ${tabelGrup}
+            </div>
           </div>
           <div style="display:flex;gap:8px;padding:8px 10px;background:#f9fafb;border-top:1px solid rgba(0,0,0,0.06);flex-wrap:wrap">
             <button onclick="window._arsipDownloadPDFAnggota('${kkId}')"
